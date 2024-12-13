@@ -11,18 +11,7 @@ class EmployeeStoreResource extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */ 
-
-     
-     protected function failedValidation(Validator $validator)
-     {
-         throw new HttpResponseException(
-             response()->json([
-                 'message' => 'Validation failed',
-                 'errors' => $validator->errors()
-             ], 422)
-         );
-     }
-
+ 
     public function authorize(): bool
     {
         return true;
@@ -35,10 +24,10 @@ class EmployeeStoreResource extends FormRequest
      */
     public function rules(): array
     {
-        return [ 
+        return [
             'user_name' => 'required|string|max:255',
-            'user_email' => 'required|email|unique:users,email',
-            'user_phone' => 'required|string|max:15|unique:users,phone', 
+            'user_email' => 'required|email',
+            'user_phone' => 'required|string|max:15', 
             'role_id' => 'required|exists:roles,id',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', 
             

@@ -9,9 +9,12 @@ use App\Http\Controllers\Common\DivisionApiController;
 use App\Http\Controllers\Common\RoleApiController;
 use App\Http\Controllers\Common\UnionApiController;
 use App\Http\Controllers\Common\UpazilaApiController;
+use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Product\ProductCategoryController;
+use App\Http\Controllers\Product\ProductController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::post('login', [AuthController::class, 'login'])->name('login'); 
+Route::post('/logout', [AuthController::class, 'logout']);
+
 Route::post('register', [AuthController::class, 'register']);
 Route::get('roles',RoleApiController::class);
 Route::get('designations',DesignationApiController::class);
@@ -36,12 +41,17 @@ Route::get('divisions',DivisionApiController::class);
 Route::get('districts',DistrictApiController::class);
 Route::get('upazilas',UpazilaApiController::class);
 Route::get('unions',UnionApiController::class); 
+ 
+ 
+Route::middleware(['auth:sanctum'])->group(function () { 
+    Route::resource('employee', EmployeeController::class); 
+    Route::resource('product-category', ProductCategoryController::class);
+    Route::resource('product', ProductController::class); 
+    Route::resource('customer', CustomerController::class); 
 
-Route::resource('employee', EmployeeController::class); 
-Route::resource('product-category', ProductCategoryController::class); 
 
-Route::middleware(['auth:api'])->group(function () {  
-    // Route::resource('employee', EmployeeController::class); 
+   
 });
+
 
  

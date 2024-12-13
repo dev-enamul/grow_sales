@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_contacts', function (Blueprint $table) {
-            $table->id();
+            $table->id(); 
             $table->foreignId('user_id')->constrained(); 
             $table->string('name')->nullable()->comment("if customer type is company");
             $table->string('office_phone', 15)->nullable();

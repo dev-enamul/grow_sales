@@ -102,14 +102,21 @@ class AuthController extends Controller
                 'employee_id' => $employee->id,
                 'designation_id' => $request->designation_id,
                 'start_date' => now() 
-            ]);  
-
+            ]);   
             DB::commit(); 
             Auth::login($user); 
             return LoginService::createResponse($user); 
         } catch (\Exception $e) { 
             DB::rollBack();  
-            return api_response(null, 'Error creating company and user', $e->getMessage(), 500);
+            return error_response($e->getMessage(), 500);
         }
     } 
+
+    public function logout(Request $request)
+    { 
+		$request->user()->tokens()->delete(); 
+		$request->user()->currentAccessToken()->delete();
+
+		return response()->json(['message' => 'You have been successfully logged out.'], 200);
+    }
 }

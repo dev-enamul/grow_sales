@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\ReportingService;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {  
-    $allJuniors = ReportingService::getJunior(1);
-dd($allJuniors);
+    $employee = Employee::find(1);
+    dd($employee->designation("2024-4-4")->first()->designation->title);
 
     return view('welcome');
 });

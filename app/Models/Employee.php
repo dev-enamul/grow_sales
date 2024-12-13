@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -34,12 +35,24 @@ class Employee extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function employeeDesignations()
+    public function currentDesignation()
     {
-        return $this->hasMany(EmployeeDesignation::class);
+        return $this->hasOne(EmployeeDesignation::class, 'employee_id', 'id')
+                    ->whereNull('end_date');
+    } 
+
+    public function designationOnDate($date = null)
+    {
+        $date = $date ? Carbon::parse($date) : now(); 
+        return $this->hasOne(EmployeeDesignation::class, 'employee_id', 'id')
+                    ->where('start_date', '<=', $date)
+                    ->where(function ($query) use ($date) {
+                        $query->whereNull('end_date')
+                            ->orWhere('end_date', '>=', $date);
+                    });
     }
     
 }

@@ -9,6 +9,19 @@ class Customer extends Model
 {
     use HasFactory; 
 
+    protected $fillable = [
+        'user_id',
+        'lead_source_id',
+        'visitor_id',
+        'customer_id',
+        'customer_type',
+        'ref_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+    ];
+    
+
 
     public static function generateNextCustomerId(){
         $largest_user_id = Customer::where('customer_id', 'like', 'PID-%') 

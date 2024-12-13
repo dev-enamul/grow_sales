@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('upazilas', function (Blueprint $table) {
-            $table->id();
+            $table->id(); 
             $table->foreignId('district_id')->constrained();
             $table->string('name');
             $table->string('bn_name');

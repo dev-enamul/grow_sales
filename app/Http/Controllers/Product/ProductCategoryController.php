@@ -3,8 +3,7 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductCategoryRequest;
-use App\Services\ProductCategoryService;
-use Illuminate\Http\Request;
+use App\Services\ProductCategoryService; 
 
 class ProductCategoryController extends Controller
 {
@@ -18,16 +17,16 @@ class ProductCategoryController extends Controller
     public function index()
     {
         $categories = $this->productCategoryService->index();
-        return api_response($categories, 'Product categories fetched successfully.');
+        return success_response($categories);
     }
 
     public function show($id)
     {
         try {
             $category = $this->productCategoryService->show($id);
-            return api_response($category, 'Product category fetched successfully.');
+            return success_response($category);
         } catch (\Exception $e) {
-            return api_response(null, $e->getMessage(), false, $e->getCode());
+            return error_response($e->getMessage(), $e->getCode());
         }
     }
 
@@ -35,10 +34,10 @@ class ProductCategoryController extends Controller
     {
         try {
             $data = $request->validated();
-            $category = $this->productCategoryService->store($data);
-            return api_response($category, 'Product category created successfully.');
+            $this->productCategoryService->store($data);
+            return success_response(null, 'Product category created successfully.');
         } catch (\Exception $e) {
-            return api_response(null, $e->getMessage(), false, 500);
+            return error_response($e->getMessage(), 500);
         }
     }
 
@@ -46,10 +45,10 @@ class ProductCategoryController extends Controller
     {
         try {
             $data = $request->validated();
-            $category = $this->productCategoryService->update($id, $data);
-            return api_response($category, 'Product category updated successfully.');
+            $this->productCategoryService->update($id, $data);
+            return success_response(null, 'Product category updated successfully.');
         } catch (\Exception $e) {
-            return api_response(null, $e->getMessage(), false, $e->getCode());
+            return error_response($e->getMessage(), $e->getCode());
         }
     }
 
@@ -57,9 +56,9 @@ class ProductCategoryController extends Controller
     {
         try {
             $this->productCategoryService->destroy($id);
-            return api_response(null, 'Product category deleted successfully.');
+            return success_response(null, 'Product category deleted successfully.');
         } catch (\Exception $e) {
-            return api_response(null, $e->getMessage(), false, $e->getCode());
+            return error_response($e->getMessage(),$e->getCode());
         }
     }
 }

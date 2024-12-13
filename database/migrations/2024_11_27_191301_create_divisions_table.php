@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('divisions', function (Blueprint $table) {
-            $table->id();
+            $table->id(); 
             $table->foreignId('country_id')->default(18)->constrained();
             $table->string('name');
             $table->string('bn_name');

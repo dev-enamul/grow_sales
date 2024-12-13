@@ -3,63 +3,64 @@
 namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Product\ProductRequest;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     public function index()
     {
-        //
+        $categories = $this->productService->index();
+        return success_response($categories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show($id)
     {
-        //
+        try {
+            $category = $this->productService->show($id);
+            return success_response($category);
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(), $e->getCode());
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        //
+        try {
+            $data = $request->all();
+            $this->productService->store($data);
+            return success_response(null, 'Product created successfully.');
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(ProductRequest $request, $id)
     {
-        //
+        try {
+            $data = $request->all();
+            $this->productService->update($id, $data);
+            return success_response(null, 'Product updated successfully.');
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(), $e->getCode());
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        try {
+            $this->productService->destroy($id);
+            return success_response(null, 'Product deleted successfully.');
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(),$e->getCode());
+        }
     }
 }

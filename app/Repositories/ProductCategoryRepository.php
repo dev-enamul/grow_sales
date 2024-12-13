@@ -2,19 +2,29 @@
 namespace App\Repositories;
 
 use App\Models\ProductCategory;
+use Illuminate\Support\Facades\Auth;
 
 class ProductCategoryRepository
 {
     public function all()
     {
-        return ProductCategory::select('id', 'name', 'slug', 'status')
-            ->with('company:id,name')
-            ->paginate(15);
+        return ProductCategory::where('company_id',Auth::user()->company_id)->paginate(15)
+        ->through(function ($category) { 
+            return [
+                'uuid' => $category->uuid,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'status' => $category->status,  
+            ];
+        });
+
     }
 
     public function find($id)
     {
-        return ProductCategory::with('company:id,name')->find($id);
+       return  ProductCategory::with('company:id,name')
+        ->where('uuid', $id)
+        ->first(); 
     }
 
     public function create(array $data)

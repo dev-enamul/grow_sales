@@ -24,7 +24,7 @@ class ReportingService
 
 
     public static function getAllSenior($userId, $allData = null, &$collectedSeniorIds = [])
-    { 
+    {
         static $cachedData;
         $cachedData = $cachedData ?? UserReporting::whereNull('end_date')->get()->keyBy('user_id'); 
         $allData = $allData ?? $cachedData;

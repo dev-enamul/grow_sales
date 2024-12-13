@@ -16,4 +16,9 @@ class EmployeeDesignation extends Model
         'start_date',
         'end_date',
     ];
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id', 'id');
+    }
 }
