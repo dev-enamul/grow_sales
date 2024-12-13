@@ -22,16 +22,13 @@ return new class extends Migration
             $table->string('profile_image')->nullable();
             $table->enum('marital_status', ['married', 'unmarried', 'divorced'])->nullable();
             $table->date('dob')->nullable();
-            $table->string('finger_id')->nullable();
-            $table->enum('religion', ['Islam', 'Christianity', 'Hinduism', 'Buddhism', 'Judaism', 'Sikhism', 'Jainism', 'Baháulláh', 'Confucianism', 'Others'])->nullable();
+            $table->string('dob_hijri')->nullable();
             $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->enum('gender', ['male', 'female', 'others'])->nullable(); 
             $table->json('senior_user')->nullable(); 
-            $table->json('junior_user')->nullable();
+            $table->json('junior_user')->nullable();  
 
-            $table->foreignId('role_id')->constrained();
-            $table->foreignId('company_id')->constrained();
-
+            $table->foreignId('role_id')->nullable()->constrained();  
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
