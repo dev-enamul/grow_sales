@@ -20,6 +20,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'uuid',
+        'company_id',
         'name',
         'phone',
         'email',
@@ -73,17 +74,7 @@ class User extends Authenticatable
     {
         return $this->hasOne(Customer::class, 'user_id', 'id');
     }
-
-
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-    }
+ 
 
     public function createdBy()
     {
@@ -98,6 +89,17 @@ class User extends Authenticatable
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
     }
 
 }

@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
+            $table->foreignId('company_id')->constrained();
             $table->string('name');
-            $table->string('phone', 15);
-            $table->string('email');
-            $table->string('password');
+            $table->string('phone', 15)->nullable();
+            $table->string('email')->nullable();
+            $table->string('password')->nullable();
             $table->enum('user_type', ['employee', 'affiliate', 'customer'])->nullable();
             $table->string('profile_image')->nullable();
             $table->enum('marital_status', ['married', 'unmarried', 'divorced'])->nullable();
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->enum('gender', ['male', 'female', 'others'])->nullable(); 
             $table->json('senior_user')->nullable(); 
-            $table->json('junior_user')->nullable();  
+            $table->json('junior_user')->nullable();
 
             $table->foreignId('role_id')->nullable()->constrained();  
             $table->unsignedBigInteger('created_by')->nullable();

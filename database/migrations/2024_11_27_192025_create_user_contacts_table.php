@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_contacts', function (Blueprint $table) {
-            $table->id(); 
+            $table->id();
             $table->foreignId('user_id')->constrained(); 
             $table->string('name')->nullable()->comment("if customer type is company");
+            $table->string('position')->nullable()->comment("Customer/Father/Mother/Relative/OfficeSomeone");
             $table->string('office_phone', 15)->nullable();
             $table->string('personal_phone', 15)->nullable();
             $table->string('office_email', 45)->nullable();
@@ -22,7 +23,7 @@ return new class extends Migration
             $table->string('imo_number', 15)->nullable();
             $table->string('facebook_id', 100)->nullable(); 
             $table->string('emergency_contact_number', 15)->nullable();
-            $table->string('emergency_contact_person', 45)->nullable(); 
+            $table->string('emergency_contact_person', 45)->nullable();
             $table->timestamps(); 
         });
     }

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {  
     $employee = Employee::find(1);
-    dd($employee->designation("2024-4-4")->first()->designation->title);
+    // dd($employee->designation("2024-4-4")->first()->designation->title);
 
     return view('welcome');
 });

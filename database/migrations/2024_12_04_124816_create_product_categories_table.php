@@ -12,20 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_categories', function (Blueprint $table) {
-            $table->id(); 
+            $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name'); 
             $table->string('slug');
-            $table->text('description')->nullable();
-
-            $table->foreignId('company_id')->constrained()->onDelete('cascade');
-
+            $table->text('description')->nullable(); 
+            $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
             $table->integer('status')->default(1)->comment("1=Active, 0= UnActive");
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
             $table->softDeletes();
-            $table->timestamps(); 
+            $table->timestamps();
 
             $table->unique(['company_id', 'slug']);
         });

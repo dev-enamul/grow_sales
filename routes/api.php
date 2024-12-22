@@ -13,6 +13,7 @@ use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Visitor\VisitorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -47,10 +48,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('employee', EmployeeController::class); 
     Route::resource('product-category', ProductCategoryController::class);
     Route::resource('product', ProductController::class); 
-    Route::resource('customer', CustomerController::class); 
-
-
-   
+    Route::resource('customer', CustomerController::class);
+    Route::resource('visitor', VisitorController::class); 
+    
 });
 
 

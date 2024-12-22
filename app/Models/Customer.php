@@ -23,27 +23,15 @@ class Customer extends Model
     
 
 
-    public static function generateNextCustomerId(){
-        $largest_user_id = Customer::where('customer_id', 'like', 'PID-%') 
-        ->pluck('customer_id')
+    public static function generateNextVisitorId(){ 
+        $largest_employee_id = Customer::where('visitor_id', 'like', 'VIS-%') 
+        ->pluck('visitor_id')
                 ->map(function ($id) {
                         return preg_replace("/[^0-9]/", "", $id);
                 }) 
         ->max(); 
-        $largest_user_id++; 
-        $new_user_id = 'PID-' . str_pad($largest_user_id, 6, '0', STR_PAD_LEFT);
-        return $new_user_id;
-    }
-
-    public static function generateNextUserCustomerId(){
-        $largest_user_id = Customer::where('customer_id', 'like', 'CUS-%')
-        ->pluck('customer_id')
-                ->map(function ($id) {
-                        return preg_replace("/[^0-9]/", "", $id);
-                }) 
-        ->max();  
-        $largest_user_id++; 
-        $new_user_id = 'CUS-' . str_pad($largest_user_id, 6, '0', STR_PAD_LEFT);
-        return $new_user_id;
-    }
+        $largest_employee_id++;
+        $new_employee_id = 'VIS-' . str_pad($largest_employee_id, 6, '0', STR_PAD_LEFT);
+        return $new_employee_id;
+    } 
 }

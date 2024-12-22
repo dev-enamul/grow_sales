@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
     {
         User::create([
             'name' => 'Admin User',
+            'company_id' => 1,
             'role_id' => 1, 
             'email' => 'admin@example.com',
             'phone' => '1234567890',
@@ -29,6 +30,7 @@ class UserSeeder extends Seeder
  
         User::create([
             'name' => 'John Doe',
+            'company_id' => 1,
             'role_id' => 1, 
             'email' => 'john@example.com',
             'phone' => '0987654321',
