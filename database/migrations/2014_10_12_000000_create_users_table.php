@@ -22,8 +22,7 @@ return new class extends Migration
             $table->enum('user_type', ['employee', 'affiliate', 'customer'])->nullable();
             $table->string('profile_image')->nullable();
             $table->enum('marital_status', ['married', 'unmarried', 'divorced'])->nullable();
-            $table->date('dob')->nullable();
-            $table->string('dob_hijri')->nullable();
+            $table->date('dob')->nullable(); 
             $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->enum('gender', ['male', 'female', 'others'])->nullable(); 
             $table->json('senior_user')->nullable(); 

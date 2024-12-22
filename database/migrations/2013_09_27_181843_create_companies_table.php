@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('secondary_color')->nullable();  
             $table->date('founded_date')->nullable();  
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_verified')->default(false);
          
             $table->foreignId('category_id')->constrained('company_categories')->onDelete('cascade');
         

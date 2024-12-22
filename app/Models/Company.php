@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+    use Illuminate\Support\Str;
 
 class Company extends Model
 {
@@ -20,6 +20,7 @@ class Company extends Model
         'secondary_color',
         'founded_date',
         'is_active',
+        'is_verified',
         'category_id',
     ];
 

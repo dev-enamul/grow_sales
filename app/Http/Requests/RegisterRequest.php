@@ -35,8 +35,8 @@
              
              // User Validation
              'user_name' => 'required|string|max:255',
-             'user_email' => 'required|email|unique:users,email',
-             'user_phone' => 'required|string|max:15|unique:users,phone',
+             'user_email' => 'required|email',
+             'user_phone' => 'required|string|max:20',
              'password' => 'required|string|min:8',  
          ];
      }

@@ -6,11 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class Employee extends Model
 {
     use HasFactory; 
     protected $fillable = [
+        'uuid',
         'user_id',
         'employee_id',
         'signature',
@@ -53,6 +55,17 @@ class Employee extends Model
                         $query->whereNull('end_date')
                             ->orWhere('end_date', '>=', $date);
                     });
+    }
+
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
     }
     
 }

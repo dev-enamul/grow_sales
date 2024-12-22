@@ -25,9 +25,10 @@ class User extends Authenticatable
         'phone',
         'email',
         'password',
+        'user_type',
         'profile_image',
+        'marital_status',
         'dob',
-        'dob_hijri',
         'blood_group',
         'gender',
         'senior_user',
@@ -36,7 +37,7 @@ class User extends Authenticatable
         'created_by',
         'updated_by',
         'deleted_by',
-    ];
+    ];     
     
 
     /**
@@ -75,6 +76,10 @@ class User extends Authenticatable
         return $this->hasOne(Customer::class, 'user_id', 'id');
     }
  
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id','id');
+    }
 
     public function createdBy()
     {
