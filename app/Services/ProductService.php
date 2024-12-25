@@ -18,9 +18,9 @@ class ProductService
         $this->productRepository = $productRepository;
     }
 
-    public function index()
+    public function index($request)
     {
-        return $this->productRepository->all();
+        return $this->productRepository->all($request);
     }
 
     public function show($id)

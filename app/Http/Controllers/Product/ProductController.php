@@ -4,21 +4,23 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductRequest;
+use App\Models\Company;
+use App\Models\ProductUnit;
+use App\Models\VatSetting;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    protected $productService;
-
+    protected $productService; 
     public function __construct(ProductService $productService)
     {
         $this->productService = $productService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $categories = $this->productService->index();
+        $categories = $this->productService->index($request);
         return success_response($categories);
     }
 
@@ -62,5 +64,7 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             return error_response($e->getMessage(),$e->getCode());
         }
-    }
+    } 
+
+   
 }

@@ -6,10 +6,18 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductRepository
 {
-    public function all()
+    public function all($request)
     {
+        $status = $request->status;
+        $keyword = $request->keyword; 
         return Product::where('company_id',Auth::user()->company_id)
         ->select('uuid', 'name', 'slug', 'regular_price', 'sell_price', 'status','category_id')
+        ->when($status, function ($query) use ($status) {
+            $query->where('status', $status);
+        })
+        ->when($keyword, function ($query) use ($keyword) {
+            $query->where('name', 'like', '%' . $keyword . '%');
+        })
         ->with('category:id,name')
         ->paginate(15)
         ->through(function ($product) {

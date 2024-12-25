@@ -24,8 +24,7 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $user = $this->getActiveEmployee($request->email);
-
+        $user = $this->getActiveEmployee($request->email); 
         if ($user) {
             $request->authenticate();
             return LoginService::createResponse(Auth::user());
@@ -71,7 +70,10 @@ class AuthController extends Controller
             DB::commit();
 
             return success_response(
-                ["uuid" => $user->uuid],
+            [
+                "uuid" => $user->uuid,
+                'company_uuid' => $user->company->uuid,
+            ],
                 "Registration successful! Please check your email to confirm your account."
             );
         } catch (\Exception $e) {

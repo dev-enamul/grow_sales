@@ -23,6 +23,8 @@ class LoginService {
         $data = [
             'token' => $token,
             'user' => [
+                'uuid' => $user->uuid,
+                'company_uuid' => $user->company->uuid,
                 'name' => $user->name,
                 'email' => $user->email,
                 'user_type' => $user->user_type,

@@ -4,26 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-class Company extends Model
+class ProductUnit extends Model
 {
-    use HasFactory; 
-
+    use HasFactory, SoftDeletes;  
     protected $fillable = [
+        'name', 
         'uuid',
-        'name',
-        'website',
-        'address',
-        'logo',
-        'primary_color',
-        'secondary_color',
-        'founded_date',
-        'is_active',
-        'is_verified',
-        'category_id',
+        'abbreviation', 
+        'company_id', 
+        'created_by', 
+        'updated_by', 
+        'deleted_by'
     ];
-
+    protected $hidden = ['id'];
 
     protected static function boot()
     {

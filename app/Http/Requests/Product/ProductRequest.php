@@ -23,9 +23,10 @@ class ProductRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255', 
-            'description' => 'nullable|string',
-            'regular_price' => 'required|numeric|min:0', 
+            'regular_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
+            'product_unit_id' => 'nullable|exists:product_units,id',
+            'vat_setting_id' => 'nullable|exists:vat_settings,id',
             'category_id' => 'required|exists:product_categories,id',
         ];
     }
