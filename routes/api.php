@@ -12,6 +12,7 @@ use App\Http\Controllers\Common\UnionApiController;
 use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\Employee\InviteEmployeeController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductUnitController;
@@ -50,6 +51,7 @@ Route::get('company-verify/{id}',[VerifyController::class,'verify']); //this wil
 Route::middleware(['auth:sanctum'])->group(function () { 
     Route::resource('product-unit',ProductUnitController::class);
     Route::resource('product', ProductController::class); 
+    Route::get('invite-employee',[InviteEmployeeController::class,'sendInvite']);
     Route::resource('employee', EmployeeController::class); 
     Route::resource('product-category', ProductCategoryController::class); 
     Route::resource('customer', CustomerController::class);

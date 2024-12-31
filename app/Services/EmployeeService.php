@@ -17,6 +17,7 @@ class EmployeeService
     public function __construct(EmployeeRepository $employeeRepo, UserRepository $userRepo)
     {
         $this->employeeRepo = $employeeRepo;
+        
         $this->userRepo = $userRepo;
     }
 
@@ -31,9 +32,9 @@ class EmployeeService
         try {
             $authUser = $this->userRepo->findUserById(Auth::id());
             $user = $this->userRepo->createUser([
-                'name' => $request->user_name,
-                'email' => $request->user_email,
-                'phone' => $request->user_phone,
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => Hash::make('12345678'),
                 'user_type' => 'employee',
                 'profile_image' => $request->file('profile_image') ? $request->file('profile_image')->store('profile_images', 'public') : null,
@@ -45,9 +46,9 @@ class EmployeeService
             $this->userRepo->createUserContact([
                 'user_id' => $user->id,
                 'name' => $request->name ?? $request->user_name,
-                'office_phone' => $request->office_phone,
+                'office_phone' => $request->phone,
                 'personal_phone' => $request->personal_phone,
-                'office_email' => $request->office_email,
+                'office_email' => $request->email,
                 'personal_email' => $request->personal_email,
                 'emergency_contact_number' => $request->emergency_contact_number,
                 'emergency_contact_person' => $request->emergency_contact_person,
@@ -86,18 +87,17 @@ class EmployeeService
             // Reporting
             $user->senior_user = ReportingService::getAllSenior($user->id);
             $user->junior_user = ReportingService::getAllJunior($user->id);
-            $user->save();
-
+            $user->save(); 
             DB::commit();
-            return ['success' => true, 'message' => 'Employee created successfully'];
+            return ['success' => true, 'message' => 'Employee created successfully! Login credentials have been sent to the provided email address.'];
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }  
 
-    public function show($id){
-        return $this->employeeRepo->find($id);
+    public function show($uuid){
+        return $this->userRepo->findUserByUuId($uuid);
     }
 
     public function updateEmployee($id, $request){

@@ -40,7 +40,5 @@ class EmployeeRepository
     {
         return EmployeeDesignation::create($data);
     }  
-    public function find($id){
-        return User::find($id);
-    }
+ 
 }

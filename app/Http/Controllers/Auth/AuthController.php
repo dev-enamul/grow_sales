@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
-use App\Helpers\LoginService;
+ 
+use App\Auth\Services\RegisterService; 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,21 +25,21 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $user = $this->getActiveEmployee($request->email); 
+        $user = AuthService::getActiveEmployee($request->email); 
         if ($user) {
             $request->authenticate();
-            return LoginService::createResponse(Auth::user());
+            return AuthService::createResponse(Auth::user());
         }
  
-        if ($this->isUnverifiedCompany($request->email)) {
+        if (AuthService::isUnverifiedCompany($request->email)) {
             return error_response(self::ERROR_COMPANY_PENDING, 404);
         }
  
-        if ($inactive = $this->isInactiveEmployee($request->email)) {
+        if (AuthService::isInactiveEmployee($request->email)) {
             return error_response(self::ERROR_USER_INACTIVE, 404);
         }
 
-        if ($resigned = $this->isResignedEmployee($request->email)) {
+        if (AuthService::isResignedEmployee($request->email)) {
             return error_response(self::ERROR_USER_RESIGNED, 404);
         }
 
@@ -49,7 +50,7 @@ class AuthController extends Controller
     {
         DB::beginTransaction();
         try { 
-            $unverified = $this->isUnverifiedCompany($request->user_email);
+            $unverified = AuthService::isUnverifiedCompany($request->user_email);
             if ($unverified) {
                 return success_response(
                     ["uuid" => $unverified->uuid],
@@ -57,7 +58,7 @@ class AuthController extends Controller
                 );
             }
  
-            $existingUser = $this->checkExistingActiveEmployee($request->user_email);
+            $existingUser = AuthService::checkExistingActiveEmployee($request->user_email);
             if ($existingUser) {
                 return error_response(sprintf(self::ERROR_EMAIL_ASSOCIATED, $existingUser->company->name), 409);
             }
@@ -88,62 +89,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'You have been successfully logged out.'], 200);
     }
-
-    // Helper Methods
-
-    private function getActiveEmployee($email)
-    {
-        return User::where('email', $email)
-            ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', false)
-                    ->where('status', 1); // Active status
-            })
-            ->whereHas('company', function ($query) {
-                $query->where('is_verified', true); // Verified company
-            })
-            ->first();
-    }
-
-    private function isUnverifiedCompany($email)
-    {
-        return User::where('email', $email)
-            ->where('user_type', 'employee')
-            ->whereHas('company', function ($query) {
-                $query->where('is_verified', false); // Unverified company
-            })
-            ->first();
-    }
-
-    private function isInactiveEmployee($email)
-    {
-        return User::where('email', $email)
-            ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('status', 0); // Inactive employee
-            })
-            ->first();
-    }
-
-    private function isResignedEmployee($email)
-    {
-        return User::where('email', $email)
-            ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', true); // Resigned employee
-            })
-            ->first();
-    }
-
-    private function checkExistingActiveEmployee($email)
-    {
-        return User::where('email', $email)
-            ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', false); // Active employee
-            })
-            ->first();
-    }
+  
 
     private function createCompany($request)
     {

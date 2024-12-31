@@ -1,10 +1,11 @@
 <?php 
 namespace App\Http\Controllers\Employee;
-
+ 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employee\EmployeeUpdateRequest;
-use App\Http\Requests\EmployeeStoreResource;
+use App\Http\Requests\Employee\EmployeeStoreRequest;
+use App\Http\Requests\Employee\EmployeeUpdateRequest; 
 use App\Models\User;
+use App\Services\Auth\AuthService;
 use App\Services\EmployeeService;
 use Exception;
 use Illuminate\Http\Request;
@@ -28,9 +29,14 @@ class EmployeeController extends Controller
         }
     }
 
-    public function store(EmployeeStoreResource $request)
+    public function store(EmployeeStoreRequest $request)
     {
         try {
+            $existingUser = AuthService::checkExistingActiveEmployee($request->user_email);
+            if ($existingUser) {
+                return error_response("Already associated with ".$existingUser->company->name." Please resign first or use another email.", 409);
+            }  
+            
             $result = $this->employeeService->createEmployee($request);
             return success_response(null, $result['message']);
         } catch (\Exception $e) {

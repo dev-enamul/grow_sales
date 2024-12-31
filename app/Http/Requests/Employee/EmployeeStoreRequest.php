@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Employee;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Foundation\Http\FormRequest; 
 
-class EmployeeStoreResource extends FormRequest
+class EmployeeStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +23,9 @@ class EmployeeStoreResource extends FormRequest
     public function rules(): array
     {
         return [
-            'user_name' => 'required|string|max:255',
-            'user_email' => 'required|email',
-            'user_phone' => 'required|string|max:15', 
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => 'required|string|max:15', 
             'role_id' => 'required|exists:roles,id',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', 
             

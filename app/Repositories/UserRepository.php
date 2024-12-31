@@ -35,5 +35,10 @@ class UserRepository
         return User::find($id);
     }
 
+    public function findUserByUuId($uuid)
+    {
+        return User::where('uuid',$uuid);
+    }
+
      
 }
