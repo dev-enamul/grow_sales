@@ -25,9 +25,9 @@ class ProductRequest extends FormRequest
             'name' => 'required|string|max:255', 
             'regular_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
-            'product_unit_id' => 'nullable',
-            'vat_setting_id' => 'nullable',
-            'category_id' => 'require',
+            'product_unit_id' => 'nullable|exists:product_units,uuid',
+            'vat_setting_id' => 'nullable|exists:vat_settings,uuid',
+            'category_id' => 'required|exists:product_categories,uuid',
         ];
     }
 }
