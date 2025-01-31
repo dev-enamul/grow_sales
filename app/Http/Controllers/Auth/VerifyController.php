@@ -13,6 +13,9 @@ class VerifyController extends Controller
     public function verify($company_uuid){
         try {
             $company = Company::where('uuid',$company_uuid)->first();
+            if(!$company){
+                error_response("Invalid Company");
+            }
          
             $company->is_verified = true;
             $company->is_active = true;

@@ -24,7 +24,7 @@ class Employee extends Model
         'deleted_by',
     ];
 
-    public static function generateNextEmployeeId(){ 
+    public static function generateNextEmployeeId(){
         $largest_employee_id = Employee::where('employee_id', 'like', 'EMP-%') 
         ->pluck('employee_id')
                 ->map(function ($id) {
@@ -41,16 +41,12 @@ class Employee extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function currentDesignation()
-    {
-        return $this->hasOne(EmployeeDesignation::class, 'employee_id', 'id')
-                    ->whereNull('end_date');
-    } 
+    
 
     public function designationOnDate($date = null)
     {
         $date = $date ? Carbon::parse($date) : now(); 
-        return $this->hasOne(EmployeeDesignation::class, 'employee_id', 'id')
+        return $this->hasOne(DesignationLog::class, 'employee_id', 'id')
                     ->where('start_date', '<=', $date)
                     ->where(function ($query) use ($date) {
                         $query->whereNull('end_date')

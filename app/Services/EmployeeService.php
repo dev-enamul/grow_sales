@@ -39,49 +39,85 @@ class EmployeeService
                 'user_type' => 'employee',
                 'profile_image' => $request->file('profile_image') ? $request->file('profile_image')->store('profile_images', 'public') : null,
                 'role_id' => $request->role_id,
-                'company_id' => $authUser->company_id,
-            ]);
+                'company_id'    => $authUser->company_id,
+                'dob'           => $request->dob, 
+                'blood_group'   => $request->blood_group, 
+                'gender'        => $request->gender, 
+                'created_by'    => $authUser->id,
+            ]); 
 
             // Create User Contact and Address
             $this->userRepo->createUserContact([
-                'user_id' => $user->id,
-                'name' => $request->name ?? $request->user_name,
-                'office_phone' => $request->phone,
-                'personal_phone' => $request->personal_phone,
-                'office_email' => $request->email,
-                'personal_email' => $request->personal_email,
-                'emergency_contact_number' => $request->emergency_contact_number,
-                'emergency_contact_person' => $request->emergency_contact_person,
+                'user_id'           => $user->id,
+                'name'              => $request->name,
+                'relationship_or_role' => "Employee",
+                'office_phone'      => $request->office_phone,
+                'personal_phone'    => $request->personal_phone,
+                'office_email'      => $request->office_email,
+                'personal_email'    => $request->personal_email,
+                'website'           => $request->website,
+                'whatsapp'          => $request->whatsapp,
+                'imo'               => $request->imo,
+                'facebook'          => $request->facebook,
+                'linkedin'          => $request->linkedin,
+                'created_by'    => $authUser->id,
             ]);
 
-            $this->userRepo->createUserAddress([
+            if(isset($request->permanent_country) || isset($request->permanent_zip_code) ||  isset($request->permanent_address)){
+                $this->userRepo->createUserAddress([
+                    'user_id' => $user->id,
+                    'address_type'      => "permanent",
+                    'country'           => $request->permanent_country,
+                    'division'          => $request->permanent_division,
+                    'district'          => $request->permanent_district,
+                    'upazila_or_thana'  => $request->permanent_upazila_or_thana,
+                    "zip_code"          => $request->permanent_zip_code,
+                    'address'           => $request->permanent_address, 
+                    "is_same_present_permanent" => $request->is_same_present_permanent,
+                    'created_by'    => $authUser->id,
+               ]);
+
+               if(!$request->is_same_present_permanent){
+                    $this->userRepo->createUserAddress([
+                        'user_id' => $user->id,
+                        'address_type'      => "present",
+                        'country'           => $request->present_country,
+                        'division'          => $request->present_division,
+                        'district'          => $request->present_district,
+                        'upazila_or_thana'  => $request->present_upazila_or_thana,
+                        "zip_code"          => $request->present_zip_code,
+                        'address'           => $request->present_address, 
+                        "is_same_present_permanent" => $request->is_same_present_permanent,
+                        'created_by'    => $authUser->id,
+                    ]); 
+                }
+            }
+            
+              // Create Employee
+            $employee = $this->employeeRepo->createEmployee([
                 'user_id' => $user->id,
-                'country_id' => $request->country_id,
-                'division_id' => $request->division_id,
-                'district_id' => $request->district_id,
-                'upazila_id' => $request->upazila_id,
-                'address' => $request->address,
+                'employee_id' => Employee::generateNextEmployeeId(),
+                'designation_id'=> $request->designation_id, 
+                'referred_by'   => $request->referred_by, 
+                'created_by'    => Auth::user()->id
             ]);
 
             $this->userRepo->createUserReporting([
                 'user_id' => $user->id,
                 'reporting_user_id' => $request->reporting_user_id,
                 'start_date' => now(), 
+                'created_by'    => $authUser->id,
             ]);
 
-            // Create Employee
-            $employee = $this->employeeRepo->createEmployee([
-                'user_id' => $user->id,
-                'employee_id' => Employee::generateNextEmployeeId(),
-                'status' => 1,
-            ]);
+          
 
             // Assign Designation
-            $this->employeeRepo->createEmployeeDesignation([
+            $this->employeeRepo->createDesignationLog([
                 'user_id' => $user->id,
                 'employee_id' => $employee->id,
                 'designation_id' => $request->designation_id,
                 'start_date' => now(),
+                'created_by'    => $authUser->id,
             ]);
 
             // Reporting

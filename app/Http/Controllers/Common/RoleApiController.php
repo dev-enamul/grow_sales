@@ -12,7 +12,7 @@ class RoleApiController extends Controller
     public function __invoke()
     {
         try { 
-            $data = Role::select('id','name','slug')->get(); 
+            $data = Role::select('id','name','slug')->where('company_id',Auth::user()->company_id)->get(); 
             if ($data->isEmpty()) {
                 return error_response('No roles found', 404);
             }  

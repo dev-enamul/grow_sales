@@ -13,11 +13,11 @@ class CompanyCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = [ 
+        $categories = [
             [
-                'name' => 'Construction',
-                'slug' => 'construction',
-                'description' => 'Companies that build infrastructure such as buildings, roads, and bridges.',
+                'name' => 'Real Estate',
+                'slug' => 'real-estate',
+                'description' => 'Companies that buy, sell, or lease properties and manage real estate investments.',
             ],
             [
                 'name' => 'Education',
@@ -48,12 +48,7 @@ class CompanyCategorySeeder extends Seeder
                 'name' => 'Manufacturing',
                 'slug' => 'manufacturing',
                 'description' => 'Companies that produce and distribute goods, from consumer products to industrial machinery.',
-            ], 
-            [
-                'name' => 'Real Estate',
-                'slug' => 'real-estate',
-                'description' => 'Companies that buy, sell, or lease properties and manage real estate investments.',
-            ],
+            ],  
             [
                 'name' => 'Transportation',
                 'slug' => 'transportation',

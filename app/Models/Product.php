@@ -13,21 +13,24 @@ class Product extends Model
 
     protected $fillable = [
         'uuid',
+        'company_id',
         'name',
         'slug',
         'description',
         'code',
+        'product_unit_id',
+        'unit_price',
+        'unit',
         'regular_price',
         'sell_price',
-        'product_unit_id',
         'vat_setting_id',
         'category_id',
-        'company_id',
         'status',
         'created_by',
         'updated_by',
         'deleted_by',
-    ];
+    ]; 
+    
     protected $hidden = ['id'];
 
     public function category()

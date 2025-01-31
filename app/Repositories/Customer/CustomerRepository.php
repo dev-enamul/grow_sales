@@ -1,8 +1,8 @@
 <?php 
 namespace App\Repositories;
 
-use App\Models\Employee;
-use App\Models\EmployeeDesignation;
+use App\Models\DesignationLog;
+use App\Models\Employee; 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,9 +36,9 @@ class CustomerRepository
     {
         return Employee::create($data);
     } 
-    public function createEmployeeDesignation($data)
+    public function createDesignationLog($data)
     {
-        return EmployeeDesignation::create($data);
+        return DesignationLog::create($data);
     }  
     public function find($id){
         return User::find($id);

@@ -10,19 +10,19 @@ class AuthService {
     {
         $token = $user->createToken('authToken')->plainTextToken;
  
-        $permissions = $user->role->slug === 'admin'
+        $permissions = @$user->role->slug === 'admin'
             ? Permission::pluck('slug')  
-            : $user->role->permissions->pluck('slug'); 
+            : $user?->role?->permissions?->pluck('slug'); 
      
         $data = [
             'token' => $token,
             'user' => [
                 'uuid' => $user->uuid,
-                'company_uuid' => $user->company->uuid,
+                'company_uuid' => @$user->company->uuid,
                 'name' => $user->name,
                 'email' => $user->email,
-                'user_type' => $user->user_type,
-                'role' => $user->role->slug,
+                'user_type' => @$user->user_type,
+                'role' => @$user->role->slug,
             ],
             'permissions' => $permissions,
         ];

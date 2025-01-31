@@ -12,21 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_addresses', function (Blueprint $table) {
-            $table->id(); 
-            $table->foreignId('user_id')->constrained();
-            $table->foreignId('country_id')->nullable()->constrained();
-            $table->foreignId('division_id')->nullable()->constrained();
-            $table->foreignId('district_id')->nullable()->constrained();
-            $table->foreignId('upazila_id')->nullable()->constrained();
-            $table->foreignId('union_id')->nullable()->constrained();
-            $table->foreignId('village_id')->nullable()->constrained();
-            $table->string('post_code')->nullable();  
-            $table->string('address', 250)->nullable();  
+            $table->id();
+            $table->foreignId('user_id'); 
+            $table->enum('address_type', ['permanent', 'present']); 
+            $table->string('country')->nullable();
+            $table->string('division')->nullable();
+            $table->string('district')->nullable();
+            $table->string('upazila_or_thana')->nullable(); 
+            $table->string('zip_code')->nullable(); 
+            $table->string('region')->nullable(); //for international address
+            $table->string('city')->nullable(); //for international address
+            $table->text('address')->nullable();  
 
-            $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->foreignId('deleted_by')->nullable()->constrained('users');
-            $table->softDeletes();
+            $table->boolean('is_same_present_permanent')->nullable()->comment('0=Diff Address , 1  = Same Address');
             $table->timestamps(); 
         });
     }

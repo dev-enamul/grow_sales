@@ -15,21 +15,22 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained(); 
             $table->string('name')->nullable()->comment();
-            $table->string('relation')->nullable()->comment("Customer/Father/Mother/Relative/OfficeSomeone");
+            $table->string('relationship_or_role')->nullable()->comment("Customer/Father/Mother/Relative/OfficeSomeone");
             $table->string('office_phone', 15)->nullable();
             $table->string('personal_phone', 15)->nullable();
             $table->string('office_email', 45)->nullable();
             $table->string('personal_email', 45)->nullable();
-            $table->string('whatsapp_number', 15)->nullable();
-            $table->string('facebook_id', 100)->nullable(); 
-            $table->string('emergency_contact_number', 15)->nullable();
-            $table->string('emergency_contact_person', 45)->nullable(); 
+            $table->string('website', 20)->nullable();
+            $table->string('whatsapp', 20)->nullable();
+            $table->string('imo', 20)->nullable();
+            $table->string('facebook', 100)->nullable();
+            $table->string('linkedin', 100)->nullable();
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->softDeletes();
-            $table->timestamps(); 
+            $table->timestamps();  
         });
     }
 

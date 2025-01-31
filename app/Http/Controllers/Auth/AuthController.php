@@ -26,7 +26,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $user = AuthService::getActiveEmployee($request->email); 
-        return success_response($user);
+     
         if ($user) {
             $request->authenticate();
             return AuthService::createResponse(Auth::user());
@@ -54,7 +54,10 @@ class AuthController extends Controller
             $unverified = AuthService::isUnverifiedCompany($request->user_email);
             if ($unverified) {
                 return success_response(
-                    ["uuid" => $unverified->uuid],
+                    [
+                        "uuid" => $unverified->uuid,
+                        'company_uuid' => $unverified->company->uuid,
+                    ],
                     "An account is already associated with this email, but the company verification is pending. Please check your email and confirm."
                 );
             }

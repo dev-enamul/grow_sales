@@ -74,7 +74,7 @@ class CustomerService
             ]);
 
             // Assign Designation
-            $this->employeeRepo->createEmployeeDesignation([
+            $this->employeeRepo->createDesignationLog([
                 'user_id' => $user->id,
                 'employee_id' => $employee->id,
                 'designation_id' => $request->designation_id,

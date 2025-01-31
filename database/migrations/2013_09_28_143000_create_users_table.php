@@ -36,7 +36,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps(); 
 
-            $table->unique(['company_id', 'email']);
+            $table->unique(['company_id', 'email']);  
         });
     }
 

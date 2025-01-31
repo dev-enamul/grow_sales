@@ -10,13 +10,15 @@ class UserAddress extends Model
     use HasFactory; 
     protected $fillable = [
         'user_id',
-        'country_id',
-        'division_id',
-        'district_id',
-        'upazila_id',
-        'union_id',
-        'village_id',
-        'post_code',
+        'address_type',
+        'country',
+        'division',
+        'district',
+        'upazila_or_thana',
+        'zip_code',
+        'region',
+        'city',
         'address',
+        'is_same_present_permanent',
     ];
 }
