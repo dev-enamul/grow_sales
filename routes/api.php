@@ -49,12 +49,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('product-category', ProductCategoryController::class); 
     Route::resource('product', ProductController::class);
      
-    Route::resource('employee', EmployeeController::class); 
+    // Employee
+    Route::resource('employee', EmployeeController::class);
+    Route::get('employee-existing-information',[EmployeeController::class,'is_existing']);
+    
+    // Lead 
     Route::resource('customer', CustomerController::class);
-    Route::resource('visitor', VisitorController::class); 
-
-
-
+    Route::resource('visitor', VisitorController::class);  
+ 
     // Setting Route 
     Route::resource('vat-setting',VatSettingController::class);
     

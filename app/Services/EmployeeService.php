@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Helpers\ReportingService;
 use App\Models\Employee;
+use App\Models\User;
 
 class EmployeeService
 {
@@ -102,9 +103,10 @@ class EmployeeService
                 'created_by'    => Auth::user()->id
             ]);
 
+            $reporting_user = User::where('uuid',$request->reporting_user_id)->first();
             $this->userRepo->createUserReporting([
                 'user_id' => $user->id,
-                'reporting_user_id' => $request->reporting_user_id,
+                'reporting_user_id' => $reporting_user->id,
                 'start_date' => now(), 
                 'created_by'    => $authUser->id,
             ]);

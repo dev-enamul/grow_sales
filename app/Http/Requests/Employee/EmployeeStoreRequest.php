@@ -63,7 +63,7 @@ class EmployeeStoreRequest extends FormRequest
             // Employee-related fields
             'designation_id' => 'required|exists:designations,id',
             'referred_by' => 'nullable|exists:users,id',
-            'reporting_user_id' => 'nullable|exists:users,id',
+            'reporting_user_id' => 'nullable|exists:users,uuid',
         ];
     }
 }

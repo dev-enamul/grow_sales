@@ -35,7 +35,7 @@ class EmployeeController extends Controller
             $existingUser = AuthService::checkExistingActiveEmployee($request->user_email);
             if ($existingUser) {
                 return error_response("Already associated with ".$existingUser->company->name." Please resign first or use another email.", 409);
-            }  
+            } 
             
             $result = $this->employeeService->createEmployee($request);
             return success_response(null, $result['message']);
