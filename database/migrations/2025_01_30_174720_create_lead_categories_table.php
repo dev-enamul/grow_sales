@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,11 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permissions', function (Blueprint $table) {
+        Schema::create('lead_categories', function (Blueprint $table) {
             $table->id(); 
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
-            $table->string('guard_name')->default('web'); 
+            $table->uuid('uuid')->unique()->default(DB::raw('(UUID())')); 
+            $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
+            $table->string('title'); 
+            $table->string('slug');
+            $table->tinyInteger('status')->default(1)->comment("0=Inactive, 1 = Active");
+            $table->integer('serial'); 
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -30,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permissions');
+        Schema::dropIfExists('lead_categories');
     }
 };

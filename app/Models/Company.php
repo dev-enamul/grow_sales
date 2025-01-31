@@ -24,6 +24,18 @@ class Company extends Model
         'category_id',
     ];
 
+    public function users(){
+        return $this->hasMany(User::class, 'company_id');
+    }
+    
+    public function employees(){
+        return $this->hasMany(User::class, 'company_id')->where('user_type', 'employee');
+    }
+    
+    public function customers(){
+        return $this->hasMany(User::class, 'company_id')->where('user_type', 'customer');
+    }
+
 
     protected static function boot()
     {

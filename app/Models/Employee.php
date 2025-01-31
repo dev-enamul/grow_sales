@@ -15,6 +15,7 @@ class Employee extends Model
         'uuid',
         'user_id',
         'employee_id',
+        'is_admin',
         'signature',
         'ref_id',
         'status',
@@ -56,16 +57,6 @@ class Employee extends Model
                             ->orWhere('end_date', '>=', $date);
                     });
     }
-
-
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-    }
+ 
     
 }

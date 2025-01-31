@@ -12,19 +12,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_units', function (Blueprint $table) {
-            $table->id();
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id(); 
             $table->uuid('uuid')->unique()->default(DB::raw('(UUID())')); 
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('abbreviation')->nullable();  
-            $table->boolean('is_active')->default(true); 
+            $table->string('slug');
+            $table->string('guard_name')->default('web');  
             
-            $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->bigInteger('created_by')->nullable();
+            $table->bigInteger('updated_by')->nullable();
+            $table->bigInteger('deleted_by')->nullable();
             $table->softDeletes();
             $table->timestamps(); 
+
+            $table->unique(['company_id', 'slug']);
         });
     }
 
@@ -33,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_units');
+        Schema::dropIfExists('roles');
     }
 };

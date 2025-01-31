@@ -15,7 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade'); // Assuming there's a product table to reference
             $table->string('image_path'); 
-            $table->timestamps();
+
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->softDeletes();
+            $table->timestamps();  
         });
     }
 

@@ -27,8 +27,11 @@ return new class extends Migration
          
             $table->foreignId('category_id')->constrained('company_categories')->onDelete('cascade');
         
+            $table->bigInteger('created_by')->nullable();
+            $table->bigInteger('updated_by')->nullable();
+            $table->bigInteger('deleted_by')->nullable();
+            $table->softDeletes();
             $table->timestamps(); 
-            $table->softDeletes();  
         });
     }
 

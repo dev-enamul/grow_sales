@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\VerifyController;
 use App\Http\Controllers\Common\CompanyCategoryApiController;

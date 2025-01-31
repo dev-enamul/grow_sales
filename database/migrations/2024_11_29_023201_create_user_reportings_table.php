@@ -16,8 +16,14 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
             $table->foreignId('reporting_user_id')->constrained('users')->onDelete('cascade');  
             $table->date('start_date'); 
-            $table->date('end_date')->nullable(); 
-            $table->timestamps();  
+            $table->date('end_date')->nullable();  
+            
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->softDeletes();
+            $table->timestamps(); 
+            
         });
     }
 

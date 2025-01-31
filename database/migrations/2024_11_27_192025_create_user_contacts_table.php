@@ -23,7 +23,12 @@ return new class extends Migration
             $table->string('whatsapp_number', 15)->nullable();
             $table->string('facebook_id', 100)->nullable(); 
             $table->string('emergency_contact_number', 15)->nullable();
-            $table->string('emergency_contact_person', 45)->nullable();
+            $table->string('emergency_contact_person', 45)->nullable(); 
+
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->softDeletes();
             $table->timestamps(); 
         });
     }

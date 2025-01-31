@@ -13,21 +13,34 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('employees', function (Blueprint $table) {
-            $table->id(); 
-            $table->uuid('uuid')->unique()->default(DB::raw('(UUID())')); 
-            $table->foreignId('user_id')->constrained();
-            $table->string('employee_id')->unique();  
+            $table->id();  
+    
+            // User-related columns
+            $table->foreignId('user_id')->constrained(); 
+            $table->string('employee_id')->unique(); 
             $table->string('signature')->nullable(); 
+            $table->boolean('is_admin')->default(false);
+            
+            // Designation
+            $table->foreignId('designation_id')->nullable()->constrained(); 
         
-            $table->foreignId('ref_id')->nullable()->constrained('users');  
+            // Salary information
+            $table->decimal('salary')->default(0);  
         
+            // Referral information
+            $table->foreignId('referred_by')->nullable()->constrained('users'); 
+        
+            // Employment status
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive'); 
-            $table->boolean('is_resigned')->default(false)->comment('false=Not Resigned, true=Resigned');
-            $table->date('resignation_date')->nullable()->comment('Date of resignation');
+            $table->boolean('is_resigned')->default(false)->comment('false=Not Resigned, true=Resigned'); 
+            $table->date('resigned_at')->nullable()->comment('Date of resignation'); 
         
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-            $table->unsignedBigInteger('deleted_by')->nullable();
+            // Audit columns (for created, updated, and deleted by users)
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+        
+            // Soft deletes and timestamps
             $table->softDeletes();
             $table->timestamps();
         });

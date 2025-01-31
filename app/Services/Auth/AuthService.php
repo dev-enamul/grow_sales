@@ -7,7 +7,7 @@ use App\Models\User;
 class AuthService {
 
     public static function createResponse($user)
-    {  
+    {
         $token = $user->createToken('authToken')->plainTextToken;
  
         $permissions = $user->role->slug === 'admin'
@@ -25,7 +25,7 @@ class AuthService {
                 'role' => $user->role->slug,
             ],
             'permissions' => $permissions,
-        ];   
+        ];
         return success_response($data, 'User authenticated successfully.'); 
     }
     
@@ -76,10 +76,10 @@ class AuthService {
             ->where('user_type', 'employee')
             ->whereHas('employee', function ($query) {
                 $query->where('is_resigned', false)
-                    ->where('status', 1); // Active status
+                    ->where('status', 1); 
             })
             ->whereHas('company', function ($query) {
-                $query->where('is_verified', true); // Verified company
+                $query->where('is_verified', true); 
             })
             ->first();
     }

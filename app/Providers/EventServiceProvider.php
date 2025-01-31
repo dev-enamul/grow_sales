@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Company;
+use App\Models\Employee;
 use App\Models\ProductCategory;
+use App\Observers\CompanyObserver;
 use App\Observers\ProductCategoryObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -27,7 +30,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        
+        Company::observe(CompanyObserver::class);
     }
 
     /**

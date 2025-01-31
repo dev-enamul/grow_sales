@@ -26,6 +26,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $user = AuthService::getActiveEmployee($request->email); 
+        return success_response($user);
         if ($user) {
             $request->authenticate();
             return AuthService::createResponse(Auth::user());
@@ -108,8 +109,7 @@ class AuthController extends Controller
             'email' => $request->user_email,
             'phone' => $request->user_phone,
             'password' => Hash::make($request->password),
-            'user_type' => 'employee',
-            'role_id' => 1,
+            'user_type' => 'employee', 
             'company_id' => $companyId,
         ]);
     }
@@ -120,6 +120,7 @@ class AuthController extends Controller
             'user_id' => $userId,
             'employee_id' => Employee::generateNextEmployeeId(),
             'status' => 1, // Active status
+            'is_admin' => 1,
         ]);
     }
 }

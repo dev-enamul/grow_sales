@@ -1,4 +1,6 @@
-<?php  
+<?php
+
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 if (!function_exists('success_response')) {
     function success_response($data = null, $message = 'Success', $statusCode = 200)
@@ -30,32 +32,29 @@ if (!function_exists('error_response')) {
 
 
 if (!function_exists('getSlug')) {
-    function getSlug($model, $title, $column = 'slug', $separator = '-') {
+    function getSlug($model, $title, $column = 'slug', $separator = '-') { 
         $slug         = Str::slug($title);
         $originalSlug = $slug;
-        $count        = 1;
+        $count        = 1;  
 
-        while ($model::where($column, $slug)->exists()) {
-            $slug = $originalSlug . $separator . $count;
-            $count++;
-        }
-
-        return $slug;
-    }
-} 
-
-if (!function_exists('getSlug')) {
-    function getSlug($model, $title, $column = 'slug', $separator = '-') {
-        $slug         = Str::slug($title);
-        $originalSlug = $slug;
-        $count        = 1;
-
-        while ($model::where($column, $slug)->exists()) {
-            $slug = $originalSlug . $separator . $count;
-            $count++;
+        if (Schema::hasColumn((new $model)->getTable(), 'company_id')) { 
+            $companyId = auth()->user()->company_id ?? null;  
+             
+            while ($model::where('company_id', $companyId)->where($column, $slug)->exists()) {
+                $slug = $originalSlug . $separator . $count;
+                $count++;
+            }
+        } else { 
+            while ($model::where($column, $slug)->exists()) {
+                $slug = $originalSlug . $separator . $count;
+                $count++;
+            }
         }
 
         return $slug;
     }
 }
+
+
+ 
 

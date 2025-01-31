@@ -1,31 +1,44 @@
 <?php
+ namespace Database\Seeders;
 
-namespace Database\Seeders;
-
-use Carbon\Carbon;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-
-class RoleSeeder extends Seeder
-{
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
-    {
-        DB::table('roles')->insert([
-            'name' => 'Admin',
-            'slug' => 'admin', 
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ],[
-            'name' => 'Student',
-            'slug' => 'student', 
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        $this->command->info('Admin role created successfully!');
-    }
-}
+ use App\Models\Role;
+ use Illuminate\Database\Seeder;
+ 
+ class RoleSeeder extends Seeder
+ {
+     public $companyId;
+ 
+     public function __construct($companyId = null)
+     {
+         $this->companyId = $companyId;
+     }
+ 
+     public function run(): void
+     {
+         $roles = [
+             'Admin',
+             'Student',
+             'Manager',
+             'Salesperson',
+             'Support',
+             'Customer',
+             'Marketing',
+             'HR',
+             'Accounting'
+         ];
+ 
+         if ($this->companyId) {
+             $rolesData = []; 
+             foreach ($roles as $role) {
+                 $rolesData[] = [
+                     'company_id' => $this->companyId,
+                     'name' => $role,
+                     'slug' => getSlug(new Role(), $role),
+                 ];
+             }
+ 
+             Role::insert($rolesData);  // Using Eloquent to insert the roles
+         }
+     }
+ }
+ 

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('phone', 15)->nullable();
             $table->string('email')->nullable();
@@ -28,12 +28,15 @@ return new class extends Migration
             $table->json('senior_user')->nullable(); 
             $table->json('junior_user')->nullable();
 
-            $table->foreignId('role_id')->nullable()->constrained();  
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-            $table->unsignedBigInteger('deleted_by')->nullable();
+            $table->foreignId('role_id')->nullable()->constrained('roles');  
+            
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->softDeletes();
-            $table->timestamps();
+            $table->timestamps(); 
+
+            $table->unique(['company_id', 'email']);
         });
     }
 
