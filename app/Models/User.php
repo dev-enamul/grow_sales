@@ -61,6 +61,22 @@ class User extends Authenticatable
         'password' => 'hashed',
     ]; 
 
+    public function userContact()
+    {
+        return $this->hasMany(UserContact::class);
+    }
+
+    public function userAddress()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+ 
+
+    public function reportingUsers()
+    {
+        return $this->hasMany(UserReporting::class, 'user_id');
+    }
+
     
     public function role()
     {

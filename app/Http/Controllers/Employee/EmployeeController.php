@@ -62,4 +62,63 @@ class EmployeeController extends Controller
             return error_response($e->getMessage(),500);
         }
     }
+
+
+    public function existing_employee_data(Request $request){
+        $phone = $request->phone;
+        $email = $request->email;
+
+        $user = User::where('phone', $phone)
+            ->orWhere('email', $email)
+            ->with(['userContact', 'userAddress', 'employee', 'reportingUsers'])
+            ->first();
+
+        if ($user) {
+            $contact = $user->userContact()->first();
+    
+            $permanentAddress = $user->userAddress()->where('address_type', 'permanent')->first();
+            $presentAddress = $user->userAddress()->where('address_type', 'present')->first();
+    
+            $response = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'designation_id' => optional($user->employee)->designation_id, 
+                'reporting_user_id' => optional($user->reportingUsers)->first()->user_id, 
+                'role_id' => $user->role_id,
+                'referred_by' => $user->employee ? $user->employee->referred_by : null, 
+                'profile_image' => $user->profile_image ?? '',
+                'dob' => $user->dob,
+                'blood_group' => $user->blood_group,
+                'gender' => $user->gender,
+    
+                'office_phone' => $contact->office_phone ?? '',
+                'personal_phone' => $contact->personal_phone ?? '',
+                'office_email' => $contact->office_email ?? '',
+                'personal_email' => $contact->personal_email ?? '',
+                'website' => $contact->website ?? '',
+                'whatsapp' => $contact->whatsapp ?? '',
+                'imo' => $contact->imo ?? '',
+                'facebook' => $contact->facebook ?? '',
+                'linkedin' => $contact->linkedin ?? '',
+    
+                'permanent_country' => $permanentAddress ? $permanentAddress->country : '',
+                'permanent_division' => $permanentAddress ? $permanentAddress->division : '',
+                'permanent_district' => $permanentAddress ? $permanentAddress->district : '',
+                'permanent_upazila_or_thana' => $permanentAddress ? $permanentAddress->upazila_or_thana : '',
+                'permanent_zip_code' => $permanentAddress ? $permanentAddress->zip_code : '',
+                'permanent_address' => $permanentAddress ? $permanentAddress->address : '',
+                'is_same_present_permanent' => $permanentAddress ? $permanentAddress->is_same_present_permanent : false,
+    
+                'present_country' => $presentAddress ? $presentAddress->country : '',
+                'present_division' => $presentAddress ? $presentAddress->division : '',
+                'present_district' => $presentAddress ? $presentAddress->district : '',
+                'present_upazila_or_thana' => $presentAddress ? $presentAddress->upazila_or_thana : '',
+                'present_zip_code' => $presentAddress ? $presentAddress->zip_code : '',
+                'present_address' => $presentAddress ? $presentAddress->address : '',
+            ]; 
+            return response()->json($response);
+        } 
+        return response()->json(['message' => 'User not found'], 404);
+    }
 }

@@ -51,7 +51,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
      
     // Employee
     Route::resource('employee', EmployeeController::class);
-    Route::get('employee-existing-information',[EmployeeController::class,'is_existing']);
+    Route::post('existing-employee-data',[EmployeeController::class,'existing_employee_data']);
     
     // Lead 
     Route::resource('customer', CustomerController::class);
