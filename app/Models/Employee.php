@@ -12,13 +12,15 @@ class Employee extends Model
 {
     use HasFactory; 
     protected $fillable = [
-        'uuid',
         'user_id',
         'employee_id',
-        'is_admin',
         'signature',
-        'ref_id',
+        'is_admin',
+        'salary',
+        'referred_by',
         'status',
+        'is_resigned',
+        'resigned_at',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -39,8 +41,14 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
-    }
+    }  
 
+    public function currentDesignation()
+    {
+        return $this->hasOne(DesignationLog::class, 'employee_id', 'id')
+                    ->whereNull('end_date') 
+                    ->orWhere('end_date', '>=', now());
+    }
     
 
     public function designationOnDate($date = null)

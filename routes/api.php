@@ -10,7 +10,8 @@ use App\Http\Controllers\Common\RoleApiController;
 use App\Http\Controllers\Common\UnionApiController;
 use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
-use App\Http\Controllers\Employee\EmployeeController; 
+use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\Employee\EmployeeEditController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductUnitController;
@@ -51,7 +52,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
      
     // Employee
     Route::resource('employee', EmployeeController::class);
-    Route::post('existing-employee-data',[EmployeeController::class,'existing_employee_data']);
+    Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
+    Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
     
     // Lead 
     Route::resource('customer', CustomerController::class);

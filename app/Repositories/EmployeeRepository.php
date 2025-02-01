@@ -13,25 +13,31 @@ class EmployeeRepository
     {
         $user = Auth::user(); 
         $employees = User::with('employee.designationOnDate')
-        ->where('company_id', $user->company_id)
-        ->where('user_type', 'employee')
-        ->get()
-        ->map(function ($user) {
-            return [ 
-                'uuid' => $user->uuid,
-                'employee_id' => $user->employee->employee_id ?? null,
-                'profile_image' => $user->profile_image,
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'senior_user' => $user->senior_user,
-                'junior_user' => $user->junior_user,
-                'designation' => $user->employee->currentDesignation->designation->title ?? null,
-            ];
-        });
+            ->where('company_id', $user->company_id)
+            ->where('user_type', 'employee')
+            ->get()
+            ->map(function ($user) { 
+                $seniorUserName = null;
+                if (!empty($user->senior_user)) { 
+                    $firstSeniorUser = User::find($user->senior_user[0]);
+                    $seniorUserName = $firstSeniorUser ? $firstSeniorUser->name : null; 
+                }
 
+                return [ 
+                    'uuid' => $user->uuid,
+                    'employee_id' => $user->employee->employee_id ?? null,
+                    'profile_image' => $user->profile_image,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'email' => $user->email,
+                    'senior_user' => $seniorUserName, 
+                    'designation' => $user->employee->currentDesignation->designation->title ?? null,
+                ];
+            }); 
+            
         return $employees;
-    } 
+    }
+
     public function createEmployee($data)
     {
         return Employee::create($data);

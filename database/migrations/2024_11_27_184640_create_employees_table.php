@@ -20,9 +20,7 @@ return new class extends Migration
             $table->string('employee_id')->unique(); 
             $table->string('signature')->nullable(); 
             $table->boolean('is_admin')->default(false);
-            
-            // Designation
-            $table->foreignId('designation_id')->nullable()->constrained(); 
+             
         
             // Salary information
             $table->decimal('salary')->default(0);  

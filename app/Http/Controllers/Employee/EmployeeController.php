@@ -64,7 +64,7 @@ class EmployeeController extends Controller
     }
 
 
-    public function existing_employee_data(Request $request){
+    public function existingEmployeeData(Request $request){
         $phone = $request->phone;
         $email = $request->email;
 
