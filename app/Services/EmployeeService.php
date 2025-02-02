@@ -42,6 +42,7 @@ class EmployeeService
                 'role_id' => $request->role_id,
                 'company_id'    => $authUser->company_id,
                 'dob'           => $request->dob, 
+                'marital_status' => $request->marital_status,
                 'blood_group'   => $request->blood_group, 
                 'gender'        => $request->gender, 
                 'created_by'    => $authUser->id,
@@ -51,7 +52,6 @@ class EmployeeService
             $this->userRepo->createUserContact([
                 'user_id'           => $user->id,
                 'name'              => $request->name,
-                'relationship_or_role' => "Employee",
                 'office_phone'      => $request->office_phone,
                 'personal_phone'    => $request->personal_phone,
                 'office_email'      => $request->office_email,

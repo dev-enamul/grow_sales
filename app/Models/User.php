@@ -111,12 +111,7 @@ class User extends Authenticatable
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
-    }
-
-    public function designation(){
-        return $this->employee()->designation()->title??"";
-    }
-
+    } 
 
     protected static function boot()
     {

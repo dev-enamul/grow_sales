@@ -37,7 +37,7 @@ class UserRepository
 
     public function findUserByUuId($uuid)
     {
-        return User::where('uuid',$uuid);
+        return User::where('uuid',$uuid)->first();
     }
 
      

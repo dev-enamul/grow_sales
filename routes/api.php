@@ -12,10 +12,15 @@ use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
+use App\Http\Controllers\Employee\EmployeeProfileController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductUnitController;
 use App\Http\Controllers\Setting\VatSettingController;
+use App\Http\Controllers\User\ContactController;
+use App\Http\Controllers\User\ContactInfoController;
+use App\Http\Controllers\User\ProfileEditController;
+use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\Visitor\VisitorController; 
 use Illuminate\Support\Facades\Route;
 
@@ -54,11 +59,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('employee', EmployeeController::class);
     Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
     Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
-    Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']);
+    Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
     Route::resource('customer', CustomerController::class);
     Route::resource('visitor', VisitorController::class);  
+
+    // User common 
+    Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);
+    Route::post('bio-update',[ProfileUpdateController::class,'bio']);
+    Route::post('address-update',[ProfileUpdateController::class,'address']);
+    Route::resource('contact',ContactInfoController::class);
+    
  
     // Setting Route 
     Route::resource('vat-setting',VatSettingController::class);

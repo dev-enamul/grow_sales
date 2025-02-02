@@ -44,14 +44,41 @@ class EmployeeController extends Controller
         }
     }  
 
-    public function show($id){
-        try{ 
-            $user = $this->employeeService->show($id);
-            return success_response($user);
-        }catch(Exception $e){
-            return error_response($e->getMessage(),500);
-        }
+    public function show($uuid){ 
+        try {  
+            $user = User::with(['employee', 'userAddress', 'userContact'])
+                        ->where('uuid',$uuid)->first();
+
+            if (!$user) {
+                return error_response('User not found', 404);
+            }
+ 
+            $bio = [
+                "name" => $user->name, 
+                'designation' => $user->employee->currentDesignation->designation->title??"",
+                'profile_image' => $user->profile_image
+            ];  
+
         
+            $personal = [
+                "phone" => $user->phone,
+                'email' => $user->email,
+                "marital_status" => $user->marital_status,
+                'dob' => $user->dob,
+                'blood_group' => $user->blood_group,
+                'gender' => $user->gender,
+                'senior_user' => json_decode($user->senior_user??"[]"),
+            ];  
+            
+            return success_response([
+                'bio' => $bio,
+                'personal' => $personal,
+                'contacts' => $user->contact,
+                'address' => $user->address, 
+            ]);
+        } catch (Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
     }
 
     public function update(EmployeeUpdateRequest $request, $id){
