@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('employee', EmployeeController::class);
     Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
     Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
+    Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']);
     
     // Lead 
     Route::resource('customer', CustomerController::class);

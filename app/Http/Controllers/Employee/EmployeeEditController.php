@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\DesignationLog;
 use App\Models\User;
+use App\Models\UserReporting;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -34,11 +35,8 @@ class EmployeeEditController extends Controller
             if (!$user) {
                 return error_response('User not found.', 404); 
             } 
-            $employee = $user->employee;
-            $employee->designation_id = $designation_id;
-            $employee->save();
- 
-            $currentDesignation = $employee->currentDesignation()->first();
+           
+            $currentDesignation = $user->employee->currentDesignation()->first();
             if ($currentDesignation) {
                 $currentDesignation->end_date = $start_date->subDay();;
                 $currentDesignation->updated_by = $auth_user->id;
@@ -47,7 +45,7 @@ class EmployeeEditController extends Controller
  
             DesignationLog::create([
                 'user_id' => $user->id,
-                'employee_id' => $employee->id,
+                'employee_id' => $user->employee->id,
                 'designation_id' => $designation_id,
                 'start_date' => $start_date,
                 'created_by' => $auth_user->id,
@@ -59,6 +57,73 @@ class EmployeeEditController extends Controller
             DB::rollBack(); 
             return error_response($e->getMessage(),500); 
         }
+    } 
+
+    public function updateReporting(Request $request) {  
+        $request->validate([
+            'uuid' => 'required|exists:users,uuid',
+            'reporting_uuid' => 'required|exists:users,uuid',
+        ]);
+    
+        DB::beginTransaction();
+    
+        try { 
+            $authUser = Auth::user()->id; 
+            $user = User::where('uuid', $request->uuid)->first();
+            if (!$user) {
+                return error_response("User not found.", 404);
+            }
+     
+            $reportingUser = User::where('uuid', $request->reporting_uuid)->first();
+            if (!$reportingUser) {
+                return error_response("Reporting user not found.", 404);
+            }
+     
+            if ($user->id == $reportingUser->id) {
+                return error_response("You cannot select yourself as a reporting user.", 400);
+            }
+    
+            // Check if the reporting user is already a junior, and prevent selection
+            
+            if (in_array($reportingUser->id, json_decode($user->junior_user??"[]"))) {
+                return error_response("You cannot select {$reportingUser->name} as a reporting user, as they are already your junior.", 400);
+            }
+    
+            // Check if the user already has an active reporting user
+            $activeReportingUser = $user->reportingUsers()
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>', now());
+                })
+                ->first();
+
+            // Check if an active reporting user is found
+            if ($activeReportingUser) { 
+                if ($activeReportingUser->reporting_user_id == $reportingUser->id) {
+                    return success_response("The reporting user is already up to date.");
+                } 
+                $activeReportingUser->end_date = now()->subDay();
+                $activeReportingUser->save();
+            }
+    
+            // Create a new reporting relationship
+            UserReporting::create([
+                'user_id' => $user->id,
+                'reporting_user_id' => $reportingUser->id,
+                'start_date' => now(),
+                'created_by' => $authUser,
+            ]);
+     
+            DB::commit();
+    
+            return success_response("Reporting user updated successfully.");
+            
+        } catch (\Exception $e) { 
+            DB::rollBack(); 
+            return error_response($e->getMessage(), 500);
+        }
     }
+    
+    
 
 }
