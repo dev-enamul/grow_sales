@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('personal_phone', 20)->nullable();
             $table->string('office_email', 45)->nullable();
             $table->string('personal_email', 45)->nullable();
-            $table->string('website', 20)->nullable();
+            $table->string('website')->nullable();
             $table->string('whatsapp', 20)->nullable();
             $table->string('imo', 20)->nullable();
             $table->string('facebook', 100)->nullable();

@@ -31,6 +31,14 @@ class EmployeeService
     {
         DB::beginTransaction();
         try {
+            if ($request->hasFile('profile_image')) {
+                $image = $request->file('profile_image'); 
+                $imagePath = $image->store('profile_images', 'public'); 
+                $fullImageUrl = asset('storage/' . $imagePath);  
+            } else { 
+                $fullImageUrl = null;
+            } 
+
             $authUser = $this->userRepo->findUserById(Auth::id());
             $user = $this->userRepo->createUser([
                 'name' => $request->name,
@@ -38,7 +46,7 @@ class EmployeeService
                 'phone' => $request->phone,
                 'password' => Hash::make('12345678'),
                 'user_type' => 'employee',
-                'profile_image' => $request->file('profile_image') ? $request->file('profile_image')->store('profile_images', 'public') : null,
+                'profile_image' =>  $fullImageUrl,
                 'role_id' => $request->role_id,
                 'company_id'    => $authUser->company_id,
                 'dob'           => $request->dob, 

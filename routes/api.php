@@ -21,6 +21,8 @@ use App\Http\Controllers\User\ContactController;
 use App\Http\Controllers\User\ContactInfoController;
 use App\Http\Controllers\User\ProfileEditController;
 use App\Http\Controllers\User\ProfileUpdateController;
+use App\Http\Controllers\User\UserAddressController;
+use App\Http\Controllers\User\UserContactController;
 use App\Http\Controllers\Visitor\VisitorController; 
 use Illuminate\Support\Facades\Route;
 
@@ -68,8 +70,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // User common 
     Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);
     Route::post('bio-update',[ProfileUpdateController::class,'bio']);
-    Route::post('address-update',[ProfileUpdateController::class,'address']);
-    Route::resource('contact',ContactInfoController::class);
+    // address 
+    Route::post('address-update',[UserAddressController::class,'update']);
+    Route::get('address/{uuid}',[UserAddressController::class,'show']);
+    // contact   
+    Route::get('contacts/{uuid}',[UserContactController::class,'contact_list']);
+    Route::post('add-contact',[UserContactController::class,'add_contact']);
+    Route::post('upate-contact',[UserContactController::class,'update_contact']);
+    Route::get('show-contact',[UserContactController::class,'show_contact']);
     
  
     // Setting Route 

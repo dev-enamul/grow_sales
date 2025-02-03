@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Models\UserContact;
 use Exception;
 use Illuminate\Http\Request;
@@ -12,13 +13,13 @@ use Illuminate\Support\Facades\Auth;
 class ProfileUpdateController extends Controller
 {
     public function profile_picture(Request $request)
-    { 
+    {
         $request->validate([
             'uuid' => 'required|uuid',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
     
-        try { 
+        try {
             $uuid = $request->uuid;
             $authUser = Auth::user(); 
             $user = User::where('uuid', $uuid)
@@ -84,8 +85,5 @@ class ProfileUpdateController extends Controller
         return error_response($e->getMessage(),500);
        }
     }
-
-    public function address($uuid){
-
-    } 
+ 
 }
