@@ -15,7 +15,7 @@ class ProfileUpdateController extends Controller
     { 
         $request->validate([
             'uuid' => 'required|uuid',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         try { 
