@@ -17,35 +17,37 @@ class ProfileUpdateController extends Controller
             'uuid' => 'required|uuid',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-
+    
         try { 
             $uuid = $request->uuid;
-            $authUser = Auth::user();
- 
+            $authUser = Auth::user(); 
             $user = User::where('uuid', $uuid)
                         ->where('company_id', $authUser->company_id)
-                        ->first(); 
- 
+                        ->first();   
+
             if (!$user) {
                 return error_response(null, 404, "User not found");
             }
- 
+     
             if ($request->hasFile('image')) {
                 $image = $request->file('image'); 
                 $imagePath = $image->store('profile_images', 'public'); 
+                $fullImageUrl = asset('storage/' . $imagePath); 
                 $user->update([
-                    'profile_image' => $imagePath,
+                    'profile_image' => $fullImageUrl,
                 ]);
             } else { 
                 $user->update([
                     'profile_image' => null,
                 ]);
             } 
-            return success_response(null, "Profile picture updated successfully"); 
+            return success_response(null, "Profile picture updated successfully");
+    
         } catch (Exception $e) { 
             return error_response($e->getMessage(), 500);
         }
     }
+    
 
 
     public function bio(Request $request){
