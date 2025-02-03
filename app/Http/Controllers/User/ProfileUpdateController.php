@@ -15,7 +15,7 @@ class ProfileUpdateController extends Controller
     { 
         $request->validate([
             'uuid' => 'required|uuid',
-            'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         try { 
@@ -30,8 +30,8 @@ class ProfileUpdateController extends Controller
                 return error_response(null, 404, "User not found");
             }
  
-            if ($request->hasFile('profile_image')) {
-                $image = $request->file('profile_image'); 
+            if ($request->hasFile('image')) {
+                $image = $request->file('image'); 
                 $imagePath = $image->store('profile_images', 'public'); 
                 $user->update([
                     'profile_image' => $imagePath,
