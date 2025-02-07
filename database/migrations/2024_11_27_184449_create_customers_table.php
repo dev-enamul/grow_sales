@@ -14,19 +14,19 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id(); 
             $table->foreignId('user_id')->constrained();
-            $table->foreignId('lead_source_id')->constrained();
-            $table->string('visitor_id')->nullable()->comment('VIS-001'); 
-            $table->string('customer_id')->nullable()->comment("CUS-001");     
-            $table->tinyInteger('customer_type')->default(1)->comment('1= Company, 0= Personal'); 
-            $table->foreignId('ref_id')->nullable()->constrained('users');
+            $table->foreignId('lead_source_id')->constrained(); 
+            $table->string('customer_id')->nullable()->comment("CUS-001");    
+            $table->foreignId('referred_by')->nullable()->constrained('users');
 
-            $table->boolean('is_lead')->default(0);
+            $table->integer('total_sales')->default(0)->nullable()->comment("Total Products Sales");
+            $table->integer('total_sales_amount')->default(0)->nullable()->comment("Total Amount of  Sales"); 
+            $table->boolean('newsletter_subscribed')->default(true);
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->softDeletes();
-            $table->timestamps(); 
+            $table->timestamps();
         });
     }
 

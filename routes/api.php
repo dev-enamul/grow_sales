@@ -12,14 +12,11 @@ use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
-use App\Http\Controllers\Employee\EmployeeProfileController;
+use App\Http\Controllers\Lead\LeadController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductUnitController;
-use App\Http\Controllers\Setting\VatSettingController;
-use App\Http\Controllers\User\ContactController;
-use App\Http\Controllers\User\ContactInfoController;
-use App\Http\Controllers\User\ProfileEditController;
+use App\Http\Controllers\Setting\VatSettingController; 
 use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserAddressController;
 use App\Http\Controllers\User\UserContactController;
@@ -36,7 +33,7 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::post('login', [AuthController::class, 'login'])->name('login'); 
+Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::post('register', [AuthController::class, 'register']); 
@@ -64,8 +61,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
+    Route::resource('lead',LeadController::class);
     Route::resource('customer', CustomerController::class);
-    Route::resource('visitor', VisitorController::class);  
+    Route::resource('visitor', VisitorController::class); 
 
     // User common 
     Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);

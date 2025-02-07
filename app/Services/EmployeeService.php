@@ -37,8 +37,7 @@ class EmployeeService
                 $fullImageUrl = asset('storage/' . $imagePath);  
             } else { 
                 $fullImageUrl = null;
-            } 
-
+            }  
             $authUser = $this->userRepo->findUserById(Auth::id());
             $user = $this->userRepo->createUser([
                 'name' => $request->name,
