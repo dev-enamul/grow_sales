@@ -14,6 +14,7 @@ use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
 use App\Http\Controllers\Followup\FollowupController;
 use App\Http\Controllers\Lead\LeadAssignController;
+use App\Http\Controllers\Lead\LeadCategoryController;
 use App\Http\Controllers\Lead\LeadController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
@@ -63,8 +64,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
+    Route::resource('lead-category',LeadCategoryController::class);
     Route::resource('lead',LeadController::class);
     Route::resource('customer', CustomerController::class); 
+    Route::get('customer-personal-info',[CustomerController::class,'show']);
     Route::post('lead-assign-to',LeadAssignController::class);
     
     // Follwup 

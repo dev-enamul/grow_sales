@@ -32,7 +32,7 @@ class LeadController extends Controller
                 ->leftJoin('users', 'leads.user_id', '=', 'users.id')
                 ->leftJoin('lead_products', 'leads.id', '=', 'lead_products.lead_id')
                 ->leftJoin('products', 'lead_products.product_id', '=', 'products.id')
-                ->select('leads.uuid as lead_id', 'leads.next_followup_date', 'leads.last_contacted_at', 
+                ->select('leads.uuid as lead_id', 'leads.next_followup_date', 'leads.last_contacted_at','users.uuid as customer_uuid', 
                          'users.name as user_name', 'users.email as user_email', 'users.phone as user_phone', 
                          'products.id as product_id', 'products.name as product_name')
                 ->where('leads.status', $status);
@@ -48,6 +48,7 @@ class LeadController extends Controller
                 $products = $lead->products->pluck('name');   
                 return [
                     'uuid' => $lead->lead_id,
+                    'customer_uuid' => $lead->customer_uuid,
                     'name' => $lead->user_name,
                     'email' => $lead->user_email,
                     'phone' => $lead->user_phone,
@@ -202,32 +203,7 @@ class LeadController extends Controller
 
     }  
 
-    public function show($uuid){ 
-        try {
-            $lead = Lead::where('uuid',$uuid)->first();
-            if(!$lead){
-                return error_response(null,404, "Lead not found");
-            }   
-            $user = User::find($lead->user_id);
-
-            if (!$user) {
-                return error_response('User not found', 404);
-            }  
-
-            return success_response([
-                "name" => $user->name,  
-                'profile_image' => $user->profile_image,
-                "phone" => $user->phone,
-                'email' => $user->email,
-                "marital_status" => $user->marital_status,
-                'dob' => $user->dob,
-                'blood_group' => $user->blood_group,
-                'gender' => $user->gender 
-            ]);
-        } catch (Exception $e) {
-            return error_response($e->getMessage(), 500);
-        }
-    }
+  
 
     /**
      * Show the form for editing the specified resource.
