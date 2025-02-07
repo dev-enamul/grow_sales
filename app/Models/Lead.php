@@ -14,6 +14,7 @@ class Lead extends Model
     protected $fillable = [
         'uuid',
         'company_id',
+        'lead_id',
         'user_id',
         'customer_id',
         'lead_categorie_id',
@@ -74,6 +75,18 @@ class Lead extends Model
     {
         return $this->hasManyThrough(Product::class, LeadProduct::class, 'lead_id', 'id', 'id', 'product_id');
     }
+
+    public static function generateNextLeadId(){
+        $largest_lead_id = Lead::where('lead_id', 'like', 'LEAD-%') 
+        ->pluck('lead_id')
+                ->map(function ($id) {
+                        return preg_replace("/[^0-9]/", "", $id);
+                }) 
+        ->max(); 
+        $largest_lead_id++;
+        $new_lead_id = 'LEAD-' . str_pad($largest_lead_id, 6, '0', STR_PAD_LEFT);
+        return $new_lead_id;
+    } 
 
     protected static function boot()
     {

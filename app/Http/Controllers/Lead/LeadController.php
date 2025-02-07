@@ -38,7 +38,7 @@ class LeadController extends Controller
                 ->where('leads.status', $status);
             if ($category) {
                 $query->where('leads.lead_categorie_id', $category);
-            }   
+            } 
             $datas = $query
                 ->orderByRaw('next_followup_date IS NULL DESC, next_followup_date DESC')
                 ->get(); 
@@ -113,6 +113,7 @@ class LeadController extends Controller
             $assigned_to = User::where('uuid',$request->assigned_to)->first();
             $lead = Lead::create([
                 'company_id' => $authUser->company_id,
+                'lead_id' => Lead::generateNextLeadId(),
                 'user_id' => $user->id,
                 'customer_id' => $customer->id,
                 'lead_categorie_id' => $lead_category->id,
@@ -201,9 +202,31 @@ class LeadController extends Controller
 
     }  
 
-    public function show(string $id)
-    {
-        //
+    public function show($uuid){ 
+        try {
+            $lead = Lead::where('uuid',$uuid)->first();
+            if(!$lead){
+                return error_response(null,404, "Lead not found");
+            }   
+            $user = User::find($lead->user_id);
+
+            if (!$user) {
+                return error_response('User not found', 404);
+            }  
+
+            return success_response([
+                "name" => $user->name,  
+                'profile_image' => $user->profile_image,
+                "phone" => $user->phone,
+                'email' => $user->email,
+                "marital_status" => $user->marital_status,
+                'dob' => $user->dob,
+                'blood_group' => $user->blood_group,
+                'gender' => $user->gender 
+            ]);
+        } catch (Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
     }
 
     /**

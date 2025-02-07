@@ -12,6 +12,8 @@ use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
+use App\Http\Controllers\Followup\FollowupController;
+use App\Http\Controllers\Lead\LeadAssignController;
 use App\Http\Controllers\Lead\LeadController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
@@ -62,8 +64,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Lead 
     Route::resource('lead',LeadController::class);
-    Route::resource('customer', CustomerController::class);
-    Route::resource('visitor', VisitorController::class); 
+    Route::resource('customer', CustomerController::class); 
+    Route::post('lead-assign-to',LeadAssignController::class);
+    
+    // Follwup 
+    Route::resource('followup',FollowupController::class);
 
     // User common 
     Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);

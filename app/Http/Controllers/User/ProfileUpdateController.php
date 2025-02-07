@@ -42,7 +42,7 @@ class ProfileUpdateController extends Controller
                     'profile_image' => null,
                 ]);
             } 
-            return success_response(null, "Profile picture updated successfully");
+            return success_response($fullImageUrl, "Profile picture updated successfully");
     
         } catch (Exception $e) { 
             return error_response($e->getMessage(), 500);

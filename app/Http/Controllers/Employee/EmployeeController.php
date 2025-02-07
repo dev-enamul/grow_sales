@@ -46,35 +46,23 @@ class EmployeeController extends Controller
 
     public function show($uuid){ 
         try {  
-            $user = User::with(['employee', 'userAddress', 'userContact'])
+            $user = User::with(['employee'])
                         ->where('uuid',$uuid)->first();
 
             if (!$user) {
                 return error_response('User not found', 404);
-            }
- 
-            $bio = [
+            } 
+            return success_response([
                 "name" => $user->name, 
                 'designation' => $user->employee->currentDesignation->designation->title??"",
-                'profile_image' => $user->profile_image
-            ];  
-
-        
-            $personal = [
+                'profile_image' => $user->profile_image,
                 "phone" => $user->phone,
                 'email' => $user->email,
                 "marital_status" => $user->marital_status,
                 'dob' => $user->dob,
                 'blood_group' => $user->blood_group,
                 'gender' => $user->gender,
-                'senior_user' => json_decode($user->senior_user??"[]"),
-            ];  
-            
-            return success_response([
-                'bio' => $bio,
-                'personal' => $personal,
-                'contacts' => $user->contact,
-                'address' => $user->address, 
+                'senior_user' => json_decode($user->senior_user??"[]")
             ]);
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);

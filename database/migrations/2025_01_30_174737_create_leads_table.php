@@ -15,7 +15,8 @@ return new class extends Migration
         Schema::create('leads', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
-            $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->string('lead_id')->nullable()->unique();
             
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
