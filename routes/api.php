@@ -60,7 +60,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Employee
     Route::resource('employee', EmployeeController::class);
     Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
-    Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
+    Route::post('update-employee-designation',[EmployeeEditController::class,'updateDesignation']);
     Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
