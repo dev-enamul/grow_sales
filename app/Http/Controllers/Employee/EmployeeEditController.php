@@ -38,7 +38,7 @@ class EmployeeEditController extends Controller
            
             $currentDesignation = $user->employee->currentDesignation()->first();
             if ($currentDesignation) {
-                $currentDesignation->end_date = $start_date->subDay();;
+                $currentDesignation->end_date = $start_date->subDay();
                 $currentDesignation->updated_by = $auth_user->id;
                 $currentDesignation->save();
             }

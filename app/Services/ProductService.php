@@ -42,8 +42,7 @@ class ProductService
     }
 
     public function store($data)
-    { 
-        return $data;
+    {  
         $product_unit = ProductUnit::where('uuid', $data->product_unit_id)->first();
         $vat_setting = VatSetting::where('uuid', $data->vat_setting_id)->first();
         $product_category = ProductCategory::where('uuid', $data->category_id)->first();
