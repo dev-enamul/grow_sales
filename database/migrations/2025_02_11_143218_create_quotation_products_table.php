@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('vat_amount', 10, 2)->default(0); 
             $table->decimal('discount', 10, 2)->default(0);  
             $table->enum('discount_type', ['flat', 'percentage'])->default('flat');  
-            $table->decimal('total_price', 10, 2)->default(0);  
+            $table->decimal('total_price', 10, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -16,6 +16,8 @@ use App\Http\Controllers\Followup\FollowupController;
 use App\Http\Controllers\Lead\LeadAssignController;
 use App\Http\Controllers\Lead\LeadCategoryController;
 use App\Http\Controllers\Lead\LeadController;
+use App\Http\Controllers\Location\AreaController;
+use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductUnitController;
@@ -35,7 +37,8 @@ use Illuminate\Support\Facades\Route;
 | routes are loaded by the RouteServiceProvider and all of them will
 | be assigned to the "api" middleware group. Make something great!
 |
-*/
+*/ 
+
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -88,6 +91,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
  
     // Setting Route 
     Route::resource('vat-setting',VatSettingController::class);
+    Route::resource('area-structure',AreaStructureController::class);
+    Route::resource('area',AreaController::class);
     
 });
 

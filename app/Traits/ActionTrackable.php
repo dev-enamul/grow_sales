@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-trait Blameable
+trait ActionTrackable
 {
-    public static function bootBlameable()
+    public static function bootActionTrackable()
     {
         static::creating(function ($model) {
             $authUser = Auth::user(); 

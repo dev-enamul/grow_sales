@@ -6,7 +6,7 @@ trait PaginatorTrait
 {
     public function paginateQuery($query, $request)
     {
-        $perPage = $request->per_page ?? 15;
+        $perPage = $request->per_page ?? 20;
         $page = $request->page ?? 1;
 
         $total = $query->count();
