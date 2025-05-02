@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Schema;
+
 trait FindByUuidTrait
 {
     public static function findByUuid($value)
@@ -11,7 +13,7 @@ trait FindByUuidTrait
  
         if (
             auth()->check() &&
-            \Schema::hasColumn($model->getTable(), 'company_id')
+            Schema::hasColumn($model->getTable(), 'company_id')
         ) {
             $query->where('company_id', auth()->user()->company_id);
         }
