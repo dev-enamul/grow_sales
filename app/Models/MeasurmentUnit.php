@@ -7,14 +7,13 @@ use App\Traits\FindByUuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-class ProductUnit extends Model
+class MeasurmentUnit extends Model
 {
-    use HasFactory, SoftDeletes,FindByUuidTrait,ActionTrackable;  
+    use HasFactory, SoftDeletes,ActionTrackable,FindByUuidTrait;  
     protected $fillable = [
+        'name', 
         'uuid',
-        'name',  
         'abbreviation', 
         'company_id', 
         'created_by', 
@@ -22,6 +21,4 @@ class ProductUnit extends Model
         'deleted_by'
     ];
     protected $hidden = ['id'];
-
-    
 }

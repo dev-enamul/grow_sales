@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Location;
 
 use App\Http\Controllers\Controller;
+use App\Models\Area;
 use App\Models\AreaStructure;
 use App\Traits\ValidatesParent;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class AreaStructureController extends Controller
             'status'   => $request->status,
         ]);
         return success_response(null,'Structure created successfully'); 
-    } 
+    }
 
     public function update(Request $request, $id)
     {
@@ -50,8 +51,7 @@ class AreaStructureController extends Controller
         ]); 
 
         return success_response(null,'Structure updated successfully');  
-    }
-
+    } 
 
     public function destroy($id)
     {
@@ -59,8 +59,6 @@ class AreaStructureController extends Controller
         AreaStructure::where('parent_id', $structure->id)->update(['parent_id' => null]);
         $structure->delete(); 
         return success_response(null,'Structure deleted successfully');   
-    }
-
-  
+    } 
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Product;
+namespace App\Http\Controllers\Setting;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductUnit;
@@ -9,20 +9,28 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductUnitController extends Controller
 {
-    public function index(Request $request){
-        $status = $request->status;
+    public function index(Request $request)
+    { 
         $keyword = $request->keyword;
-        $productUnit = ProductUnit::where('company_id', Auth::user()->company_id)
-        ->when($status, function($query) use($status) {
-            $query->where('is_active', $status);
-        })
-        ->when($keyword, function($query) use($keyword) {
-            $query->where('name', 'like', '%' . $keyword . '%');
-        })
-        ->select('uuid','name', 'abbreviation', 'is_active')
-        ->paginate(10); 
+        $selectOnly = $request->boolean('select'); 
+        $query = ProductUnit::where('company_id', Auth::user()->company_id) 
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where('is_active', 1)->where('name', 'like', '%' . $keyword . '%')
+                ->orWhere('abbreviation', 'like', '%' . $keyword . '%');
+            });
+
+        if ($selectOnly) {
+            $units = $query->select('uuid', 'name')->latest()->take(10)->get();
+            return success_response($units);
+        }
+
+        $productUnit = $query
+            ->select('uuid', 'name', 'abbreviation', 'is_active')
+            ->paginate(10);
+
         return success_response($productUnit);
     }
+
 
     public function store(Request $request){ 
         $request->validate([
@@ -52,7 +60,7 @@ class ProductUnitController extends Controller
 
 
     public function update(Request $request, $unit_uuid)
-    { 
+    {
         $request->validate([
             'name' => 'required|string|max:255',
             'abbreviation' => 'nullable|string|max:10', 
@@ -66,10 +74,16 @@ class ProductUnitController extends Controller
         }  
         $productUnit->name = $request->input('name');
         $productUnit->abbreviation = $request->input('abbreviation');
-        $productUnit->is_active = $request->input('is_active', $productUnit->is_active);  
-        $productUnit->updated_by = Auth::id(); 
+        $productUnit->is_active = $request->input('is_active', $productUnit->is_active);   
         $productUnit->save(); 
         return success_response(null, 'Product unit updated successfully!');
+    }
+
+    public function destroy($id)
+    {
+        $area = ProductUnit::findByUuid($id);
+        $area->delete(); 
+        return success_response(null,'Product unit deleted successfully.'); 
     }
 
 }

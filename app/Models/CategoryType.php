@@ -7,21 +7,20 @@ use App\Traits\FindByUuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-class ProductUnit extends Model
+class CategoryType extends Model
 {
-    use HasFactory, SoftDeletes,FindByUuidTrait,ActionTrackable;  
+    use HasFactory, SoftDeletes, ActionTrackable,FindByUuidTrait;
+
     protected $fillable = [
         'uuid',
-        'name',  
-        'abbreviation', 
-        'company_id', 
-        'created_by', 
-        'updated_by', 
-        'deleted_by'
+        'company_id',
+        'name',
+        'is_active',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
-    protected $hidden = ['id'];
-
+ 
     
 }

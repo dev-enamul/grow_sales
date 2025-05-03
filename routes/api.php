@@ -20,7 +20,9 @@ use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
-use App\Http\Controllers\Product\ProductUnitController;
+use App\Http\Controllers\Setting\CategoryTypeController;
+use App\Http\Controllers\Setting\MeasurmentUnitController;
+use App\Http\Controllers\Setting\ProductUnitController;
 use App\Http\Controllers\Setting\VatSettingController; 
 use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserAddressController;
@@ -55,8 +57,7 @@ Route::get('unions',UnionApiController::class);
 Route::get('company-verify/{id}',[VerifyController::class,'verify']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('roles',RoleApiController::class);
-    Route::get('designations',DesignationApiController::class);
-    Route::resource('product-unit',ProductUnitController::class);
+    Route::get('designations',DesignationApiController::class); 
     Route::resource('product-category', ProductCategoryController::class); 
     Route::resource('product', ProductController::class);
      
@@ -90,6 +91,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
  
     // Setting Route 
+    Route::resource('product-unit',ProductUnitController::class);
+    Route::resource('measurment-unit',MeasurmentUnitController::class);
+    Route::resource('category-type',CategoryTypeController::class);
     Route::resource('vat-setting',VatSettingController::class);
     Route::resource('area-structure',AreaStructureController::class);
     Route::resource('area',AreaController::class);

@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AreaController extends Controller
 {
-    use ValidatesParent;
-    
+    use ValidatesParent; 
     use PaginatorTrait; 
     public function index(Request $request)
     {
@@ -22,12 +21,21 @@ class AreaController extends Controller
         $query = Area::where('company_id',$authUser->company_id)->with(['parent', 'areaStructure'])
             ->select('id', 'uuid', 'name', 'parent_id', 'area_structure_id');
  
-        if ($request->boolean('select2')) {
-            $keyword = $request->input('keyword');
+        $keyword = $request->input('keyword');
+        $structure_id = $request->input('structure_id');
+        $parent_id = $request->input('parent_id');
 
-            if ($keyword) {
-                $query->where('name', 'like', "%$keyword%");
-            } 
+        if ($keyword) {
+            $query->where('name', 'like', "%$keyword%");
+        }
+        if ($structure_id) {
+            $query->where('area_structure_id',$structure_id);
+        }
+        if ($parent_id) {
+            $query->where('parent_id',$parent_id);
+        }
+
+        if ($request->boolean('select2')) { 
             $areas = $query->limit(10)->get();
 
             $results = $areas->map(function ($area) { 
@@ -48,9 +56,7 @@ class AreaController extends Controller
                     'id' => $area->uuid,
                     'text' => trim($text),
                 ];
-            });
-            
-            
+            });  
             return success_response($results); 
         }
 
@@ -68,18 +74,18 @@ class AreaController extends Controller
             ];
         });
         return success_response($paginated); 
-    }
-  
+    } 
  
     public function store(Request $request)
     {
+       
         $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:areas,uuid',
             'area_structure_id' => 'required|exists:area_structures,uuid', 
             'status' => 'nullable|in:0,1',
         ]); 
-
+ 
         $input = $request->all();   
         if ($request->filled('parent_id')) {
             $area = Area::findByUuid($request->parent_id);
@@ -87,14 +93,12 @@ class AreaController extends Controller
         } else {
             $input['parent_id'] = null;
         } 
-
+ 
         $area_structure = AreaStructure::findByUuid($request->area_structure_id); 
-        $input['area_structure_id'] = $area_structure->id;
-        
+        $input['area_structure_id'] = $area_structure->id; 
         Area::create($input);
         return success_response(null,"Area created successfully."); 
-    }
- 
+    } 
     
     public function update(Request $request, $id)
     {
@@ -118,6 +122,6 @@ class AreaController extends Controller
     {
         $area = Area::findByUuid($id);
         $area->delete(); 
-        return response()->json(['message' => 'Area deleted successfully.']);
+        return success_response(null,'Area deleted successfully.'); 
     }
 }
