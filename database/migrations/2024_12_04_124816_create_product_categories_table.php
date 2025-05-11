@@ -13,20 +13,37 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_categories', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('uuid')->unique()->default(DB::raw('(UUID())')); 
+            $table->id(); // 1. Primary Key
+            $table->uuid('uuid')->unique();  
+
+            // 3. Foreign Keys
             $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('category_type_id')->nullable()->constrained('category_types')->onDelete('set null'); 
+            $table->foreignId('measurment_unit_id')->nullable()->constrained('measurment_units')->onDelete('set null'); 
+            $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null'); 
+
+            // 4. Main Data Fields
             $table->string('name'); 
             $table->string('slug');
-            $table->text('description')->nullable();  
-            $table->integer('status')->default(1)->comment("1=Active, 0= UnActive");
-           
+            $table->text('description')->nullable(); 
+            $table->enum('progress_stage', ['Ready', 'Ongoing', 'Upcomming', 'Complete']);  
+            $table->date('delivery_date')->nullable(); 
+            $table->text('address')->nullable(); 
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable(); 
+
+            // 5. Status and Tracking
+            $table->integer('status')->default(1)->comment("1=Active, 0=UnActive");
+
+            // 6. Audit Fields
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
-            $table->softDeletes();
-            $table->timestamps(); 
 
+            $table->softDeletes();
+            $table->timestamps();
+
+            // 7. Unique Constraints
             $table->unique(['company_id', 'slug']);
         });
     }
