@@ -25,8 +25,7 @@ return new class extends Migration
             $table->decimal('unit_price');
             $table->integer('unit'); 
             $table->decimal('total_price'); 
-            $table->foreignId('vat_setting_id')->nullable()->constrained('vat_settings');
-            $table->timestamps(); 
+            $table->foreignId('vat_setting_id')->nullable()->constrained('vat_settings'); 
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
