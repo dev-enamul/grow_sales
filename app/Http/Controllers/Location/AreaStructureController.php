@@ -13,9 +13,23 @@ class AreaStructureController extends Controller
     use ValidatesParent;
     public function index()
     {
-        $structures = AreaStructure::select('uuid','name','parent_id','status')->latest()->get();
-        return response()->json($structures);
+        $datas = AreaStructure::with('parent:id,name')  
+                    ->select('id', 'uuid', 'name', 'parent_id', 'status')  
+                    ->latest()
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'uuid'       => $item->uuid,
+                            'name'       => $item->name,
+                            'parent_id'  => $item->parent_id,
+                            'parent_name'=> $item->parent ? $item->parent->name : null,
+                            'status'     => $item->status,
+                        ];
+                    });
+
+        return success_response($datas);
     }
+
 
     public function store(Request $request)
     {
