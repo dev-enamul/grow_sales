@@ -15,18 +15,20 @@ return new class extends Migration
             $table->id(); 
             $table->uuid('uuid')->unique();
             $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('product_unit_id')->nullable()->constrained('product_units');
+            $table->foreignId('category_id')->constrained('product_categories')->onDelete('cascade'); 
+            $table->foreignId('sub_category_id')->constrained('pro_duct_sub_categories')->onDelete('set null');
             $table->string('name'); 
             $table->string('slug'); 
             $table->text('description')->nullable();
             $table->string('code')->nullable();
-            $table->foreignId('product_unit_id')->nullable()->constrained('product_units');
-            $table->decimal('unit_price', 10, 2)->default(0);
-            $table->integer('unit')->default(0);
 
-            $table->decimal('regular_price', 10, 2)->default(0); 
-            $table->decimal('sell_price', 10, 2)->default(0);  
+            $table->decimal('unit_price', 10, 2)->default(0);
+            $table->integer('unit')->default(0); 
+            $table->decimal('total_price', 10, 2)->default(0);
             $table->foreignId('vat_setting_id')->nullable()->constrained('vat_settings');
-            $table->foreignId('category_id')->constrained('product_categories')->onDelete('cascade');
+            $table->integer('qty_in_stock')->nullable();
+            $table->integer('floor')->nullable();
              
             $table->unsignedInteger('status')->default(1)->comment("1=Active, 0= UnActive");
            

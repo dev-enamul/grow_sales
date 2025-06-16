@@ -34,14 +34,25 @@ class ProductCategoryService
 
     public function store($data)
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         $model = new ProductCategory();
+
+        $data['uuid'] = Str::uuid();
         $data['company_id'] = $user->company_id;
         $data['created_by'] = $user->id;
         $data['updated_by'] = null;
         $data['deleted_by'] = null;
-        $data['slug'] = getSlug($model,$data['name']);  
-        
+        $data['slug'] = getSlug($model, $data['name']); 
+        $data['status'] = $data['status'] ?? 1;  
+
+        $data['category_type_id'] = $data['category_type_id'] ?? null;
+        $data['measurment_unit_id'] = $data['measurment_unit_id'] ?? null;
+        $data['area_id'] = $data['area_id'] ?? null;
+        $data['description'] = $data['description'] ?? null;
+        $data['delivery_date'] = $data['delivery_date'] ?? null;
+        $data['address'] = $data['address'] ?? null;
+        $data['latitude'] = $data['latitude'] ?? null;
+        $data['longitude'] = $data['longitude'] ?? null; 
         return $this->productCategoryRepository->create($data);
     }
 

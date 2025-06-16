@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {  
-        $this->call(CompanyCategorySeeder::class);  
+        $this->call(CompanyCategorySeeder::class);
         $this->call(CompanySeeder::class); 
         // $this->call(RoleSeeder::class);
         $this->call(RolePermissionSeeder::class); 

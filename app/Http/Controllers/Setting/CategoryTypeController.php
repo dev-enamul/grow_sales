@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class CategoryTypeController extends Controller
 {
     public function index(Request $request)
-    { 
+    {
         $keyword = $request->keyword;
         $selectOnly = $request->boolean('select');   
         $query = CategoryType::where('company_id', Auth::user()->company_id) 
@@ -31,7 +31,7 @@ class CategoryTypeController extends Controller
     }
 
 
-    public function store(Request $request){ 
+    public function store(Request $request){
         $request->validate([
             'name' => 'required|string|max:255', 
         ]);  
