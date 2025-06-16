@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
             $table->foreignId('product_unit_id')->nullable()->constrained('product_units');
             $table->foreignId('category_id')->constrained('product_categories')->onDelete('cascade'); 
-            $table->foreignId('sub_category_id')->nullable()->constrained('pro_duct_sub_categories')->onDelete('set null');
+            $table->foreignId('sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
             $table->string('name'); 
             $table->string('slug'); 
             $table->text('description')->nullable();
