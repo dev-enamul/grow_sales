@@ -20,6 +20,7 @@ use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\Product\ProductCategoryController;
 use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Product\ProductSubCategoryController;
 use App\Http\Controllers\Setting\CategoryTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
 use App\Http\Controllers\Setting\ProductUnitController;
@@ -59,6 +60,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('roles',RoleApiController::class);
     Route::get('designations',DesignationApiController::class); 
     Route::resource('product-category', ProductCategoryController::class); 
+    Route::resource('product-sub-category', ProductSubCategoryController::class);
     Route::resource('product', ProductController::class);
      
     // Employee

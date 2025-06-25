@@ -24,7 +24,7 @@ return new class extends Migration
             $table->bigInteger('updated_by')->nullable();
             $table->bigInteger('deleted_by')->nullable();
             $table->softDeletes();
-            $table->timestamps(); 
+            $table->timestamps();
 
             $table->unique(['company_id', 'slug']);
         });

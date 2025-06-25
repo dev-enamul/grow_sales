@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\ActionTrackable;
+use App\Traits\FindByUuidTrait;
+use App\Traits\PaginatorTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,57 +12,62 @@ use Illuminate\Support\Str;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes; 
+    use HasFactory, SoftDeletes, ActionTrackable, PaginatorTrait, FindByUuidTrait;
 
     protected $fillable = [
         'uuid',
         'company_id',
+        'product_unit_id',
+        'category_id',
+        'sub_category_id',
         'name',
         'slug',
         'description',
         'code',
-        'product_unit_id',
         'unit_price',
         'unit',
-        'regular_price',
-        'sell_price',
+        'total_price',
         'vat_setting_id',
-        'category_id',
+        'qty_in_stock',
+        'floor',
         'status',
         'created_by',
         'updated_by',
         'deleted_by',
-    ]; 
-    
-    protected $hidden = ['id'];
+    ];
 
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 
-    public function company()
+    public function subCategory()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(ProductSubCategory::class, 'sub_category_id');
     }
 
-    public function images()
+    public function productUnit()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->belongsTo(ProductUnit::class, 'product_unit_id');
     }
 
-    public function videos()
+    public function vatSetting()
     {
-        return $this->hasMany(ProductVideo::class);
+        return $this->belongsTo(VatSetting::class, 'vat_setting_id');
     }
 
-    protected static function boot()
+    public function creator()
     {
-        parent::boot();
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

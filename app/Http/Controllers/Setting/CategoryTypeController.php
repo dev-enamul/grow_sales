@@ -23,6 +23,16 @@ class CategoryTypeController extends Controller
             return success_response($units);
         }
 
+        $sortBy = $request->input('sort_by');
+        $sortOrder = $request->input('sort_order', 'asc');
+
+        $allowedSorts = ['name']; 
+        if ($sortBy && in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->latest();  
+        }
+        
         $categoryType = $query
             ->select('uuid', 'name', 'is_active')
             ->paginate(10);

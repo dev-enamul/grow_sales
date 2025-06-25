@@ -13,39 +13,57 @@ use Illuminate\Support\Str;
 class ProductCategory extends Model
 {
     use HasFactory, SoftDeletes, ActionTrackable, PaginatorTrait, FindByUuidTrait;
-
     protected $fillable = [
         'uuid',
+        'company_id',
+        'category_type_id',
+        'measurment_unit_id',
+        'area_id',
         'name',
         'slug',
         'description',
-        'company_id',
+        'progress_stage',
+        'ready_date',
+        'address',
         'status',
         'created_by',
         'updated_by',
-        'deleted_by'
-    ]; 
+        'deleted_by',
+    ];
  
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function products()
+    public function categoryType()
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(CategoryType::class);
     }
 
-
-  
-    protected static function boot()
+    public function measurmentUnit()
     {
-        parent::boot();
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
+        return $this->belongsTo(MeasurmentUnit::class);
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
 }

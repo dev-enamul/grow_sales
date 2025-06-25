@@ -25,6 +25,16 @@ class MeasurmentUnitController extends Controller
             return success_response($units);
         }
 
+        $sortBy = $request->input('sort_by');
+        $sortOrder = $request->input('sort_order', 'asc');
+
+        $allowedSorts = ['name','abbreviation']; 
+        if ($sortBy && in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->latest();  
+        }
+
         $measurmentUnit = $query
             ->select('uuid', 'name', 'abbreviation', 'is_active')
             ->paginate(10);

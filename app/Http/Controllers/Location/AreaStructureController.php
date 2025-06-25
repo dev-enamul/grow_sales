@@ -33,46 +33,68 @@ class AreaStructureController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([ 
-            'name' => 'required|string', 
-            'parent_id' => 'nullable|exists:area_structures,id',
-            'status' => 'in:0,1'
+        $request->validate([
+            'name' => 'required|string',
+            'parent_id' => 'nullable|exists:area_structures,uuid',
+            'status' => 'required|in:0,1',
         ]);
 
-        AreaStructure::create([ 
+        $parentId = null;
+        if ($request->filled('parent_id')) {
+            $parentId = AreaStructure::findByUuid($request->parent_id)->id; // ✅ UUID → id
+        }
+
+        AreaStructure::create([
             'name' => $request->name,
-            'parent_id' => $request->parent_id??null,
-            'status'   => $request->status,
+            'parent_id' => $parentId, // ✅ correct integer id
+            'status' => $request->status,
+            'created_by' => auth()->id(),
+            'company_id' => auth()->user()->company_id,
         ]);
-        return success_response(null,'Structure created successfully'); 
+
+        return success_response(null, 'Structure created successfully');
     }
 
+
     public function update(Request $request, $id)
-    {
-        $structure = AreaStructure::findByUuid($id);
+    { 
+        $structure = AreaStructure::findByUuid($id); 
         $request->validate([
-            'name' => 'required|string', 
-            'parent_id' => 'nullable|exists:area_structures,id',
+            'name' => 'required|string',
+            'parent_id' => 'nullable|exists:area_structures,uuid',
             'status' => 'in:0,1',
         ]); 
-        if ($request->filled('parent_id') && !$this->isValidParent($structure, $request->parent_id)) {
-            return error_response(null,422,'Invalid parent: circular reference detected.', );
+        $parentId = null;
+        if ($request->filled('parent_id')) { 
+            $parent = AreaStructure::findByUuid($request->parent_id);
+            if (!$parent) {
+                return error_response(null, 422, 'Parent not found');
+            }
+            $parentId = $parent->id; 
+            if (!$this->isValidParent($structure, $parentId)) {
+                return error_response(null, 422, 'Invalid parent: circular reference detected.');
+            }
         } 
         $structure->update([
-            'name' => $request->name ?? $structure->name,
-            'parent_id' => $request->parent_id ?? $structure->parent_id,
-            'status' => $request->status ?? $structure->status, 
-        ]); 
+            'name' => $request->name,
+            'parent_id' => $parentId,
+            'status' => $request->status ?? $structure->status,
+        ]);
 
-        return success_response(null,'Structure updated successfully');  
-    } 
+        return success_response(null, 'Structure updated successfully');
+    }
 
-    public function destroy($id)
+
+     public function destroy($id)
     {
         $structure = AreaStructure::findByUuid($id); 
-        AreaStructure::where('parent_id', $structure->id)->update(['parent_id' => null]);
+        $hasArea = Area::where('area_structure_id', $structure->id)->exists(); 
+        if ($hasArea) {
+            return error_response(null, 422, 'Cannot delete structure because it has '.$structure->name);
+        } 
+        AreaStructure::where('parent_id', $structure->id)->update(['parent_id' => null]); 
         $structure->delete(); 
-        return success_response(null,'Structure deleted successfully');   
-    } 
+        return success_response(null, 'Structure deleted successfully');
+    }
 
 }

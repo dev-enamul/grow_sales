@@ -19,7 +19,7 @@ return new class extends Migration
             // 3. Foreign Keys
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('category_type_id')->nullable()->constrained('category_types')->onDelete('set null');
-            $table->foreignId('measurment_unit_id')->nullable()->constrained('measurment_units')->onDelete('set null'); 
+            $table->foreignId('measurment_unit_id')->nullable()->constrained('measurment_units')->onDelete('set null');
             $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
 
             // 4. Main Data Fields
