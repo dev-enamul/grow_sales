@@ -11,25 +11,29 @@ class VatSettingController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->status;
         $keyword = $request->keyword;
+        $selectOnly = $request->boolean('select'); 
 
-        $vatSettings = VatSetting::where('company_id', Auth::user()->company_id)
-            ->when($status, function ($query) use ($status) {
-                $query->where('is_active', $status);
+        $query = VatSetting::where('company_id', Auth::user()->company_id)
+            ->when($request->status, function ($query) use ($request) {
+                $query->where('is_active', $request->status);
             })
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where('name', 'like', '%' . $keyword . '%');
-            })
-            ->when($request->is_select2, function ($query) {
-                $query->select('uuid', 'name', 'vat_percentage');
-            }, function ($query) { 
-                $query->select('uuid', 'name', 'vat_percentage', 'is_active', 'note');
-            })
+            });
+
+        if ($selectOnly) {
+            $vatSettings = $query->select('id', 'name', 'vat_percentage')->latest()->take(10)->get();
+            return success_response($vatSettings);
+        }
+
+        $vatSettings = $query
+            ->select('uuid', 'name', 'vat_percentage', 'is_active', 'note')
             ->paginate(10);
 
         return success_response($vatSettings);
     }
+
 
 
     public function store(Request $request)

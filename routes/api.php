@@ -60,7 +60,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('roles',RoleApiController::class);
     Route::get('designations',DesignationApiController::class); 
     Route::resource('product-category', ProductCategoryController::class); 
-    Route::resource('product-sub-category', ProductSubCategoryController::class);
+    Route::resource('product-subcategory', ProductSubCategoryController::class);
     Route::resource('product', ProductController::class);
      
     // Employee

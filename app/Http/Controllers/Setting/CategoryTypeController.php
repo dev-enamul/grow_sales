@@ -19,7 +19,7 @@ class CategoryTypeController extends Controller
             });
 
         if ($selectOnly) {
-            $units = $query->select('uuid', 'name')->latest()->take(10)->get();
+            $units = $query->select('id', 'name')->latest()->take(10)->get();
             return success_response($units);
         }
 

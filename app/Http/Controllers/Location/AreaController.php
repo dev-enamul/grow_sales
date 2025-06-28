@@ -66,7 +66,7 @@ class AreaController extends Controller
                     $text .= "(in $parentName)";
                 } 
                 return [
-                    'id' => $area->uuid,
+                    'id' => $area->id,
                     'text' => trim($text),
                 ];
             });  

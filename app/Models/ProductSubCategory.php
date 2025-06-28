@@ -22,15 +22,15 @@ class ProductSubCategory extends Model
         'slug',
         'code',
         'description',
-        'unit_price',
-        'unit',
-        'total_price',
+        'rate',
+        'quantity',
+        'price',
         'vat_setting_id',
         'created_by',
         'updated_by',
         'deleted_by',
-    ];
- 
+    ];  
+
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -38,17 +38,17 @@ class ProductSubCategory extends Model
 
     public function productUnit()
     {
-        return $this->belongsTo(ProductUnit::class, 'product_unit_id');
+        return $this->belongsTo(ProductUnit::class);
     }
 
     public function category()
     {
-        return $this->belongsTo(ProductCategory::class, 'category_id');
+        return $this->belongsTo(ProductCategory::class);
     }
 
     public function vatSetting()
     {
-        return $this->belongsTo(VatSetting::class, 'vat_setting_id');
+        return $this->belongsTo(VatSetting::class);
     }
 
     public function creator()

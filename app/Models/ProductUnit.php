@@ -20,8 +20,7 @@ class ProductUnit extends Model
         'created_by', 
         'updated_by', 
         'deleted_by'
-    ];
-    protected $hidden = ['id'];
+    ]; 
 
     
 }

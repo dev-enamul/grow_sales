@@ -18,10 +18,9 @@ class ProductCategoryController extends Controller
     public function index(Request $request)
     {
         $keyword = $request->keyword;
-        $progressStage = $request->progress_stage;
-        $startDate = $request->start_date;
-        $endDate = $request->end_date;
+        $progressStage = $request->progress_stage; 
         $areaId = $request->area_id;
+        $selectOnly = $request->boolean('select');
 
         $query = ProductCategory::where('company_id', Auth::user()->company_id)
             ->when($keyword, function ($query) use ($keyword) {
@@ -33,15 +32,27 @@ class ProductCategoryController extends Controller
             })
             ->when($progressStage, function ($query) use ($progressStage) {
                 $query->where('progress_stage', $progressStage);
-            })
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('ready_date', [$startDate, $endDate]);
-            })
+            }) 
             ->when($areaId, function ($query) use ($areaId) {
                 $query->where('area_id', $areaId);
             })
-            ->select('id','uuid', 'name', 'progress_stage', 'ready_date', 'status', 'area_id')
+            ->select('id','uuid', 'name', 'progress_stage','description','address', 'ready_date', 'status', 'area_id','category_type_id','measurment_unit_id')
             ->with(['area:id,name']);
+        
+        if ($selectOnly) {
+            $units = $query->select('id','name')->latest()->take(10)->get();
+            return success_response($units);
+        }
+
+        $sortBy = $request->input('sort_by');
+        $sortOrder = $request->input('sort_order', 'asc');
+
+        $allowedSorts = ['name','ready_date']; 
+        if ($sortBy && in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->latest();  
+        }
 
         $paginated = $this->paginateQuery($query, $request);
  
@@ -54,6 +65,11 @@ class ProductCategoryController extends Controller
                 'ready_date' => $item->ready_date,
                 'status' => $item->status,
                 'area_name' => optional($item->area)->name,
+                'category_type_id' => $item->category_type_id,
+                'measurment_unit_id' => $item->measurment_unit_id,
+                'address' => $item->address,
+                'description' => $item->description,
+                'area_id' => $item->area_id,
             ];
         });
 
@@ -104,8 +120,7 @@ class ProductCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:product_categories,slug,NULL,id,company_id,' . Auth::user()->company_id,
+            'name' => 'required|string|max:255', 
             'description' => 'nullable|string',
             'progress_stage' => 'required|in:Ready,Ongoing,Upcomming,Complete',
             'ready_date' => 'nullable|date',
@@ -118,7 +133,7 @@ class ProductCategoryController extends Controller
         $category = new ProductCategory();
         $category->company_id = Auth::user()->company_id;
         $category->name = $request->name;
-        $category->slug = $request->slug;
+        $category->slug = getSlug($category,$request->name);
         $category->description = $request->description;
         $category->progress_stage = $request->progress_stage;
         $category->ready_date = $request->ready_date;
@@ -144,6 +159,7 @@ class ProductCategoryController extends Controller
             }
         }
         $category->measurment_unit_id = $measurment_unit_id;
+        
 
         $category->area_id = $request->area_id;
         $category->created_by = Auth::id();
@@ -156,8 +172,7 @@ class ProductCategoryController extends Controller
     public function update(Request $request, $uuid)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255',
+            'name' => 'required|string|max:255', 
             'description' => 'nullable|string',
             'progress_stage' => 'required|in:Ready,Ongoing,Upcomming,Complete',
             'ready_date' => 'nullable|date',
@@ -177,7 +192,7 @@ class ProductCategoryController extends Controller
         }
 
         $category->name = $request->name;
-        $category->slug = $request->slug;
+        $category->slug = getSlug(new ProductCategory(),$request->name);
         $category->description = $request->description;
         $category->progress_stage = $request->progress_stage;
         $category->ready_date = $request->ready_date;

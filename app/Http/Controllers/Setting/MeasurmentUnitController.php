@@ -13,7 +13,7 @@ class MeasurmentUnitController extends Controller
     public function index(Request $request)
     { 
         $keyword = $request->keyword;
-        $selectOnly = $request->boolean('select');   
+        $selectOnly = $request->boolean('select');
         $query = MeasurmentUnit::where('company_id', Auth::user()->company_id) 
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where('name', 'like', '%' . $keyword . '%')
@@ -21,7 +21,7 @@ class MeasurmentUnitController extends Controller
             });
 
         if ($selectOnly) {
-            $units = $query->select('uuid', 'name')->latest()->take(10)->get();
+            $units = $query->select('id', 'name')->latest()->take(10)->get();
             return success_response($units);
         }
 

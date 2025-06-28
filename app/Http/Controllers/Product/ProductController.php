@@ -15,14 +15,22 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    use PaginatorTrait;
-
+    use PaginatorTrait; 
     public function index(Request $request)
     {
-        $query = Product::where('company_id', Auth::user()->company_id)
-            ->with(['category:id,name', 'subCategory:id,name', 'productUnit:id,name', 'vatSetting:id,name']);
+        $selectOnly = $request->boolean('select');
+        $keyword = $request->keyword;
 
-        if ($keyword = $request->keyword) {
+        $query = Product::where('company_id', Auth::user()->company_id)
+            ->with([
+                'category:id,name,measurment_unit_id',
+                'subCategory:id,name',
+                'productUnit:id,name',
+                'vatSetting:id,name,vat_percentage'
+            ]);
+
+        // Keyword Search
+        if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
                 ->orWhere('slug', 'like', "%{$keyword}%")
@@ -30,38 +38,104 @@ class ProductController extends Controller
             });
         }
 
-        $data = $this->paginateQuery($query, $request);
+        // Filters
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
 
-        $data['data'] = collect($data['data'])->map(function ($item) {
+        if ($request->filled('sub_category_id')) {
+            $query->where('sub_category_id', $request->sub_category_id);
+        }
+
+        if ($request->filled('product_unit_id')) {
+            $query->where('product_unit_id', $request->product_unit_id);
+        }
+
+        if ($request->filled('vat_setting_id')) {
+            $query->where('vat_setting_id', $request->vat_setting_id);
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        if ($request->filled('min_quantity')) {
+            $query->where('quantity', '>=', $request->min_quantity);
+        }
+
+        if ($request->filled('max_quantity')) {
+            $query->where('quantity', '<=', $request->max_quantity);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+
+        // Dropdown select mode
+        if ($selectOnly) {
+            $list = $query->select('id', 'name')->latest()->limit(10)->get();
+            return success_response($list);
+        }
+
+        // Sorting
+        $sortBy = $request->input('sort_by');
+        $sortOrder = $request->input('sort_order', 'asc');
+        $allowedSorts = ['name', 'rate', 'quantity', 'price'];
+
+        if ($sortBy && in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->latest();
+        }
+
+        // Pagination
+        $paginated = $this->paginateQuery($query, $request);
+
+        // Format data
+        $paginated['data'] = $paginated['data']->map(function ($item) {
             return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'slug' => $item->slug,
-                'code' => $item->code,
-                'unit_price' => $item->unit_price,
-                'unit' => $item->unit,
-                'total_price' => $item->total_price,
-                'qty_in_stock' => $item->qty_in_stock,
-                'status' => $item->status,
-                'category_name' => optional($item->category)->name,
-                'sub_category_name' => optional($item->subCategory)->name,
-                'unit_name' => optional($item->productUnit)->name,
-                'vat_name' => optional($item->vatSetting)->name,
+                'id'               => $item->id,
+                'uuid'             => $item->uuid,
+                'name'             => $item->name,
+                'slug'             => $item->slug,
+                'code'             => $item->code,
+                'description'      => $item->description,
+                'rate'             => $item->rate,
+                'quantity'         => $item->quantity,
+                'total_price'      => $item->price,
+                'unit_price'       => $item->rate,
+                'qty_in_stock'     => $item->qty_in_stock,
+                'floor'            => $item->floor,
+                'status'           => $item->status,
+                'category'         => optional($item->category)->name,
+                'sub_category'     => optional($item->subCategory)->name,
+                'measurment_unit'  => $item?->category?->measurmentUnit?->name ?? '',
+                'vat'              => (@$item->vatSetting->vat_percentage ?? 0) . '%',
+                'vat_setting_id'   => $item->vat_setting_id,
+                'category_id'      => $item->category_id,
+                'sub_category_id'  => $item->sub_category_id,
+                'product_unit_id'  => $item->product_unit_id,
+                'unit_name'        => optional($item->productUnit)->name,
             ];
-        });
+        });  
+        return success_response($paginated);
+    }
 
-        return success_response($data);
-    } 
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:products,slug,NULL,id,company_id,' . Auth::user()->company_id,
+            'name' => 'required|string|max:255', 
             'description' => 'nullable|string',
             'code' => 'nullable|string|max:100',
-            'unit_price' => 'required|numeric|min:0',
-            'unit' => 'required|integer|min:1',
+            'rate' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
@@ -70,23 +144,21 @@ class ProductController extends Controller
             'floor' => 'nullable|integer',
         ]);
 
-        $product = new Product();
-        $product->company_id = Auth::user()->company_id;
+        $product = new Product(); 
         $product->name = $request->name;
-        $product->slug = $request->slug;
+        $product->slug = getSlug(new Product(),$request->name);
         $product->description = $request->description;
         $product->code = $request->code;
-        $product->unit_price = $request->unit_price;
-        $product->unit = $request->unit;
-        $product->total_price = $request->unit_price * $request->unit;
+        $product->rate = $request->rate;
+        $product->quantity = $request->quantity;
+        $product->price = $request->price;
         $product->product_unit_id = $request->product_unit_id;
         $product->category_id = $request->category_id;
         $product->sub_category_id = $request->sub_category_id;
         $product->vat_setting_id = $request->vat_setting_id;
-        $product->qty_in_stock = $request->qty_in_stock;
+        $product->qty_in_stock = $request->qty_in_stock??0;
         $product->floor = $request->floor;
-        $product->status = 1;
-        $product->created_by = Auth::id();
+        $product->status = 0; 
         $product->save();
 
         return success_response(null, 'Product created successfully!', 201);
@@ -109,12 +181,12 @@ class ProductController extends Controller
     public function update(Request $request, $uuid)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255',
+            'name' => 'required|string|max:255', 
             'description' => 'nullable|string',
             'code' => 'nullable|string|max:100',
-            'unit_price' => 'required|numeric|min:0',
-            'unit' => 'required|integer|min:1',
+            'rate' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
@@ -133,14 +205,11 @@ class ProductController extends Controller
         }
 
         $product->fill($request->only([
-            'name', 'slug', 'description', 'code', 'unit_price', 'unit', 'product_unit_id',
-            'category_id', 'sub_category_id', 'vat_setting_id', 'qty_in_stock', 'floor', 'status'
-        ]));
-
-        $product->total_price = $request->unit_price * $request->unit;
-        $product->updated_by = Auth::id();
-        $product->save();
-
+            'name', 'description', 'code', 'rate', 'quantity', 'price', 'product_unit_id',
+            'category_id', 'sub_category_id', 'vat_setting_id', 'qty_in_stock', 'floor'
+        ])); 
+        $product->slug  = getSlug(new Product(),$request->name);
+        $product->save(); 
         return success_response(null, 'Product updated successfully!');
     }
 
