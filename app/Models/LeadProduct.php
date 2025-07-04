@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\ProductUnit;
+use App\Models\ProductCategory;
+use App\Models\ProductSubCategory;
 
 class LeadProduct extends Model
 {
@@ -12,10 +15,14 @@ class LeadProduct extends Model
 
     protected $fillable = [
         'company_id',
-        'user_id',
-        'customer_id',
         'lead_id',
         'product_id',
+        'customer_id',
+        'user_id',
+        'product_unit_id',
+        'product_category_id',
+        'product_sub_category_id',
+        'qty',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -51,19 +58,34 @@ class LeadProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function productUnit()
+    {
+        return $this->belongsTo(ProductUnit::class);
+    }
+
+    public function productCategory()
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
+
+    public function productSubCategory()
+    {
+        return $this->belongsTo(ProductSubCategory::class);
+    }
  
-    public function createdBy()
+    public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
  
-    public function updatedBy()
+    public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
     // Relationship with User (who deleted the lead product)
-    public function deletedBy()
+    public function deleter()
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }

@@ -5,42 +5,48 @@ namespace App\Http\Controllers\Setting;
 use App\Http\Controllers\Controller;
 use App\Models\MeasurmentUnit;
 use App\Models\ProductUnit;
+use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MeasurmentUnitController extends Controller
 {
+    use PaginatorTrait;
+
     public function index(Request $request)
-    { 
-        $keyword = $request->keyword;
-        $selectOnly = $request->boolean('select');
-        $query = MeasurmentUnit::where('company_id', Auth::user()->company_id) 
-            ->when($keyword, function ($query) use ($keyword) {
-                $query->where('name', 'like', '%' . $keyword . '%')
-                ->orWhere('abbreviation', 'like', '%' . $keyword . '%');
-            });
+    {
+        try {
+            $keyword = $request->keyword;
+            $selectOnly = $request->boolean('select');
+            $query = MeasurmentUnit::where('company_id', Auth::user()->company_id)
+                ->when($keyword, function ($query) use ($keyword) {
+                    $query->where('name', 'like', '%' . $keyword . '%')
+                        ->orWhere('abbreviation', 'like', '%' . $keyword . '%');
+                });
 
-        if ($selectOnly) {
-            $units = $query->select('id', 'name')->latest()->take(10)->get();
-            return success_response($units);
+            if ($selectOnly) {
+                $units = $query->select('id', 'name')->latest()->take(10)->get();
+                return success_response($units);
+            }
+
+            $sortBy = $request->input('sort_by');
+            $sortOrder = $request->input('sort_order', 'asc');
+
+            $allowedSorts = ['name', 'abbreviation'];
+            if ($sortBy && in_array($sortBy, $allowedSorts)) {
+                $query->orderBy($sortBy, $sortOrder);
+            } else {
+                $query->latest();
+            }
+
+            $measurmentUnit = $this->paginateQuery($query->select('uuid', 'name', 'abbreviation', 'is_active'), $request);
+
+            return success_response($measurmentUnit);
+        } catch (\Exception $e) {
+            return error_response($e->getMessage());
         }
-
-        $sortBy = $request->input('sort_by');
-        $sortOrder = $request->input('sort_order', 'asc');
-
-        $allowedSorts = ['name','abbreviation']; 
-        if ($sortBy && in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortOrder);
-        } else {
-            $query->latest();  
-        }
-
-        $measurmentUnit = $query
-            ->select('uuid', 'name', 'abbreviation', 'is_active')
-            ->paginate(10);
-
-        return success_response($measurmentUnit);
     }
+    
 
 
     public function store(Request $request){ 

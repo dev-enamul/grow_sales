@@ -6,6 +6,7 @@ use App\Http\Controllers\Common\CountryApiController;
 use App\Http\Controllers\Common\DesignationApiController;
 use App\Http\Controllers\Common\DistrictApiController;
 use App\Http\Controllers\Common\DivisionApiController;
+use App\Http\Controllers\Common\EnamController;
 use App\Http\Controllers\Common\RoleApiController;
 use App\Http\Controllers\Common\UnionApiController;
 use App\Http\Controllers\Common\UpazilaApiController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Followup\FollowupController;
 use App\Http\Controllers\Lead\LeadAssignController;
 use App\Http\Controllers\Lead\LeadCategoryController;
 use App\Http\Controllers\Lead\LeadController;
+use App\Http\Controllers\Lead\LeadSourceController;
 use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\Product\ProductCategoryController;
@@ -72,6 +74,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Lead 
     Route::resource('lead-category',LeadCategoryController::class);
     Route::resource('lead',LeadController::class);
+    Route::resource('lead-source',LeadSourceController::class);
     Route::resource('customer', CustomerController::class); 
     Route::get('customer-personal-info',[CustomerController::class,'show']);
     Route::post('lead-assign-to',LeadAssignController::class);
@@ -99,8 +102,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('vat-setting',VatSettingController::class);
     Route::resource('area-structure',AreaStructureController::class);
     Route::resource('area',AreaController::class);
-    
 });
+
+// Enam 
+Route::get('blood-groups',[EnamController::class,'bloodgroup']);
+Route::get('genders',[EnamController::class,'gender']);
+Route::get('maritual-statuses',[EnamController::class,'maritualStatus']);
+Route::get('priorities',[EnamController::class,'priority']);
+Route::get('religions',[EnamController::class,'religion']);
+Route::get('statuses',[EnamController::class,'status']);
+Route::get('educations',[EnamController::class,'education']);
+Route::get('professions',[EnamController::class,'profession']);
 
 
  

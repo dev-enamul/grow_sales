@@ -19,10 +19,10 @@ class EmployeeController extends Controller
         $this->employeeService = $employeeService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $data = $this->employeeService->getAllEmployees();
+            $data = $this->employeeService->getAllEmployees($request);
             return success_response($data);
         } catch (\Exception $e) {
             return error_response($e->getMessage(),500);

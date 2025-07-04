@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Enums;
+
+final class ProfessionEnam
+{
+    const Accountant    = "1";
+    const Actor         = "2";
+    const Architect     = "3";
+    const Artist        = "4";
+    const Athlete       = "5";
+    const Author        = "6";
+    const Baker         = "7";
+    const Banker        = "8";
+    const Barber        = "9";
+    const Bartender     = "10";
+    const Builder       = "11";
+    const Businessman   = "12";
+    const Butcher       = "13";
+    const Carpenter     = "14";
+    const Chef          = "15";
+    const Cleaner       = "16";
+    const Clerk         = "17";
+    const Coach         = "18";
+    const Cook          = "19";
+    const Dancer        = "20";
+    const Dentist       = "21";
+    const Designer      = "22";
+    const Doctor        = "23";
+    const Driver        = "24";
+    const Electrician   = "25";
+    const Engineer      = "26";
+    const Farmer        = "27";
+    const Firefighter   = "28";
+    const Fisherman     = "29";
+    const Florist       = "30";
+    const Gardener      = "31";
+    const Hairdresser   = "32";
+    const Journalist    = "33";
+    const Judge         = "34";
+    const Lawyer        = "35";
+    const Librarian     = "36";
+    const Lifeguard     = "37";
+    const Mechanic      = "38";
+    const Model         = "39";
+    const Musician      = "40";
+    const Nurse         = "41";
+    const Optician      = "42";
+    const Painter       = "43";
+    const Pharmacist    = "44";
+    const Photographer  = "45";
+    const Pilot         = "46";
+    const Plumber       = "47";
+    const PoliceOfficer = "48";
+    const Politician    = "49";
+    const Postman       = "50";
+    const Receptionist  = "51";
+    const Scientist     = "52";
+    const Secretary     = "53";
+    const Singer        = "54";
+    const Soldier       = "55";
+    const Student       = "56";
+    const Tailor        = "57";
+    const Teacher       = "58";
+    const Technician    = "59";
+    const Translator    = "60";
+    const Vet           = "61";
+    const Waiter        = "62";
+    const Writer        = "63";
+    const Other         = "64";
+
+    public static function values()
+    {
+        return [
+            self::Accountant    => 'Accountant',
+            self::Actor         => 'Actor',
+            self::Architect     => 'Architect',
+            self::Artist        => 'Artist',
+            self::Athlete       => 'Athlete',
+            self::Author        => 'Author',
+            self::Baker         => 'Baker',
+            self::Banker        => 'Banker',
+            self::Barber        => 'Barber',
+            self::Bartender     => 'Bartender',
+            self::Builder       => 'Builder',
+            self::Businessman   => 'Businessman',
+            self::Butcher       => 'Butcher',
+            self::Carpenter     => 'Carpenter',
+            self::Chef          => 'Chef',
+            self::Cleaner       => 'Cleaner',
+            self::Clerk         => 'Clerk',
+            self::Coach         => 'Coach',
+            self::Cook          => 'Cook',
+            self::Dancer        => 'Dancer',
+            self::Dentist       => 'Dentist',
+            self::Designer      => 'Designer',
+            self::Doctor        => 'Doctor',
+            self::Driver        => 'Driver',
+            self::Electrician   => 'Electrician',
+            self::Engineer      => 'Engineer',
+            self::Farmer        => 'Farmer',
+            self::Firefighter   => 'Firefighter',
+            self::Fisherman     => 'Fisherman',
+            self::Florist       => 'Florist',
+            self::Gardener      => 'Gardener',
+            self::Hairdresser   => 'Hairdresser',
+            self::Journalist    => 'Journalist',
+            self::Judge         => 'Judge',
+            self::Lawyer        => 'Lawyer',
+            self::Librarian     => 'Librarian',
+            self::Lifeguard     => 'Lifeguard',
+            self::Mechanic      => 'Mechanic',
+            self::Model         => 'Model',
+            self::Musician      => 'Musician',
+            self::Nurse         => 'Nurse',
+            self::Optician      => 'Optician',
+            self::Painter       => 'Painter',
+            self::Pharmacist    => 'Pharmacist',
+            self::Photographer  => 'Photographer',
+            self::Pilot         => 'Pilot',
+            self::Plumber       => 'Plumber',
+            self::PoliceOfficer => 'Police Officer',
+            self::Politician    => 'Politician',
+            self::Postman       => 'Postman',
+            self::Receptionist  => 'Receptionist',
+            self::Scientist     => 'Scientist',
+            self::Secretary     => 'Secretary',
+            self::Singer        => 'Singer',
+            self::Soldier       => 'Soldier',
+            self::Student       => 'Student',
+            self::Tailor        => 'Tailor',
+            self::Teacher       => 'Teacher',
+            self::Technician    => 'Technician',
+            self::Translator    => 'Translator',
+            self::Vet           => 'Vet',
+            self::Waiter        => 'Waiter',
+            self::Writer        => 'Writer',
+            self::Other         => 'Other',
+        ];
+    }
+}

@@ -22,9 +22,9 @@ class EmployeeService
         $this->userRepo = $userRepo;
     }
 
-    public function getAllEmployees()
+    public function getAllEmployees($request)
     {
-        return $this->employeeRepo->getAllEmployees();
+        return $this->employeeRepo->getAllEmployees($request);
     }
 
     public function createEmployee($request)

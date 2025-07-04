@@ -4,30 +4,35 @@ namespace App\Http\Controllers\Setting;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductUnit;
+use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProductUnitController extends Controller
 {
+    use PaginatorTrait;
     public function index(Request $request)
-    { 
+    {  
         $keyword = $request->keyword;
-        $selectOnly = $request->boolean('select'); 
-        $query = ProductUnit::where('company_id', Auth::user()->company_id) 
+        $selectOnly = $request->boolean('select');
+
+        $query = ProductUnit::where('company_id', Auth::user()->company_id)
             ->when($keyword, function ($query) use ($keyword) {
-                $query->where('is_active', 1)->where('name', 'like', '%' . $keyword . '%')
-                ->orWhere('abbreviation', 'like', '%' . $keyword . '%');
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('name', 'like', '%' . $keyword . '%')
+                      ->orWhere('abbreviation', 'like', '%' . $keyword . '%');
+                });
             });
 
+        // For select dropdowns
         if ($selectOnly) {
             $units = $query->select('id', 'name')->latest()->take(10)->get();
             return success_response($units);
         }
 
-        $productUnit = $query
-            ->select('uuid', 'name', 'abbreviation', 'is_active')
-            ->paginate(10);
-
+        // Use the trait for pagination
+        $query = $query->select('id', 'uuid', 'name', 'abbreviation', 'is_active');
+        $productUnit = $this->paginateQuery($query, $request); 
         return success_response($productUnit);
     }
 
@@ -40,9 +45,7 @@ class ProductUnitController extends Controller
      
         $productUnit = new ProductUnit();
         $productUnit->name = $request->input('name');
-        $productUnit->abbreviation = $request->input('abbreviation');
-        $productUnit->company_id = Auth::user()->company_id; 
-        $productUnit->created_by = Auth::id();   
+        $productUnit->abbreviation = $request->input('abbreviation');   
         $productUnit->save();  
         return success_response($productUnit, 'Product unit created successfully!',201); 
     } 

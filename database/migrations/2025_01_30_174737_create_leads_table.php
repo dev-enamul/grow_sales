@@ -20,13 +20,14 @@ return new class extends Migration
             
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->foreignId('lead_categorie_id')->constrained('lead_categories'); 
-            $table->integer('purchase_probability')->nullable()->default(null)->comment("0-100%");
+            $table->foreignId('lead_categorie_id')->constrained('lead_categories');
+            $table->string('priority')->nullable()->default(null);
             $table->decimal('price')->nullable()->default(null);
             $table->date('next_followup_date')->nullable();
             $table->timestamp('last_contacted_at')->nullable();
             
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null'); 
+             $table->foreignId('lead_source_id')->nullable()->constrained('lead_sources')->onDelete('set null'); 
             $table->enum('status', ['Active', 'Rejected', 'Salsed', 'Waiting'])->default('Active');
             
             $table->foreignId('created_by')->nullable()->constrained('users');

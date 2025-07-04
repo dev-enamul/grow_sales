@@ -21,14 +21,11 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->enum('user_type', ['employee', 'affiliate', 'customer'])->nullable();
             $table->string('profile_image')->nullable();
-            $table->enum('marital_status', ['married', 'unmarried', 'divorced'])->nullable();
-            $table->date('dob')->nullable(); 
-            $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
-            $table->enum('gender', ['male', 'female', 'others'])->nullable(); 
+            
             $table->json('senior_user')->nullable(); 
             $table->json('junior_user')->nullable();
 
-            $table->foreignId('role_id')->nullable()->constrained('roles');  
+            $table->foreignId('role_id')->nullable()->constrained('roles');
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -36,7 +33,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps(); 
 
-            $table->unique(['company_id', 'email']);  
+            $table->unique(['company_id', 'email']);
         });
     }
 
