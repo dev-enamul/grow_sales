@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActionTrackable; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 
 class Lead extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, ActionTrackable;
 
     protected $fillable = [
         'uuid',
@@ -18,11 +19,12 @@ class Lead extends Model
         'user_id',
         'customer_id',
         'lead_categorie_id',
-        'purchase_probability',
+        'priority',
         'price',
         'next_followup_date',
         'last_contacted_at',
         'assigned_to',
+        'lead_source_id',
         'status',
         'created_by',
         'updated_by',
@@ -49,6 +51,11 @@ class Lead extends Model
     public function leadCategory()
     {
         return $this->belongsTo(LeadCategory::class, 'lead_categorie_id');
+    }
+
+    public function leadSource()
+    {
+        return $this->belongsTo(LeadSource::class);
     }
  
     public function assignedTo()

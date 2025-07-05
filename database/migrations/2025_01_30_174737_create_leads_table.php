@@ -28,7 +28,7 @@ return new class extends Migration
             
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null'); 
              $table->foreignId('lead_source_id')->nullable()->constrained('lead_sources')->onDelete('set null'); 
-            $table->enum('status', ['Active', 'Rejected', 'Salsed', 'Waiting'])->default('Active');
+            $table->enum('status', ['Active', 'Rejected', 'Salsed', 'Waiting','Returned'])->default('Active');
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');

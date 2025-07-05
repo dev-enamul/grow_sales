@@ -14,6 +14,7 @@ class UserDetail extends Model
     protected $fillable = [
         'uuid',
         'user_id',
+        "customer_id",
         'company_id',
         'name',
         'primary_phone',

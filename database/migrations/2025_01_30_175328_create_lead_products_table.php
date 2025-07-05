@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
             $table->foreignId('product_unit_id')->constrained('product_units')->onDelete('set null');
+            $table->foreignId('area_id')->constrained('areas')->onDelete('set null');
             $table->foreignId('product_category_id')->constrained('product_categories')->onDelete('set null');
             $table->foreignId('product_sub_category_id')->constrained('product_sub_categories')->onDelete('set null');
             $table->integer('qty')->default(null);

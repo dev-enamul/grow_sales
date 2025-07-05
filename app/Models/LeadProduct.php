@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\ProductUnit;
 use App\Models\ProductCategory;
 use App\Models\ProductSubCategory;
+use App\Traits\ActionTrackable;
 
 class LeadProduct extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, ActionTrackable, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -20,6 +21,7 @@ class LeadProduct extends Model
         'customer_id',
         'user_id',
         'product_unit_id',
+        "area_id",
         'product_category_id',
         'product_sub_category_id',
         'qty',

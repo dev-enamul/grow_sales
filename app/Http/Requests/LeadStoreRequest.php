@@ -22,47 +22,47 @@ class LeadStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|digits_between:10,15',
-            'email' => 'nullable|email|max:255',
-            'password' => 'nullable|string|min:8',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'marital_status' => 'nullable|in:married,unmarried,divorced',
+            'name' => 'required|string|max:100',
+            'primary_phone' => 'required|string|max:20|unique:users,phone',
+            'primary_email' => 'nullable|email|unique:users,email',
+            'secondary_phone' => 'nullable|string|max:20',
+            'secondary_email' => 'nullable|email',
+            'assigned_to' => 'nullable|exists:users,id',
+            'lead_source_id' => 'nullable|exists:lead_sources,id',
+            'priority' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'notes' => 'nullable|string',
             'dob' => 'nullable|date',
-            'blood_group' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
             'gender' => 'nullable|in:male,female,others',
-    
-            // Customer data validation
-            'lead_source_id' => 'required|exists:lead_sources,id',
-            'referred_by' => 'nullable|exists:users,uuid',
-    
-            // Lead data validation
-            'purchase_probability' => 'nullable|integer|between:0,100',
-            'assigned_to' => 'nullable|exists:users,uuid',
-    
-            // Product selection validation
-            'products' => 'nullable|array',
-            'products.*' => 'exists:products,id',
-    
-            // User Contact data validation
-            'office_phone' => 'nullable|numeric|digits_between:10,15',
-            'personal_phone' => 'nullable|numeric|digits_between:10,15',
-            'office_email' => 'nullable|email|max:255',
-            'personal_email' => 'nullable|email|max:255',
-            'website' => 'nullable|url',
-            'whatsapp' => 'nullable|string|max:20',
-            'imo' => 'nullable|string|max:20',
-            'facebook' => 'nullable|url',
-            'linkedin' => 'nullable|url',
-    
-            // User Address validation
-            'permanent_country' => 'nullable|string|max:100',
-            'permanent_zip_code' => 'nullable|string|max:20',
-            'permanent_address' => 'nullable|string|max:500',
+            'marital_status' => 'nullable|in:married,unmarried,divorced',
+            'blood_group' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'religion' => 'nullable|string|max:45',
+            'education' => 'nullable|string|max:45',
+            'profession' => 'nullable|string|max:45',
+            'relationship_or_role' => 'nullable|string|max:100', 
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'interested_project' => 'nullable|array',
+            'interested_project.*.product_id' => 'nullable',
+            'interested_project.*.product_unit_id' => 'nullable',
+            'interested_project.*.area_id' => 'nullable',
+            'interested_project.*.product_category_id' => 'nullable',
+            'interested_project.*.product_sub_category_id' => 'nullable',
+            'interested_project.*.qty' => 'nullable|numeric',
+
+            // Address fields
+            'permanent_country' => 'nullable|string',
+            'permanent_division' => 'nullable|string',
+            'permanent_district' => 'nullable|string',
+            'permanent_upazila_or_thana' => 'nullable|string',
+            'permanent_zip_code' => 'nullable|string',
+            'permanent_address' => 'nullable|string',
+            'present_country' => 'nullable|string',
+            'present_division' => 'nullable|string',
+            'present_district' => 'nullable|string',
+            'present_upazila_or_thana' => 'nullable|string',
+            'present_zip_code' => 'nullable|string',
+            'present_address' => 'nullable|string',
             'is_same_present_permanent' => 'nullable|boolean',
-            'present_country' => 'nullable|string|max:100',
-            'present_zip_code' => 'nullable|string|max:20',
-            'present_address' => 'nullable|string|max:500',
         ];
     }
 }

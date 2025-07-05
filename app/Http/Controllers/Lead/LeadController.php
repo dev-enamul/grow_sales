@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Lead;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LeadStoreRequest;
 use App\Models\Customer;
 use App\Models\Followup;
 use App\Models\Lead;
@@ -11,6 +12,8 @@ use App\Models\LeadProduct;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserContact;
+use App\Models\UserDetail;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -74,11 +77,11 @@ class LeadController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(LeadStoreRequest $request)
     {
+        return $request;
         DB::beginTransaction();
-        try{
-
+        try{ 
             if ($request->hasFile('profile_image')) {
                 $image = $request->file('profile_image'); 
                 $imagePath = $image->store('profile_images', 'public'); 
@@ -88,80 +91,82 @@ class LeadController extends Controller
             }  
             $authUser = Auth::user();
     
-            $user = User::create([
-                'company_id'    => $authUser->company_id,
+            $user = User::create([ 
                 'name' => $request->name,
-                'phone' => $request->phone,
-                'email' => $request->email, 
+                'phone' => $request->primary_phone,
+                'email' => $request->primary_email, 
                 'password' => Hash::make('12345678'),
                 'user_type' => 'customer',
                 'profile_image' =>  $fullImageUrl,
-                'marital_status' => $request->marital_status,
-                'dob'           => $request->dob,  
-                'blood_group'   => $request->blood_group,
-                'gender'        => $request->gender, 
-                'created_by'    => $authUser->id,
             ]);
      
             $customer = Customer::create([
                 'user_id' => $user->id,
                 'lead_source_id' => $request->lead_source_id,
                 'referred_by'  => $authUser->id,
-                'created_by'    => $authUser->id,
             ]);
     
-            $lead_category = LeadCategory::where('status',1)->first();
-            $assigned_to = User::where('uuid',$request->assigned_to)->first();
-            $lead = Lead::create([
-                'company_id' => $authUser->company_id,
+            $lead_category = LeadCategory::where('status',1)->first(); 
+            $lead = Lead::create([ 
                 'lead_id' => Lead::generateNextLeadId(),
                 'user_id' => $user->id,
                 'customer_id' => $customer->id,
                 'lead_categorie_id' => $lead_category->id,
-                'purchase_probability' => $request->purchase_probability,
+                'priority' => $request->priority,
+                'price' => $request->price,
                 'last_contacted_at' => now(),
-                'assigned_to' => $assigned_to->id??null,
-                'created_by'    => $authUser->id,
-            ]);
+                'next_followup_date' => Carbon::now()->addDay(10),
+                'assigned_to' => $request->assigned_to,
+                'lead_source_id' => $request->lead_source_id,
+            ]); 
     
-            Followup::create([
-                'company_id' => $authUser->company_id,
+            Followup::create([ 
                 'user_id' => $user->id,
                 'customer_id' => $customer->id,
                 'lead_id' =>  $lead->id,
                 'lead_categorie_id' =>$lead_category->id,
-                'notes' => $request->notes,
-                'created_by'    => $authUser->id,
+                'notes' => $request->notes, 
             ]);
     
-            if(isset($request->products) && count($request->products)>0){
-                foreach($request->products as $product_id){
-                    LeadProduct::create([
-                        'company_id' => $authUser->company_id,
+            if(isset($request->interested_project) && count($request->interested_project) > 0){
+                foreach($request->interested_project as $project){
+                    LeadProduct::create([ 
                         'user_id' => $user->id,
                         'customer_id' => $customer->id, 
                         'lead_id' => $lead->id,
-                        'product_id' => $product_id,
-                        'created_by'    => $authUser->id,
+                        'product_id' => $project['product_id'], 
+                        'area_id' => $project['area_id'], 
+                        "product_unit_id" => $project['product_unit_id'],
+                        "product_category_id" => $project['product_category_id'],
+                        "product_sub_category_id" => $project['product_sub_category_id'],
+                        "qty" => $project['qty']
                     ]);
                 }
-            }
+            } 
     
-            
-    
-            UserContact::create([
+            UserDetail::create([
                 'user_id'           => $user->id,
+                'customer_id'       => $customer->id,
+                'company_id'        => $request->company_id,
                 'name'              => $request->name,
-                'office_phone'      => $request->office_phone,
-                'personal_phone'    => $request->personal_phone,
-                'office_email'      => $request->office_email,
-                'personal_email'    => $request->personal_email,
+                'primary_phone'      => $request->primary_phone,
+                'secondary_phone'    => $request->secondary_phone,
+                'primary_email'      => $request->primary_email,
+                'secondary_email'    => $request->secondary_email,
                 'website'           => $request->website,
                 'whatsapp'          => $request->whatsapp,
                 'imo'               => $request->imo,
                 'facebook'          => $request->facebook,
-                'linkedin'          => $request->linkedin,
-                'created_by'    => $authUser->id,
+                'linkedin'          => $request->linkedin, 
+                "dob" => $request->dob,
+                "gender" => $request->gender,
+                "marital_status" => $request->marital_status,
+                "blood_group" => $request->blood_group,
+                "religion" => $request->religion,
+                "education" => $request->education,
+                "profession" => $request->profession,
+                "relationship_or_role" => $request->relationship_or_role,
+                "is_decision_maker" => true,
             ]);
     
             if(isset($request->permanent_country) || isset($request->permanent_zip_code) ||  isset($request->permanent_address)){

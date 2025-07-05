@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Traits\ActionTrackable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,7 +14,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;  
+    use HasApiTokens, ActionTrackable, HasFactory, Notifiable, SoftDeletes;  
 
     /**
      * The attributes that are mass assignable.
@@ -62,9 +64,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ]; 
 
-    public function userContact()
+    public function userDetails()
     {
-        return $this->hasMany(UserContact::class);
+        return $this->hasMany(UserDetail::class);
     }
 
     public function userAddress()
