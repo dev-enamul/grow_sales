@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Company;
+use App\Traits\ActionTrackable;
 
 class UserDetail extends Model
 {
-    use HasFactory, SoftDeletes; 
+    use HasFactory, SoftDeletes, ActionTrackable; 
     protected $fillable = [
         'uuid',
         'user_id',

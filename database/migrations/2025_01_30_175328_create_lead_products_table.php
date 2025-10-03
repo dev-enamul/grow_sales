@@ -6,10 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+{ 
     public function up(): void
     {
         Schema::create('lead_products', function (Blueprint $table) {
@@ -19,10 +16,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
-            $table->foreignId('product_unit_id')->constrained('product_units')->onDelete('set null');
-            $table->foreignId('area_id')->constrained('areas')->onDelete('set null');
-            $table->foreignId('product_category_id')->constrained('product_categories')->onDelete('set null');
-            $table->foreignId('product_sub_category_id')->constrained('product_sub_categories')->onDelete('set null');
+            $table->foreignId('product_unit_id')->nullable()->constrained('product_units')->onDelete('set null');
+            $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
+            $table->foreignId('product_category_id')->nullable()->constrained('product_categories')->onDelete('set null');
+            $table->foreignId('product_sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
             $table->integer('qty')->default(null);
             
             $table->foreignId('created_by')->nullable()->constrained('users');

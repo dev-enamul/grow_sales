@@ -79,7 +79,6 @@ class LeadController extends Controller
      */
     public function store(LeadStoreRequest $request)
     {
-        return $request;
         DB::beginTransaction();
         try{ 
             if ($request->hasFile('profile_image')) {

@@ -19,10 +19,7 @@ class UserSeeder extends Seeder
             'company_id' => 1, 
             'email' => 'admin@example.com',
             'phone' => '1234567890',
-            'password' => Hash::make('password123'),  
-            'dob' => '1990-01-01',
-            'gender' => 1,   
-            'blood_group' => 1,  
+            'password' => Hash::make('password123'),   
             'created_by' => 1,
             'updated_by' => 1,
         ]);
@@ -32,10 +29,7 @@ class UserSeeder extends Seeder
             'company_id' => 1, 
             'email' => 'john@example.com',
             'phone' => '0987654321',
-            'password' => Hash::make('password123'),  
-            'dob' => '1995-03-10',
-            'gender' => 2,   
-            'blood_group' => 2,
+            'password' => Hash::make('password123'),     
             'created_by' => 1,
             'updated_by' => 1,
         ]);

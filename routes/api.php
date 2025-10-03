@@ -44,7 +44,7 @@ use Illuminate\Support\Facades\Route;
 |
 */ 
 
-Route::post('login', [AuthController::class, 'login'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::post('register', [AuthController::class, 'register']); 
@@ -72,7 +72,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
-    Route::resource('lead-category',LeadCategoryController::class);
+    Route::apiResource('lead-category', LeadCategoryController::class);
     Route::resource('lead',LeadController::class);
     Route::resource('lead-source',LeadSourceController::class);
     Route::resource('customer', CustomerController::class); 
