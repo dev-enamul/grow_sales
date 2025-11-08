@@ -54,6 +54,7 @@ class VerifyController extends Controller
             ProductUnit::create([
                 'name' => $unit['name'],
                 'abbreviation' => $unit['abbreviation'],
+                'applies_to' =>  'property',
                 'company_id' => $company_id,
                 'created_by' => $user_id,
                 'updated_by' => $user_id,
@@ -108,6 +109,7 @@ class VerifyController extends Controller
             CategoryType::create([
                 'name' => $tupe['name'], 
                 'company_id' => $company_id,
+                'applies_to' =>  'property',
                 'created_by' => $user_id,
                 'updated_by' => $user_id,
             ]);
