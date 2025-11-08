@@ -26,6 +26,7 @@ class ProductCategory extends Model
         'ready_date',
         'address',
         'status',
+        'applies_to',
         'created_by',
         'updated_by',
         'deleted_by',

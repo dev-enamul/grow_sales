@@ -8,15 +8,15 @@ use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProductUnitController extends Controller
+class PropertyUnitController extends Controller
 {
     use PaginatorTrait;
     public function index(Request $request)
-    {  
+    {
         $keyword = $request->keyword;
         $selectOnly = $request->boolean('select');
-
         $query = ProductUnit::where('company_id', Auth::user()->company_id)
+            ->where('applies_to','property')
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('name', 'like', '%' . $keyword . '%')
@@ -42,10 +42,10 @@ class ProductUnitController extends Controller
             'name' => 'required|string|max:255',
             'abbreviation' => 'nullable|string|max:10', 
         ]);
-     
         $productUnit = new ProductUnit();
         $productUnit->name = $request->input('name');
-        $productUnit->abbreviation = $request->input('abbreviation');   
+        $productUnit->abbreviation = $request->input('abbreviation'); 
+        $productUnit->applies_to = 'property';  
         $productUnit->save();  
         return success_response($productUnit, 'Product unit created successfully!',201); 
     } 

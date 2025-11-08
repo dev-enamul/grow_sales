@@ -32,6 +32,7 @@ return new class extends Migration
 
             // 5. Status and Tracking
             $table->integer('status')->default(1)->comment("1=Active, 0=UnActive");
+            $table->string('applies_to');
 
             // 6. Audit Fields
             $table->foreignId('created_by')->nullable()->constrained('users');

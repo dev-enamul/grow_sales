@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('name'); 
             $table->boolean('is_active')->default(true); 
+            $table->string('applies_to');
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');

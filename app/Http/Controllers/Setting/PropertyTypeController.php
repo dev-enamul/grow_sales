@@ -6,14 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\CategoryType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-class CategoryTypeController extends Controller
+class PropertyTypeController extends Controller
 {
     public function index(Request $request)
     {
         $keyword = $request->keyword;
         $selectOnly = $request->boolean('select');   
         $query = CategoryType::where('company_id', Auth::user()->company_id) 
+            ->where('applies_to','property')
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where('name', 'like', '%' . $keyword . '%');
             });
@@ -40,16 +40,15 @@ class CategoryTypeController extends Controller
         return success_response($categoryType);
     }
 
-
     public function store(Request $request){
         $request->validate([
             'name' => 'required|string|max:255', 
         ]);  
-
         $categoryType = new CategoryType();
-        $categoryType->name = $request->input('name');   
+        $categoryType->name = $request->input('name'); 
+        $categoryType->applies_to = 'property';   
         $categoryType->save();  
-        return success_response(null, 'Category type created successfully!',201); 
+        return success_response(null, 'Property type created successfully!',201); 
     }  
 
     public function update(Request $request, $uuid)

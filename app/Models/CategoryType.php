@@ -17,6 +17,7 @@ class CategoryType extends Model
         'company_id',
         'name',
         'is_active',
+        'applies_to',
         'created_by',
         'updated_by',
         'deleted_by',

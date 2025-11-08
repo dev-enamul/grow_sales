@@ -12,7 +12,7 @@ use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProductCategoryController extends Controller
+class ProjectController extends Controller
 { 
     use PaginatorTrait; 
     public function index(Request $request)
@@ -23,6 +23,7 @@ class ProductCategoryController extends Controller
         $selectOnly = $request->boolean('select');
 
         $query = ProductCategory::where('company_id', Auth::user()->company_id)
+            ->where('applies_to','property')
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('name', 'like', '%' . $keyword . '%')
@@ -139,6 +140,7 @@ class ProductCategoryController extends Controller
         $category->ready_date = $request->ready_date;
         $category->address = $request->address;
         $category->status = 1;
+        $category->applies_to = 'property';
 
         // ✅ Default category_type_id যদি null হয়
         $category_type_id = $request->category_type_id;

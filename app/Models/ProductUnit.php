@@ -14,11 +14,13 @@ class ProductUnit extends Model
     use HasFactory, SoftDeletes,FindByUuidTrait,ActionTrackable;  
     protected $fillable = [
         'uuid',
-        'name',  
-        'abbreviation', 
-        'company_id', 
-        'created_by', 
-        'updated_by', 
+        'name',
+        'abbreviation',
+        'company_id',
+        'applies_to',
+        'is_active',
+        'created_by',
+        'updated_by',
         'deleted_by'
     ]; 
 

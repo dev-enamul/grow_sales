@@ -27,8 +27,6 @@ class FollowupStoreRequest extends FormRequest
             'purchase_probability' => 'nullable|integer|between:0,100', 
             'price' => 'nullable|numeric|min:0', 
             'next_followup_date' => 'nullable|date|after_or_equal:today',  
-            'product_ids' => 'nullable|array',  
-            'product_ids.*' => 'integer|exists:products,id', 
             'notes' => 'nullable|string|max:1000',
         ];
     }
