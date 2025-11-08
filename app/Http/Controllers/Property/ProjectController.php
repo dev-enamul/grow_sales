@@ -1,5 +1,5 @@
 <?php 
-namespace App\Http\Controllers\Product;
+namespace App\Http\Controllers\Property;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\ProductCategoryRequest;
