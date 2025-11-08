@@ -31,6 +31,7 @@ class Product extends Model
         'qty_in_stock',
         'floor',
         'status',
+        'applies_to',
         'created_by',
         'updated_by',
         'deleted_by',

@@ -35,7 +35,8 @@ return new class extends Migration
         $table->integer('floor')->nullable();
 
         $table->unsignedTinyInteger('status')->default(0)->comment('0 = Unsold, 1 = Sold, 2 = Booked, 3 = Damaged, 4 = Returned');
-
+        $table->string('applies_to');
+        
         $table->foreignId('created_by')->nullable()->constrained('users');
         $table->foreignId('updated_by')->nullable()->constrained('users');
         $table->foreignId('deleted_by')->nullable()->constrained('users');

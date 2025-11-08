@@ -22,6 +22,7 @@ class UnitController extends Controller
         $keyword = $request->keyword;
 
         $query = Product::where('company_id', Auth::user()->company_id)
+            ->where('applies_to','property')
             ->with([
                 'category:id,name,measurment_unit_id',
                 'subCategory:id,name',
@@ -159,6 +160,7 @@ class UnitController extends Controller
         $product->qty_in_stock = $request->qty_in_stock??0;
         $product->floor = $request->floor;
         $product->status = 0; 
+        $product->applies_to = 'property';
         $product->save();
 
         return success_response(null, 'Product created successfully!', 201);
