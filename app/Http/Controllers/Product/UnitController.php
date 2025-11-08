@@ -13,7 +13,7 @@ use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProductController extends Controller
+class UnitController extends Controller
 {
     use PaginatorTrait; 
     public function index(Request $request)

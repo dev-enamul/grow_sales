@@ -26,6 +26,7 @@ class ProductSubCategory extends Model
         'quantity',
         'price',
         'vat_setting_id',
+        'applies_to',
         'created_by',
         'updated_by',
         'deleted_by',

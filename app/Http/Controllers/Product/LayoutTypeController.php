@@ -8,7 +8,7 @@ use App\Traits\PaginatorTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProductSubCategoryController extends Controller
+class LayoutTypeController extends Controller
 {
     use PaginatorTrait;
 
@@ -16,13 +16,9 @@ class ProductSubCategoryController extends Controller
     {
         $selectOnly = $request->boolean('select');
         $keyword = $request->keyword;
-
         $query = ProductSubCategory::where('company_id', Auth::user()->company_id)
+            ->where('applies_to','property')
             ->with(['category:id,name,measurment_unit_id', 'productUnit:id,name', 'vatSetting:id,name,vat_percentage']);
-
-        
-
-        // Apply filters
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
@@ -151,6 +147,7 @@ class ProductSubCategoryController extends Controller
             'product_unit_id'  => $request->product_unit_id,
             'category_id'      => $request->category_id,
             'vat_setting_id'   => $request->vat_setting_id, 
+            'applies_to'       => 'property',
         ]);
 
         $sub->save();

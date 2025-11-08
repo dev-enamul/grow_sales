@@ -21,16 +21,15 @@ use App\Http\Controllers\Lead\LeadSourceController;
 use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\Product\ProjectController;
-use App\Http\Controllers\Product\ProductController;
-use App\Http\Controllers\Product\ProductSubCategoryController;
+use App\Http\Controllers\Product\UnitController;
+use App\Http\Controllers\Product\LayoutTypeController;
 use App\Http\Controllers\Setting\PropertyTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
 use App\Http\Controllers\Setting\PropertyUnitController;
 use App\Http\Controllers\Setting\VatSettingController; 
 use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserAddressController;
-use App\Http\Controllers\User\UserContactController;
-use App\Http\Controllers\Visitor\VisitorController; 
+use App\Http\Controllers\User\UserContactController;  
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,8 +61,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('roles',RoleApiController::class);
     Route::get('designations',DesignationApiController::class); 
     Route::resource('project', ProjectController::class); 
-    Route::resource('product-subcategory', ProductSubCategoryController::class);
-    Route::resource('product', ProductController::class);
+    Route::resource('layout-type', LayoutTypeController::class);
+    Route::resource('unit', UnitController::class);
      
     // Employee
     Route::resource('employee', EmployeeController::class);

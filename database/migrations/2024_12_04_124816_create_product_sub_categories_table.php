@@ -41,6 +41,8 @@ return new class extends Migration
                   ->constrained('vat_settings')
                   ->onDelete('set null');
 
+            $table->string('applies_to');
+
             $table->foreignId('created_by')
                   ->nullable()
                   ->constrained('users')
