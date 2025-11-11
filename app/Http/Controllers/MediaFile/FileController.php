@@ -100,7 +100,7 @@ class FileController extends Controller
 
     protected function applyFileFilters(Builder $query, Request $request): Builder
     {
-        return $query
+        $query = $query
             ->when($request->filled('folder_id'), fn (Builder $builder) => $builder->where('folder_id', $request->integer('folder_id')))
             ->when($request->filled('search'), function (Builder $builder) use ($request) {
                 $search = $request->input('search');
@@ -110,6 +110,53 @@ class FileController extends Controller
                         ->orWhere('mime_type', 'like', "%{$search}%");
                 });
             });
+
+        if ($request->filled('type')) {
+            $type = trim(strtolower($request->input('type')));
+            $query->where(function (Builder $builder) use ($type) {
+                $mimeGroups = [
+                    'images' => ['image/'],
+                    'documents' => ['application/pdf', 'text/', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                    'audio' => ['audio/'],
+                    'video' => ['video/'],
+                    'archives' => ['application/zip', 'application/x-7z-compressed', 'application/x-rar-compressed', 'application/x-tar'],
+                ];
+
+                if (isset($mimeGroups[$type])) {
+                    $builder->where(function (Builder $inner) use ($mimeGroups, $type) {
+                        foreach ($mimeGroups[$type] as $mime) {
+                            $inner->orWhere('mime_type', 'like', "{$mime}%");
+                        }
+                    });
+                } elseif ($type === 'other') {
+                    $builder->whereNot(function (Builder $inner) use ($mimeGroups) {
+                        foreach ($mimeGroups as $group) {
+                            foreach ($group as $mime) {
+                                $inner->orWhere('mime_type', 'like', "{$mime}%");
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        if ($request->filled('sort_by')) {
+            $sortBy = $request->input('sort_by');
+            $sortDirection = strtolower($request->input('sort_direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+            $sortable = [
+                'name' => 'original_name',
+                'size' => 'size',
+                'date' => 'updated_at',
+                'type' => 'mime_type',
+            ];
+
+            if (isset($sortable[$sortBy])) {
+                $query->orderBy($sortable[$sortBy], $sortDirection);
+            }
+        }
+
+        return $query;
     }
 
     protected function validateUpload(StoreFileRequest $request): array
