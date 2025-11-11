@@ -25,6 +25,7 @@ class ProductCategory extends Model
         'progress_stage',
         'ready_date',
         'address',
+        'image',
         'status',
         'applies_to',
         'created_by',

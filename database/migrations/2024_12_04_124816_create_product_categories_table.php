@@ -26,9 +26,10 @@ return new class extends Migration
             $table->string('name'); 
             $table->string('slug');
             $table->text('description')->nullable(); 
-            $table->enum('progress_stage', ['Ready', 'Ongoing', 'Upcomming', 'Complete']);
+            $table->enum('progress_stage', ['Ready', 'Ongoing', 'Upcomming', 'Complete'])->default('Ready');
             $table->date('ready_date')->nullable();
             $table->text('address')->nullable();  
+            $table->string('image')->nullable();
 
             // 5. Status and Tracking
             $table->integer('status')->default(1)->comment("1=Active, 0=UnActive");

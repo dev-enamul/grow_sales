@@ -14,13 +14,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, ActionTrackable, HasFactory, Notifiable, SoftDeletes;  
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    use HasApiTokens, ActionTrackable, HasFactory, Notifiable, SoftDeletes;
     protected $fillable = [
         'uuid',
         'company_id',

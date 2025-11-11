@@ -20,9 +20,12 @@ use App\Http\Controllers\Lead\LeadController;
 use App\Http\Controllers\Lead\LeadSourceController;
 use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
+use App\Http\Controllers\MediaFile\FileController;
+use App\Http\Controllers\MediaFile\FolderController;
 use App\Http\Controllers\Property\LayoutTypeController;
 use App\Http\Controllers\Property\ProjectController;
 use App\Http\Controllers\Property\UnitController;
+use App\Http\Controllers\Service\ServiceCategoryController;
 use App\Http\Controllers\Setting\PropertyTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
 use App\Http\Controllers\Setting\PropertyUnitController;
@@ -57,14 +60,24 @@ Route::get('upazilas',UpazilaApiController::class);
 Route::get('unions',UnionApiController::class);  
  
 Route::get('company-verify/{id}',[VerifyController::class,'verify']);
+Route::get('files/{file}/download', [FileController::class, 'download'])->name('files.download');
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('roles',RoleApiController::class);
-    Route::get('designations',DesignationApiController::class); 
+
+    // MediaFile 
+    Route::resource('folder', FolderController::class);
+    Route::resource('files', FileController::class); 
+    
+    // Property
     Route::resource('project', ProjectController::class); 
     Route::resource('layout-type', LayoutTypeController::class);
     Route::resource('unit', UnitController::class);
+
+    // Service
+    Route::resource('service-category', ServiceCategoryController::class);  
      
     // Employee
+    Route::get('roles',RoleApiController::class);
+    Route::get('designations',DesignationApiController::class);
     Route::resource('employee', EmployeeController::class);
     Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
     Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
