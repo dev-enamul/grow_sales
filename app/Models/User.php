@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Models\FileItem;
 use App\Traits\ActionTrackable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -83,6 +84,11 @@ class User extends Authenticatable
     public function employee()
     {
         return $this->hasOne(Employee::class, 'user_id', 'id');
+    }
+
+    public function affiliate()
+    {
+        return $this->hasOne(Affiliate::class, 'user_id', 'id');
     }
 
     public function customer()

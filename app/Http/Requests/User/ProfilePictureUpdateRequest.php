@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Employee;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmployeeUpdateRequest extends FormRequest
+class ProfilePictureUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +22,9 @@ class EmployeeUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'phone' => 'required|string|max:15',
-            'designation_id' => 'required|exists:designations,id',
-            'reporting_id' => 'nullable|exists:users,id',
-            'referred_by' => 'nullable|exists:users,id',
+            'uuid' => 'required|uuid',
+            'profile_image' => 'nullable|exists:files,id',
         ];
     }
 }
+

@@ -25,6 +25,7 @@ return new class extends Migration
         $table->string('slug');
         $table->text('description')->nullable();
         $table->string('code')->nullable();
+        $table->foreignId('image')->nullable()->constrained('files')->onDelete('set null');
 
         $table->decimal('rate', 10, 2)->default(0);
         $table->integer('quantity')->default(0);

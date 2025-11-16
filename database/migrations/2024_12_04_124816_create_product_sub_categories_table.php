@@ -31,10 +31,12 @@ return new class extends Migration
             $table->string('slug');
             $table->string('code')->nullable(); 
             $table->text('description')->nullable();
+            $table->foreignId('image')->nullable()->constrained('files')->onDelete('set null');
+            
 
-            $table->decimal('rate', 15, 2);     
-            $table->integer('quantity');      
-            $table->decimal('price', 15, 2); 
+            $table->decimal('rate', 15, 2)->default(0);     
+            $table->integer('quantity')->default(0);      
+            $table->decimal('price', 15, 2)->default(0); 
 
             $table->foreignId('vat_setting_id')
                   ->nullable()

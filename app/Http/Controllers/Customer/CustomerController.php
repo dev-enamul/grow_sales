@@ -49,7 +49,7 @@ class CustomerController extends Controller
                 "phone" => $user->phone,
                 'email' => $user->email,
                 "marital_status" => $user->marital_status,
-                'dob' => $user->dob,
+                'dob' => formatDate($user->dob),
                 'blood_group' => $user->blood_group,
                 'gender' => $user->gender 
             ]);

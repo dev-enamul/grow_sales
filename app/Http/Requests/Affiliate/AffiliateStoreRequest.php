@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Employee;
+namespace App\Http\Requests\Affiliate;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmployeeUpdateRequest extends FormRequest
+class AffiliateStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,10 +24,11 @@ class EmployeeUpdateRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email',
-            'phone' => 'required|string|max:15',
-            'designation_id' => 'required|exists:designations,id',
+            'phone' => 'required|string|max:25',
+            'profile_image' => 'nullable|exists:files,id',
             'reporting_id' => 'nullable|exists:users,id',
             'referred_by' => 'nullable|exists:users,id',
         ];
     }
 }
+

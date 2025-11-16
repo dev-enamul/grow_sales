@@ -22,6 +22,7 @@ class ProductSubCategory extends Model
         'slug',
         'code',
         'description',
+        'image',
         'rate',
         'quantity',
         'price',

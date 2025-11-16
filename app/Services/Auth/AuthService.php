@@ -1,10 +1,46 @@
 <?php 
 namespace App\Services\Auth;
 
+use App\Mail\PasswordSetupMail;
 use App\Models\Permission;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 
 class AuthService {
+
+    /**
+     * Send password reset email to user
+     * Common function used for both forgot password and initial password setup
+     * 
+     * @param User $user
+     * @param bool $isForgotPassword
+     * @return bool Returns true if email sent successfully, false otherwise
+     */
+    public static function sendPasswordResetEmail(User $user, bool $isForgotPassword = false): bool
+    {
+        try {
+            // Generate password reset token
+            $token = Password::createToken($user);
+            
+            // Get frontend URL from config or env
+            $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000'));
+            $resetUrl = "{$frontendUrl}/reset-password?token={$token}&email=" . urlencode($user->email);
+            
+            // Send email using Mailable
+            Mail::to($user->email, $user->name)->send(new PasswordSetupMail($user, $resetUrl, $token, $isForgotPassword));
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 
     public static function createResponse($user)
     {

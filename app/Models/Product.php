@@ -28,6 +28,7 @@ class Product extends Model
         'quantity',
         'price',
         'vat_setting_id',
+        'image',
         'qty_in_stock',
         'floor',
         'status',

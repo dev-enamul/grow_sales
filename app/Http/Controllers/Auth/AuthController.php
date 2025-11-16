@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Auth;
  
 use App\Auth\Services\RegisterService; 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\PasswordResetRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Company;
 use App\Models\Employee;
@@ -14,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
 {
@@ -92,6 +95,70 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'You have been successfully logged out.'], 200);
+    }
+
+    /**
+     * Send forgot password email
+     * 
+     * @param ForgotPasswordRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function forgotPassword(ForgotPasswordRequest $request)
+    {
+        try {
+            $user = User::where('email', $request->email)
+                ->where('user_type', 'employee')
+                ->first();
+
+            if (!$user) {
+                // Return success even if user not found (security best practice)
+                return success_response(null, 'If the email exists, a password reset link has been sent.');
+            }
+
+            // Check if user is active
+            if (AuthService::isInactiveEmployee($request->email)) {
+                return error_response('Your account is inactive. Please contact administrator.', 403);
+            }
+
+            if (AuthService::isResignedEmployee($request->email)) {
+                return error_response('You have resigned. Please contact administrator.', 403);
+            }
+
+            // Send password reset email using common function
+            AuthService::sendPasswordResetEmail($user, true);
+
+            return success_response(null, 'If the email exists, a password reset link has been sent.');
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Reset password using token from email
+     * Used for both: Initial password setup and Forgot password
+     * 
+     * @param PasswordResetRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function resetPassword(PasswordResetRequest $request)
+    {
+        try {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function (User $user, string $password) {
+                    $user->password = Hash::make($password);
+                    $user->save();
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return success_response(null, 'Password has been reset successfully. You can now login with your new password.');
+            }
+
+            return error_response('Invalid or expired token. Please request a new password reset link.', 400);
+        } catch (\Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
     }
   
 

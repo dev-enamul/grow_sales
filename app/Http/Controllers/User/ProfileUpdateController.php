@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\ProfilePictureUpdateRequest;
+use App\Models\FileItem;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserContact;
@@ -12,42 +14,37 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileUpdateController extends Controller
 {
-    public function profile_picture(Request $request)
+    public function profile_picture(ProfilePictureUpdateRequest $request)
     {
-        $request->validate([
-            'uuid' => 'required|uuid',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-    
         try {
-            $uuid = $request->uuid;
-            $authUser = Auth::user(); 
-            $user = User::where('uuid', $uuid)
+            $authUser = Auth::user();
+            $user = User::where('uuid', $request->uuid)
                         ->where('company_id', $authUser->company_id)
-                        ->first();   
+                        ->first();
 
             if (!$user) {
                 return error_response(null, 404, "User not found");
             }
-     
-            if ($request->hasFile('image')) {
-                $image = $request->file('image'); 
-                $imagePath = $image->store('profile_images', 'public'); 
-                $fullImageUrl = asset('storage/' . $imagePath); 
-                $user->update([
-                    'profile_image' => $fullImageUrl,
-                ]);
-            } else { 
-                $user->update([
-                    'profile_image' => null,
-                ]);
-            } 
-            return success_response($fullImageUrl, "Profile picture updated successfully");
+
+            $this->updateProfileImage($user, $request->profile_image);
+
+            return success_response([
+                'profile_image' => $user->profile_image,
+                'profile_image_url' => getFileUrl($user->profile_image),
+            ], "Profile picture updated successfully");
     
         } catch (Exception $e) { 
             return error_response($e->getMessage(), 500);
         }
     }
+
+    private function updateProfileImage(User $user, $fileId = null): void
+    {
+        $user->profile_image = $fileId;
+        $user->updated_by = Auth::id();
+        $user->save();
+    }
+
     
 
 

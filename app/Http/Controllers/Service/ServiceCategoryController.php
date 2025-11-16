@@ -26,7 +26,7 @@ class ServiceCategoryController extends Controller
                         ->orWhere('address', 'like', '%' . $keyword . '%');
                 });
             }) 
-            ->select('id','uuid', 'name','slug', 'description', 'status')
+            ->select('id','uuid', 'name','slug', 'description', 'status', 'image')
             ->with(['area:id,name']);
         
         if ($selectOnly) {
@@ -52,7 +52,9 @@ class ServiceCategoryController extends Controller
                 'name' => $item->name,  
                 'slug' => $item->slug, 
                 'status' => $item->status,   
-                'description' => $item->description, 
+                'description' => $item->description,
+                'image' => $item->image,
+                'image_url' => getFileUrl($item->image),
             ];
         });
         return success_response($paginated);
@@ -78,12 +80,14 @@ class ServiceCategoryController extends Controller
             'name' => $category->name,
             'slug' => $category->slug,
             'description' => $category->description,   
-            'status' => $category->status,    
+            'status' => $category->status,
+            'image' => $category->image,
+            'image_url' => getFileUrl($category->image),
             'created_by' => optional($category->creator)->name,
             'updated_by' => optional($category->updater)->name,
             'deleted_by' => optional($category->deleter)->name,
-            'created_at' => $category->created_at,
-            'updated_at' => $category->updated_at,
+            'created_at' => formatDate($category->created_at),
+            'updated_at' => formatDate($category->updated_at),
         ]);
     }
 
@@ -93,6 +97,7 @@ class ServiceCategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|exists:files,id',
         ]);
 
         $category = new ProductCategory();
@@ -100,6 +105,7 @@ class ServiceCategoryController extends Controller
         $category->name = $request->name;
         $category->slug = getSlug($category,$request->name);
         $category->description = $request->description;
+        $category->image = $request->image;
         $category->progress_stage = 'Ready';  
         $category->status = 1;
         $category->applies_to = 'service';  
@@ -116,6 +122,7 @@ class ServiceCategoryController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'nullable|in:0,1',
+            'image' => 'nullable|exists:files,id',
         ]);
 
         $category = ProductCategory::where('uuid', $uuid)
@@ -131,6 +138,9 @@ class ServiceCategoryController extends Controller
         $category->slug = getSlug(new ProductCategory(), $request->name);
         $category->description = $request->description;
         $category->status = $request->status ?? $category->status;
+        if ($request->has('image')) {
+            $category->image = $request->image;
+        }
         $category->updated_by = Auth::id();
         $category->save();
 

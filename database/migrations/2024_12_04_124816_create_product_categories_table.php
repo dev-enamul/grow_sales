@@ -29,7 +29,7 @@ return new class extends Migration
             $table->enum('progress_stage', ['Ready', 'Ongoing', 'Upcomming', 'Complete'])->default('Ready');
             $table->date('ready_date')->nullable();
             $table->text('address')->nullable();  
-            $table->string('image')->nullable();
+            $table->foreignId('image')->nullable()->constrained('files')->onDelete('set null');
 
             // 5. Status and Tracking
             $table->integer('status')->default(1)->comment("1=Active, 0=UnActive");

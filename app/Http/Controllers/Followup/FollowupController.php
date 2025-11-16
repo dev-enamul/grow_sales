@@ -24,7 +24,7 @@ class FollowupController extends Controller
             $data = $followup->map(function($data){
                 return  [
                     'customer_name' => $data->user->name??"",
-                    'date' => $data->created_at, 
+                    'date' => formatDate($data->created_at), 
                     'followup_by' => $data->createdBy->name,
                     'category' => $data->leadCategory->title,
                     'notes' => $data->notes,

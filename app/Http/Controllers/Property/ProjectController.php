@@ -63,7 +63,7 @@ class ProjectController extends Controller
                 'uuid' => $item->uuid,
                 'name' => $item->name,
                 'progress_stage' => $item->progress_stage,
-                'ready_date' => $item->ready_date,
+                'ready_date' => formatDate($item->ready_date),
                 'status' => $item->status,
                 'area_name' => optional($item->area)->name,
                 'category_type_id' => $item->category_type_id,
@@ -102,7 +102,7 @@ class ProjectController extends Controller
             'slug' => $category->slug,
             'description' => $category->description,
             'progress_stage' => $category->progress_stage,
-            'ready_date' => $category->ready_date,
+            'ready_date' => formatDate($category->ready_date),
             'address' => $category->address,
             'status' => $category->status,
             'category_type' => optional($category->categoryType)->name,
@@ -112,8 +112,8 @@ class ProjectController extends Controller
             'created_by' => optional($category->creator)->name,
             'updated_by' => optional($category->updater)->name,
             'deleted_by' => optional($category->deleter)->name,
-            'created_at' => $category->created_at,
-            'updated_at' => $category->updated_at,
+            'created_at' => formatDate($category->created_at),
+            'updated_at' => formatDate($category->updated_at),
         ]);
     }
 

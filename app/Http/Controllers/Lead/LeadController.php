@@ -55,8 +55,8 @@ class LeadController extends Controller
                     'name' => $lead->user_name,
                     'email' => $lead->user_email,
                     'phone' => $lead->user_phone,
-                    'next_followup_date' => $lead->next_followup_date,
-                    'last_contacted_at' => $lead->last_contacted_at,
+                    'next_followup_date' => formatDate($lead->next_followup_date),
+                    'last_contacted_at' => formatDate($lead->last_contacted_at),
                     'producs' => $products,
                 ];
             })->values()->all();   

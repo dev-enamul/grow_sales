@@ -50,6 +50,7 @@ class EmployeeRepository
                 'uuid' => $user->uuid,
                 'employee_id' => $user->employee->employee_id ?? null,
                 'profile_image' => $user->profile_image,
+                'profile_image_url' => getFileUrl($user->profile_image),
                 'name' => $user->name,
                 'phone' => $user->phone,
                 'email' => $user->email,

@@ -15,6 +15,9 @@ class DesignationLog extends Model
         'designation_id',
         'start_date',
         'end_date',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function designation()

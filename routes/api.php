@@ -1,4 +1,5 @@
 <?php 
+use App\Http\Controllers\Affiliate\AffiliateController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\VerifyController;
 use App\Http\Controllers\Common\CompanyCategoryApiController;
@@ -26,6 +27,8 @@ use App\Http\Controllers\Property\LayoutTypeController;
 use App\Http\Controllers\Property\ProjectController;
 use App\Http\Controllers\Property\UnitController;
 use App\Http\Controllers\Service\ServiceCategoryController;
+use App\Http\Controllers\Service\ServiceSubCategoryController;
+use App\Http\Controllers\Service\ServiceController;
 use App\Http\Controllers\Setting\PropertyTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
 use App\Http\Controllers\Setting\PropertyUnitController;
@@ -48,6 +51,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.forgot');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
 
 Route::post('register', [AuthController::class, 'register']); 
 Route::get('company-categories',CompanyCategoryApiController::class);
@@ -73,15 +78,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('unit', UnitController::class);
 
     // Service
-    Route::resource('service-category', ServiceCategoryController::class);  
+    Route::resource('service-category', ServiceCategoryController::class);
+    Route::resource('service-sub-category', ServiceSubCategoryController::class);
+    Route::resource('service', ServiceController::class);  
      
     // Employee
     Route::get('roles',RoleApiController::class);
     Route::get('designations',DesignationApiController::class);
     Route::resource('employee', EmployeeController::class);
-    Route::post('existing-employee-data',[EmployeeController::class,'existingEmployeeData']);
-    Route::post('employee-designation-update',[EmployeeEditController::class,'updateDesignation']);
-    Route::post('employee-reporting-update',[EmployeeEditController::class,'updateReporting']); 
+    Route::resource('affiliate', AffiliateController::class);
+    
+    Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation']);
+    Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting']); 
     
     // Lead 
     Route::apiResource('lead-category', LeadCategoryController::class);
