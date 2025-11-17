@@ -25,6 +25,8 @@ class Lead extends Model
         'last_contacted_at',
         'assigned_to',
         'lead_source_id',
+        'campaign_id',
+        'notes',
         'status',
         'created_by',
         'updated_by',
@@ -56,6 +58,11 @@ class Lead extends Model
     public function leadSource()
     {
         return $this->belongsTo(LeadSource::class);
+    }
+
+    public function campaign()
+    {
+        return $this->belongsTo(Campaign::class);
     }
  
     public function assignedTo()

@@ -20,14 +20,16 @@ return new class extends Migration
             
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->foreignId('lead_categorie_id')->constrained('lead_categories');
+            $table->foreignId('lead_categorie_id')->nullable()->constrained('lead_categories')->onDelete('set null');
             $table->string('priority')->nullable()->default(null);
             $table->decimal('price')->nullable()->default(null);
             $table->date('next_followup_date')->nullable();
             $table->timestamp('last_contacted_at')->nullable();
             
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null'); 
-             $table->foreignId('lead_source_id')->nullable()->constrained('lead_sources')->onDelete('set null'); 
+            $table->foreignId('lead_source_id')->nullable()->constrained('lead_sources')->onDelete('set null');
+            $table->foreignId('campaign_id')->nullable()->constrained('campaigns')->onDelete('set null');
+            $table->text('notes')->nullable();
             $table->enum('status', ['Active', 'Rejected', 'Salsed', 'Waiting','Returned'])->default('Active');
             
             $table->foreignId('created_by')->nullable()->constrained('users');

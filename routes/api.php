@@ -2,6 +2,7 @@
 use App\Http\Controllers\Affiliate\AffiliateController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\VerifyController;
+use App\Http\Controllers\Campaign\CampaignController;
 use App\Http\Controllers\Common\CompanyCategoryApiController;
 use App\Http\Controllers\Common\CountryApiController;
 use App\Http\Controllers\Common\DesignationApiController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Common\RoleApiController;
 use App\Http\Controllers\Common\UnionApiController;
 use App\Http\Controllers\Common\UpazilaApiController;
 use App\Http\Controllers\Customer\CustomerController;
+use App\Http\Controllers\Employee\DesignationController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
 use App\Http\Controllers\Followup\FollowupController;
@@ -82,30 +84,32 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('service-sub-category', ServiceSubCategoryController::class);
     Route::resource('service', ServiceController::class);  
      
-    // Employee
-    Route::get('roles',RoleApiController::class);
-    Route::get('designations',DesignationApiController::class);
+    // Employee  
+    Route::resource('designation', DesignationController::class);
     Route::resource('employee', EmployeeController::class);
-    Route::resource('affiliate', AffiliateController::class);
-    
     Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation']);
     Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting']); 
+
+    // Affiliate 
+    Route::resource('affiliate', AffiliateController::class);
     
     // Lead 
+    Route::resource('campaign', CampaignController::class);
     Route::apiResource('lead-category', LeadCategoryController::class);
-    Route::resource('lead',LeadController::class);
     Route::resource('lead-source',LeadSourceController::class);
-    Route::resource('customer', CustomerController::class); 
-    Route::get('customer-personal-info',[CustomerController::class,'show']);
+    Route::resource('lead',LeadController::class);
+    Route::post('lead-interested', [LeadController::class, 'interested']);
     Route::post('lead-assign-to',LeadAssignController::class);
+
+    Route::resource('customer', CustomerController::class);
+    Route::get('customer-personal-info',[CustomerController::class,'show']); 
     
     // Follwup 
     Route::resource('followup',FollowupController::class);
 
     // User common 
     Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);
-    Route::post('bio-update',[ProfileUpdateController::class,'bio']);
-    // address 
+    Route::post('bio-update',[ProfileUpdateController::class,'bio']); 
     Route::post('address-update',[UserAddressController::class,'update']);
     Route::get('address/{uuid}',[UserAddressController::class,'show']);
     // contact   
@@ -133,6 +137,8 @@ Route::get('religions',[EnamController::class,'religion']);
 Route::get('statuses',[EnamController::class,'status']);
 Route::get('educations',[EnamController::class,'education']);
 Route::get('professions',[EnamController::class,'profession']);
+Route::get('campaign-types',[EnamController::class,'campaignType']);
+Route::get('channels',[EnamController::class,'channel']);
 
 
  

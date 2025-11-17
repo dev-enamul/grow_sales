@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActionTrackable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 
 class Designation extends Model
 {
-    use HasFactory, SoftDeletes; 
+    use HasFactory, SoftDeletes, ActionTrackable; 
     protected $table = 'designations'; 
     protected $fillable = [
         'company_id',

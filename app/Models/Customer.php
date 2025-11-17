@@ -14,7 +14,7 @@ class Customer extends Model
     protected $fillable = [
         'user_id',
         'company_id',
-        'lead_source_id',
+        'campaign_id',
         'customer_id',
         'referred_by',
         'total_sales',
@@ -49,9 +49,9 @@ class Customer extends Model
         return $this->belongsTo(User::class);
     }  
 
-    public function leadSource()
+    public function campaign()
     {
-        return $this->belongsTo(LeadSource::class);
+        return $this->belongsTo(Campaign::class);
     }  
 
     public function referredBy()

@@ -31,7 +31,7 @@ return new class extends Migration
         $table->integer('quantity')->default(0);
         $table->decimal('price', 10, 2)->default(0);
 
-        $table->foreignId('vat_setting_id')->nullable()->constrained('vat_settings');
+        $table->foreignId('vat_id')->nullable()->constrained('vat_settings');
         $table->integer('qty_in_stock')->nullable();
         $table->integer('floor')->nullable();
 

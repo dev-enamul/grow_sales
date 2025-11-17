@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('profession', 45)->nullable();
             $table->string('relationship_or_role')->nullable()->comment("Customer/Father/Mother/Relative/OfficeSomeone");
             $table->boolean('is_decision_maker')->default(false);
+            $table->date('avalable_time')->nullable();
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -50,6 +51,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_contacts');
+        Schema::dropIfExists('user_details');
     }
 };

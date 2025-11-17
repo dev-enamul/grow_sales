@@ -24,4 +24,9 @@ class DesignationLog extends Model
     {
         return $this->belongsTo(Designation::class, 'designation_id', 'id');
     }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
 }

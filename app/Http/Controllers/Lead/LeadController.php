@@ -19,9 +19,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\PaginatorTrait;
 
 class LeadController extends Controller
 {
+    use PaginatorTrait;
     /**
      * Display a listing of the resource.
      */
@@ -30,70 +32,102 @@ class LeadController extends Controller
         try {
             $category = $request->category_id;
             $status = $request->status ?? "Active";
-            
-            $query = Lead::query()
-                ->leftJoin('users', 'leads.user_id', '=', 'users.id')
-                ->leftJoin('lead_products', 'leads.id', '=', 'lead_products.lead_id')
-                ->leftJoin('products', 'lead_products.product_id', '=', 'products.id')
-                ->select('leads.uuid as lead_id', 'leads.next_followup_date', 'leads.last_contacted_at','users.uuid as customer_uuid', 
-                         'users.name as user_name', 'users.email as user_email', 'users.phone as user_phone', 
-                         'products.id as product_id', 'products.name as product_name')
-                ->where('leads.status', $status);
-            if ($category) {
-                $query->where('leads.lead_categorie_id', $category);
-            } 
-            $datas = $query
-                ->orderByRaw('next_followup_date IS NULL DESC, next_followup_date DESC')
-                ->get(); 
+            $selectOnly = $request->boolean('select');
 
-            $datas = $datas->groupBy('lead_id')->map(function ($leads) {
-                $lead = $leads->first(); 
-                $products = $lead->products->pluck('name');   
+            // Base query with relations
+            $query = Lead::query()
+                ->with([
+                    'user:id,uuid,name,email,phone',
+                    'products' => function ($q) {
+                        $q->select('products.id', 'products.name');
+                    }
+                ])
+                ->where('status', $status)
+                ->when($category, function ($q) use ($category) {
+                    $q->where('lead_categorie_id', $category);
+                });
+
+            // Select only minimal set for dropdowns
+            if ($selectOnly) {
+                $items = $query
+                    ->select('id', 'uuid', 'user_id')
+                    ->latest()
+                    ->take(10)
+                    ->get()
+                    ->map(function ($lead) {
+                        return [
+                            'id' => $lead->id,
+                            'name' => optional($lead->user)->name,
+                        ];
+                    });
+                return success_response($items);
+            }
+
+            // Sorting: next_followup_date (nulls last), then latest
+            $query->orderByRaw('next_followup_date IS NULL DESC, next_followup_date DESC');
+
+            // Paginate
+            $paginated = $this->paginateQuery($query, $request);
+
+            // Map response
+            $paginated['data'] = collect($paginated['data'])->map(function ($lead) {
                 return [
-                    'uuid' => $lead->lead_id,
-                    'customer_uuid' => $lead->customer_uuid,
-                    'name' => $lead->user_name,
-                    'email' => $lead->user_email,
-                    'phone' => $lead->user_phone,
+                    'uuid' => $lead->uuid,
+                    'customer_uuid' => optional($lead->user)->uuid,
+                    'name' => optional($lead->user)->name,
+                    'email' => optional($lead->user)->email,
+                    'phone' => optional($lead->user)->phone,
                     'next_followup_date' => formatDate($lead->next_followup_date),
                     'last_contacted_at' => formatDate($lead->last_contacted_at),
-                    'producs' => $products,
+                    'products' => collect($lead->products)->pluck('name')->values(),
                 ];
-            })->values()->all();   
-            return success_response($datas);
+            });
+
+            return success_response($paginated);
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);
         }  
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
-    public function store(LeadStoreRequest $request)
+    public function store(Request $request)
     {
         DB::beginTransaction();
-        try{ 
-            if ($request->hasFile('profile_image')) {
-                $image = $request->file('profile_image'); 
-                $imagePath = $image->store('profile_images', 'public'); 
-                $fullImageUrl = asset('storage/' . $imagePath);  
-            } else { 
-                $fullImageUrl = null;
-            }  
+        try{  
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'email' => 'nullable|email|max:255',
+                'gender' => 'nullable|in:male,female,others',
+                'profile_image' => 'nullable',
+                'lead_source_id' => 'nullable|exists:lead_sources,id',
+                'campaign_id' => 'nullable|exists:campaigns,id',
+                'lead_categorie_id' => 'nullable|exists:lead_categories,id',
+                'priority' => 'nullable|string|max:50',
+                'price' => 'nullable|numeric|min:0',
+                'next_followup_date' => 'nullable|date',
+                'assigned_to' => 'nullable|integer|exists:users,id',
+                'relationship_or_role' => 'nullable|string|max:100',
+                'is_decision_maker' => 'nullable|boolean',
+                'religion' => 'nullable|string|max:45',
+                'avalable_time' => 'nullable|date',
+                'notes' => 'nullable|string',
+            ]);
+
+            if (!$request->phone && !$request->email) {
+                return error_response(['phone' => ['Phone or Email is required'], 'email' => ['Phone or Email is required']], 422, 'Validation failed');
+            }
+
+            // Profile image can be a file URL or file_id; store as-is for now
+            $fullImageUrl = $request->profile_image ?: null;
             $authUser = Auth::user();
     
-            $user = User::create([ 
+            $user = User::create([
                 'name' => $request->name,
-                'phone' => $request->primary_phone,
-                'email' => $request->primary_email, 
+                'phone' => $request->phone,
+                'email' => $request->email, 
                 'password' => Hash::make('12345678'),
                 'user_type' => 'customer',
                 'profile_image' =>  $fullImageUrl,
@@ -101,103 +135,49 @@ class LeadController extends Controller
      
             $customer = Customer::create([
                 'user_id' => $user->id,
-                'lead_source_id' => $request->lead_source_id,
                 'referred_by'  => $authUser->id,
             ]);
     
-            $lead_category = LeadCategory::where('status',1)->first(); 
+            $lead_category = $request->lead_categorie_id 
+                ? LeadCategory::where('id', $request->lead_categorie_id)->first()
+                : LeadCategory::where('status',1)->first(); 
             $lead = Lead::create([ 
                 'lead_id' => Lead::generateNextLeadId(),
                 'user_id' => $user->id,
                 'customer_id' => $customer->id,
-                'lead_categorie_id' => $lead_category->id,
+                'lead_categorie_id' => optional($lead_category)->id,
                 'priority' => $request->priority,
                 'price' => $request->price,
                 'last_contacted_at' => now(),
-                'next_followup_date' => Carbon::now()->addDay(10),
+                'next_followup_date' => $request->next_followup_date ?: Carbon::now()->addDay(10),
                 'assigned_to' => $request->assigned_to,
                 'lead_source_id' => $request->lead_source_id,
+                'campaign_id' => $request->campaign_id,
+                'notes' => $request->notes,
             ]); 
     
             Followup::create([ 
                 'user_id' => $user->id,
                 'customer_id' => $customer->id,
                 'lead_id' =>  $lead->id,
-                'lead_categorie_id' =>$lead_category->id,
+                'lead_categorie_id' => optional($lead_category)->id,
                 'notes' => $request->notes, 
             ]);
-    
-            if(isset($request->interested_project) && count($request->interested_project) > 0){
-                foreach($request->interested_project as $project){
-                    LeadProduct::create([ 
-                        'user_id' => $user->id,
-                        'customer_id' => $customer->id, 
-                        'lead_id' => $lead->id,
-                        'product_id' => $project['product_id'], 
-                        'area_id' => $project['area_id'], 
-                        "product_unit_id" => $project['product_unit_id'],
-                        "product_category_id" => $project['product_category_id'],
-                        "product_sub_category_id" => $project['product_sub_category_id'],
-                        "qty" => $project['qty']
-                    ]);
-                }
-            } 
-    
+
             UserDetail::create([
                 'user_id'           => $user->id,
                 'customer_id'       => $customer->id,
                 'company_id'        => $request->company_id,
                 'name'              => $request->name,
-                'primary_phone'      => $request->primary_phone,
-                'secondary_phone'    => $request->secondary_phone,
-                'primary_email'      => $request->primary_email,
-                'secondary_email'    => $request->secondary_email,
-                'website'           => $request->website,
-                'whatsapp'          => $request->whatsapp,
-                'imo'               => $request->imo,
-                'facebook'          => $request->facebook,
-                'linkedin'          => $request->linkedin, 
-                "dob" => $request->dob,
+                'primary_phone'      => $request->phone,
+                'primary_email'      => $request->email,
                 "gender" => $request->gender,
-                "marital_status" => $request->marital_status,
-                "blood_group" => $request->blood_group,
                 "religion" => $request->religion,
-                "education" => $request->education,
-                "profession" => $request->profession,
                 "relationship_or_role" => $request->relationship_or_role,
-                "is_decision_maker" => true,
+                "is_decision_maker" => (bool) ($request->is_decision_maker ?? false),
+                "avalable_time" => $request->avalable_time,
             ]);
-    
-            if(isset($request->permanent_country) || isset($request->permanent_zip_code) ||  isset($request->permanent_address)){
-          
-               UserAddress::create([
-                    'user_id' => $user->id,
-                    'address_type'      => "permanent",
-                    'country'           => $request->permanent_country,
-                    'division'          => $request->permanent_division,
-                    'district'          => $request->permanent_district,
-                    'upazila_or_thana'  => $request->permanent_upazila_or_thana,
-                    "zip_code"          => $request->permanent_zip_code,
-                    'address'           => $request->permanent_address, 
-                    "is_same_present_permanent" => $request->is_same_present_permanent,
-                    'created_by'    => $authUser->id,
-               ]);
-    
-               if(!$request->is_same_present_permanent){  
-                    UserAddress::create([
-                            'user_id' => $user->id,
-                            'address_type'      => "present",
-                            'country'           => $request->present_country,
-                            'division'          => $request->present_division,
-                            'district'          => $request->present_district,
-                            'upazila_or_thana'  => $request->present_upazila_or_thana,
-                            "zip_code"          => $request->present_zip_code,
-                            'address'           => $request->present_address, 
-                            "is_same_present_permanent" => $request->is_same_present_permanent,
-                            'created_by'    => $authUser->id,
-                    ]); 
-                }
-            }
+
             DB::commit();
             return success_response(null, "Lead created successfully");
         }catch(Exception $e){ 
@@ -207,22 +187,64 @@ class LeadController extends Controller
 
     }  
 
-  
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function interested(Request $request)
     {
-        //
-    }
+        $request->validate([
+            'lead_uuid' => 'required|uuid',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|integer|exists:products,id',
+            'products.*.area_id' => 'nullable|integer|exists:areas,id',
+            'products.*.product_unit_id' => 'nullable|integer|exists:product_units,id',
+            'products.*.product_category_id' => 'nullable|integer|exists:product_categories,id',
+            'products.*.product_sub_category_id' => 'nullable|integer|exists:product_sub_categories,id',
+            'products.*.qty' => 'required|integer|min:1',
+        ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+        DB::beginTransaction();
+        try {
+            $lead = Lead::where('uuid', $request->lead_uuid)->first();
+            if (!$lead) {
+                return error_response('Lead not found', 404);
+            }
+
+            $currentProductIds = LeadProduct::where('lead_id', $lead->id)
+                ->pluck('product_id')
+                ->toArray();
+
+            $incomingProducts = collect($request->products);
+            $incomingProductIds = $incomingProducts->pluck('product_id')->toArray();
+
+            // Remove products not in the incoming list
+            $productIdsToRemove = array_diff($currentProductIds, $incomingProductIds);
+            if (!empty($productIdsToRemove)) {
+                LeadProduct::where('lead_id', $lead->id)
+                    ->whereIn('product_id', $productIdsToRemove)
+                    ->delete();
+            }
+
+            // Upsert incoming products
+            foreach ($incomingProducts as $p) {
+                LeadProduct::updateOrCreate(
+                    ['lead_id' => $lead->id, 'product_id' => $p['product_id']],
+                    [
+                        'user_id' => $lead->user_id,
+                        'customer_id' => $lead->customer_id,
+                        'area_id' => $p['area_id'] ?? null,
+                        'product_unit_id' => $p['product_unit_id'] ?? null,
+                        'product_category_id' => $p['product_category_id'] ?? null,
+                        'product_sub_category_id' => $p['product_sub_category_id'] ?? null,
+                        'qty' => $p['qty'] ?? 1,
+                    ]
+                );
+            }
+
+            DB::commit();
+            return success_response(null, 'Interested products updated successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return error_response($e->getMessage(), 500);
+        }
     }
 
     /**
