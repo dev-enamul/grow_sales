@@ -26,11 +26,27 @@ class ProductSubCategory extends Model
         'rate',
         'quantity',
         'price',
+        'other_price',
+        'discount',
         'vat_setting_id',
+        'vat_rate',
+        'vat_amount',
+        'sell_price',
         'applies_to',
         'created_by',
         'updated_by',
         'deleted_by',
+    ];
+
+    protected $casts = [
+        'rate' => 'decimal:2',
+        'quantity' => 'integer',
+        'price' => 'decimal:2',
+        'other_price' => 'decimal:2',
+        'discount' => 'float',
+        'vat_rate' => 'float',
+        'vat_amount' => 'decimal:2',
+        'sell_price' => 'decimal:2',
     ];  
 
     public function company()

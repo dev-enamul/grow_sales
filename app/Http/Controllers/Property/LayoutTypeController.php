@@ -76,7 +76,22 @@ class LayoutTypeController extends Controller
 
         // Dropdown option
         if ($selectOnly) {
-            $list = $query->select('id', 'name')->latest()->limit(10)->get();
+            $list = $query->select('id', 'uuid', 'name', 'price', 'rate', 'quantity', 'other_price', 'discount', 'vat_setting_id', 'vat_amount', 'sell_price', 'product_unit_id')->latest()->limit(10)->get()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'uuid' => $item->uuid,
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'rate' => $item->rate,
+                    'quantity' => $item->quantity,
+                    'other_price' => $item->other_price ?? 0,
+                    'discount' => $item->discount ?? 0,
+                    'vat_setting_id' => $item->vat_setting_id,
+                    'vat_amount' => $item->vat_amount ?? 0,
+                    'sell_price' => $item->sell_price ?? 0,
+                    'product_unit_id' => $item->product_unit_id,
+                ];
+            });
             return success_response($list);
         }
 
@@ -106,6 +121,10 @@ class LayoutTypeController extends Controller
                 'quantity'     => $item->quantity,
                 'measurment_unit' => $item?->category?->measurmentUnit?->name??"",
                 'total_price'  => $item->price,
+                'other_price'  => $item->other_price ?? 0,
+                'discount'     => $item->discount ?? 0,
+                'vat_amount'   => $item->vat_amount ?? 0,
+                'sell_price'   => $item->sell_price ?? 0,
                 'category'     => optional($item->category)->name,
                 'vat'          => (@$item->vatSetting->vat_percentage ?? 0) . "%" ,
                 'vat_setting_id' => $item->vat_setting_id,
@@ -131,9 +150,13 @@ class LayoutTypeController extends Controller
             'rate'              => 'required|numeric|min:0',
             'quantity'          => 'required|integer|min:1',
             'price'             => 'required|numeric|min:0',
+            'other_price'       => 'nullable|numeric|min:0',
+            'discount'          => 'nullable|numeric|min:0',
             'product_unit_id'   => 'nullable|exists:product_units,id',
             'category_id'       => 'nullable|exists:product_categories,id',
             'vat_setting_id'    => 'nullable|exists:vat_settings,id',
+            'vat_amount'        => 'nullable|numeric|min:0',
+            'sell_price'        => 'nullable|numeric|min:0',
         ]);
 
         $sub = new ProductSubCategory([ 
@@ -141,18 +164,53 @@ class LayoutTypeController extends Controller
             'slug'             => getSlug(new ProductSubCategory(),$request->name),
             'code'             => $request->code,
             'description'      => $request->description,
-            'rate'       => $request->rate,
+            'rate'             => $request->rate,
             'quantity'         => $request->quantity,
-            'price'      => $request->price,
+            'price'            => $request->price,
+            'other_price'      => $request->other_price ?? 0,
+            'discount'         => $request->discount ?? 0,
             'product_unit_id'  => $request->product_unit_id,
             'category_id'      => $request->category_id,
-            'vat_setting_id'   => $request->vat_setting_id, 
+            'vat_setting_id'   => $request->vat_setting_id,
+            'vat_amount'       => $request->vat_amount ?? 0,
+            'sell_price'       => $request->sell_price ?? 0,
             'applies_to'       => 'property',
         ]);
 
         $sub->save();
 
         return success_response(null, 'Sub-category created successfully!', 201);
+    }
+
+    public function show($uuid)
+    {
+        $layoutType = ProductSubCategory::where('uuid', $uuid)
+            ->where('company_id', Auth::user()->company_id)
+            ->where('applies_to', 'property')
+            ->with(['category:id,name', 'productUnit:id,name', 'vatSetting:id,name,vat_percentage'])
+            ->first();
+
+        if (!$layoutType) {
+            return error_response('Layout type not found', 404);
+        }
+
+        return success_response([
+            'id' => $layoutType->id,
+            'uuid' => $layoutType->uuid,
+            'name' => $layoutType->name,
+            'code' => $layoutType->code,
+            'description' => $layoutType->description,
+            'rate' => $layoutType->rate,
+            'quantity' => $layoutType->quantity,
+            'price' => $layoutType->price,
+            'other_price' => $layoutType->other_price ?? 0,
+            'discount' => $layoutType->discount ?? 0,
+            'vat_setting_id' => $layoutType->vat_setting_id,
+            'vat_amount' => $layoutType->vat_amount ?? 0,
+            'sell_price' => $layoutType->sell_price ?? 0,
+            'category_id' => $layoutType->category_id,
+            'product_unit_id' => $layoutType->product_unit_id,
+        ]);
     } 
 
     public function update(Request $request, $uuid)
@@ -161,12 +219,16 @@ class LayoutTypeController extends Controller
             'name'             => 'required|string|max:255', 
             'code'             => 'nullable|string|max:100',
             'description'      => 'nullable|string',
-            'rate'              => 'required|numeric|min:0',
+            'rate'             => 'required|numeric|min:0',
             'quantity'         => 'required|integer|min:1',
-            'price'             => 'required|numeric|min:1',
+            'price'            => 'required|numeric|min:0',
+            'other_price'      => 'nullable|numeric|min:0',
+            'discount'         => 'nullable|numeric|min:0',
             'product_unit_id'  => 'nullable|exists:product_units,id',
             'category_id'      => 'nullable|exists:product_categories,id',
             'vat_setting_id'   => 'nullable|exists:vat_settings,id',
+            'vat_amount'       => 'nullable|numeric|min:0',
+            'sell_price'       => 'nullable|numeric|min:0',
         ]);
 
         $sub = ProductSubCategory::where('uuid', $uuid)
@@ -181,12 +243,16 @@ class LayoutTypeController extends Controller
             'slug'             => getSlug(new ProductSubCategory(), $request->name),
             'code'             => $request->code,
             'description'      => $request->description,
-            'rate'       => $request->rate,
+            'rate'             => $request->rate,
             'quantity'         => $request->quantity,
-            'price'      => $request->price,
+            'price'            => $request->price,
+            'other_price'      => $request->other_price ?? 0,
+            'discount'         => $request->discount ?? 0,
             'product_unit_id'  => $request->product_unit_id,
             'category_id'      => $request->category_id,
-            'vat_setting_id'   => $request->vat_setting_id, 
+            'vat_setting_id'   => $request->vat_setting_id,
+            'vat_amount'       => $request->vat_amount ?? 0,
+            'sell_price'       => $request->sell_price ?? 0,
         ]);
 
         $sub->save();

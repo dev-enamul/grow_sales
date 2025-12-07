@@ -27,7 +27,10 @@ return new class extends Migration
             $table->integer('impressions')->nullable()->default(0);
             $table->integer('target_leads')->nullable();
             $table->integer('target_sales')->nullable();
-            $table->decimal('target_revenue', 15, 2)->nullable();
+            $table->decimal('target_sales_amount', 15, 2)->nullable();
+            $table->integer('achive_leads')->nullable()->default(0);
+            $table->decimal('achive_sales', 15, 2)->nullable()->default(0);
+            $table->decimal('achive_sales_amount', 15, 2)->nullable()->default(0);
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');

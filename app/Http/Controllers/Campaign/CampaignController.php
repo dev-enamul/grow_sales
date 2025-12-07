@@ -84,7 +84,10 @@ class CampaignController extends Controller
                     'impressions' => $item->impressions,
                     'target_leads' => $item->target_leads,
                     'target_sales' => $item->target_sales,
-                    'target_revenue' => $item->target_revenue,
+                    'target_sales_amount' => $item->target_sales_amount,
+                    'achive_leads' => $item->achive_leads,
+                    'achive_sales' => $item->achive_sales,
+                    'achive_sales_amount' => $item->achive_sales_amount,
                     'url' => "{$frontendUrl}/campaign/{$item->slug}",
                     'created_at' => formatDate($item->created_at),
                     'updated_at' => formatDate($item->updated_at),
@@ -112,7 +115,7 @@ class CampaignController extends Controller
                 'area_id' => 'nullable|exists:areas,id',
                 'target_leads' => 'nullable|integer|min:0',
                 'target_sales' => 'nullable|integer|min:0',
-                'target_revenue' => 'nullable|numeric|min:0',
+                'target_sales_amount' => 'nullable|numeric|min:0',
             ]);
 
             $campaign = Campaign::create([
@@ -126,7 +129,10 @@ class CampaignController extends Controller
                 'area_id' => $request->area_id,
                 'target_leads' => $request->target_leads,
                 'target_sales' => $request->target_sales,
-                'target_revenue' => $request->target_revenue,
+                'target_sales_amount' => $request->target_sales_amount,
+                'achive_leads' => $request->achive_leads ?? 0,
+                'achive_sales' => $request->achive_sales ?? 0,
+                'achive_sales_amount' => $request->achive_sales_amount ?? 0,
                 'created_by' => Auth::user()->id,
             ]);
 
@@ -143,7 +149,10 @@ class CampaignController extends Controller
                 'area_id' => $campaign->area_id,
                 'target_leads' => $campaign->target_leads,
                 'target_sales' => $campaign->target_sales,
-                'target_revenue' => $campaign->target_revenue,
+                'target_sales_amount' => $campaign->target_sales_amount,
+                'achive_leads' => $campaign->achive_leads,
+                'achive_sales' => $campaign->achive_sales,
+                'achive_sales_amount' => $campaign->achive_sales_amount,
             ], 'Campaign created successfully', 201);
         } catch (Exception $e) {
             DB::rollBack();
@@ -185,7 +194,10 @@ class CampaignController extends Controller
                 'impressions' => $campaign->impressions,
                 'target_leads' => $campaign->target_leads,
                 'target_sales' => $campaign->target_sales,
-                'target_revenue' => $campaign->target_revenue,
+                'target_sales_amount' => $campaign->target_sales_amount,
+                'achive_leads' => $campaign->achive_leads,
+                'achive_sales' => $campaign->achive_sales,
+                'achive_sales_amount' => $campaign->achive_sales_amount,
                 'url' => "{$frontendUrl}/campaign/{$campaign->slug}",
                 'created_by' => $campaign->createdBy ? $campaign->createdBy->name : null,
                 'updated_by' => $campaign->updatedBy ? $campaign->updatedBy->name : null,
@@ -214,7 +226,10 @@ class CampaignController extends Controller
                 'area_id' => 'nullable|exists:areas,id',
                 'target_leads' => 'nullable|integer|min:0',
                 'target_sales' => 'nullable|integer|min:0',
-                'target_revenue' => 'nullable|numeric|min:0',
+                'target_sales_amount' => 'nullable|numeric|min:0',
+                'achive_leads' => 'nullable|integer|min:0',
+                'achive_sales' => 'nullable|numeric|min:0',
+                'achive_sales_amount' => 'nullable|numeric|min:0',
             ]);
 
             $campaign = Campaign::where('uuid', $uuid)
@@ -232,7 +247,8 @@ class CampaignController extends Controller
 
             $campaign->fill($request->only([
                 'name', 'description', 'budget', 'campaign_type', 'channel', 'area_id',
-                'target_leads', 'target_sales', 'target_revenue'
+                'target_leads', 'target_sales', 'target_sales_amount',
+                'achive_leads', 'achive_sales', 'achive_sales_amount'
             ]));
             $campaign->updated_by = Auth::user()->id;
             $campaign->save();
@@ -250,7 +266,10 @@ class CampaignController extends Controller
                 'area_id' => $campaign->area_id,
                 'target_leads' => $campaign->target_leads,
                 'target_sales' => $campaign->target_sales,
-                'target_revenue' => $campaign->target_revenue,
+                'target_sales_amount' => $campaign->target_sales_amount,
+                'achive_leads' => $campaign->achive_leads,
+                'achive_sales' => $campaign->achive_sales,
+                'achive_sales_amount' => $campaign->achive_sales_amount,
             ], 'Campaign updated successfully');
         } catch (Exception $e) {
             DB::rollBack();
@@ -351,6 +370,30 @@ class CampaignController extends Controller
                 'spent_amount' => $campaign->spent_amount,
             ], 'Metrics updated successfully');
         } catch (\Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($uuid)
+    {
+        try {
+            $campaign = Campaign::where('uuid', $uuid)
+                ->where('company_id', Auth::user()->company_id)
+                ->first();
+
+            if (!$campaign) {
+                return error_response('Campaign not found', 404);
+            }
+
+            $campaign->deleted_by = Auth::user()->id;
+            $campaign->save();
+            $campaign->delete();
+
+            return success_response(null, 'Campaign deleted successfully');
+        } catch (Exception $e) {
             return error_response($e->getMessage(), 500);
         }
     }

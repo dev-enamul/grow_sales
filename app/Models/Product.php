@@ -27,7 +27,12 @@ class Product extends Model
         'rate',
         'quantity',
         'price',
+        'other_price',
+        'discount',
         'vat_setting_id',
+        'vat_rate',
+        'vat_amount',
+        'sell_price',
         'image',
         'qty_in_stock',
         'floor',
@@ -36,6 +41,17 @@ class Product extends Model
         'created_by',
         'updated_by',
         'deleted_by',
+    ];
+
+    protected $casts = [
+        'rate' => 'decimal:2',
+        'quantity' => 'integer',
+        'price' => 'decimal:2',
+        'other_price' => 'decimal:2',
+        'discount' => 'float',
+        'vat_rate' => 'float',
+        'vat_amount' => 'decimal:2',
+        'sell_price' => 'decimal:2',
     ];
 
  
@@ -61,7 +77,7 @@ class Product extends Model
  
     public function vatSetting()
     {
-        return $this->belongsTo(VatSetting::class);
+        return $this->belongsTo(VatSetting::class, 'vat_setting_id');
     }
  
     public function creator()

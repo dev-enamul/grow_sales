@@ -41,19 +41,32 @@ class AffiliateController extends Controller
     {
         try {
             $user = $this->affiliateService->show($uuid);
-            if (!$user || !$user->affiliate) {
+            if (!$user || !$user->isAffiliate()) {
                 return error_response('Affiliate not found', 404);
             }
 
+            // Load reportingUsers relationship
+            $user->load('reportingUsers');
+
+            // Get current reporting user from the collection
+            $currentReportingUser = $user->reportingUsers
+                ->filter(function ($reporting) {
+                    return $reporting->end_date === null || $reporting->end_date > now();
+                })
+                ->first();
+            $reportingUserId = $currentReportingUser ? $currentReportingUser->reporting_user_id : null;
+
             return success_response([
                 'uuid' => $user->uuid,
-                'affiliate_id' => $user->affiliate->affiliate_id,
+                'affiliate_id' => $user->user_id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'profile_image' => $user->profile_image,
-                'status' => $user->affiliate->status,
-                'referred_by' => $user->affiliate->referred_by,
+                'profile_image_url' => getFileUrl($user->profile_image),
+                'status' => $user->status,
+                'referred_by' => $user->referred_by,
+                'reporting_id' => $reportingUserId,
             ]);
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);

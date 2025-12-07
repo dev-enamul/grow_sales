@@ -20,6 +20,10 @@ class ServiceController extends Controller
         $selectOnly = $request->boolean('select');
         $categoryId = $request->category_id; // Filter by category ID
         $subCategoryId = $request->sub_category_id; // Filter by sub-category ID
+        $minPrice = $request->min_price; // Price range filter - minimum
+        $maxPrice = $request->max_price; // Price range filter - maximum
+        $minRate = $request->min_rate; // Rate filter - minimum
+        $maxRate = $request->max_rate; // Rate filter - maximum
         
         $query = Product::where('company_id', Auth::user()->company_id)
             ->where('applies_to','service')
@@ -29,6 +33,18 @@ class ServiceController extends Controller
             ->when($subCategoryId, function ($query) use ($subCategoryId) {
                 $query->where('sub_category_id', $subCategoryId);
             })
+            ->when($minPrice !== null, function ($query) use ($minPrice) {
+                $query->where('price', '>=', $minPrice);
+            })
+            ->when($maxPrice !== null, function ($query) use ($maxPrice) {
+                $query->where('price', '<=', $maxPrice);
+            })
+            ->when($minRate !== null, function ($query) use ($minRate) {
+                $query->where('rate', '>=', $minRate);
+            })
+            ->when($maxRate !== null, function ($query) use ($maxRate) {
+                $query->where('rate', '<=', $maxRate);
+            })
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('name', 'like', '%' . $keyword . '%')
@@ -37,17 +53,23 @@ class ServiceController extends Controller
                 });
             }) 
             ->select('id','uuid', 'name','slug', 'code', 'description', 'rate', 'quantity', 'price', 'category_id', 'sub_category_id', 'vat_setting_id', 'image')
-            ->with(['category:id,uuid,name', 'subCategory:id,uuid,name']);
+            ->with(['category:id,uuid,name', 'subCategory:id,uuid,name', 'vatSetting:id,vat_percentage']);
         
         if ($selectOnly) {
-            $services = $query->select('id','name')->latest()->take(10)->get();
+            $services = $query->select('id','name', 'price')->latest()->take(10)->get()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'sell_price' => $item->price,
+                ];
+            });
             return success_response($services);
         }
 
         $sortBy = $request->input('sort_by');
         $sortOrder = $request->input('sort_order', 'asc');
 
-        $allowedSorts = ['name']; 
+        $allowedSorts = ['name', 'code', 'price', 'rate']; 
         if ($sortBy && in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
@@ -67,6 +89,7 @@ class ServiceController extends Controller
                 'quantity' => $item->quantity,
                 'price' => $item->price,
                 'vat_id' => $item->vat_setting_id,
+                'vat_percentage' => $item->vatSetting ? $item->vatSetting->vat_percentage : null,
                 'category_id' => $item->category ? $item->category->id : null,
                 'category_name' => $item->category ? $item->category->name : null,
                 'sub_category_id' => $item->subCategory ? $item->subCategory->id : null,
@@ -130,7 +153,8 @@ class ServiceController extends Controller
             'rate' => 'nullable|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
             'price' => 'nullable|numeric|min:0',
-            'vat_id' => 'nullable|exists:vat_settings,id',
+            'vat_setting_id' => 'nullable|exists:vat_settings,id',
+            'vat_id' => 'nullable|exists:vat_settings,id', // Backward compatibility
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'required|exists:product_sub_categories,id',
             'image' => 'nullable|exists:files,id',
@@ -156,7 +180,7 @@ class ServiceController extends Controller
         $service->rate = $request->rate ?? 0;
         $service->quantity = $request->quantity ?? 0;
         $service->price = $request->price ?? 0;
-        $service->vat_setting_id = $request->vat_id;
+        $service->vat_setting_id = $request->vat_setting_id ?? $request->vat_id;
         $service->category_id = $request->category_id;
         $service->sub_category_id = $request->sub_category_id;
         $service->image = $request->image;
@@ -177,7 +201,8 @@ class ServiceController extends Controller
             'rate' => 'nullable|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
             'price' => 'nullable|numeric|min:0',
-            'vat_id' => 'nullable|exists:vat_settings,id',
+            'vat_setting_id' => 'nullable|exists:vat_settings,id',
+            'vat_id' => 'nullable|exists:vat_settings,id', // Backward compatibility
             'category_id' => 'nullable|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'image' => 'nullable|exists:files,id',
@@ -214,8 +239,8 @@ class ServiceController extends Controller
         $service->quantity = $request->quantity ?? $service->quantity;
         $service->price = $request->price ?? $service->price;
         
-        if ($request->has('vat_id')) {
-            $service->vat_setting_id = $request->vat_id;
+        if ($request->has('vat_setting_id') || $request->has('vat_id')) {
+            $service->vat_setting_id = $request->vat_setting_id ?? $request->vat_id;
         }
         if ($request->has('category_id')) {
             $service->category_id = $request->category_id;

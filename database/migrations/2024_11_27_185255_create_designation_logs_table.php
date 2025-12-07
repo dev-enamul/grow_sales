@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('designation_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->foreignId('designation_id')->constrained()->onDelete('cascade');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();

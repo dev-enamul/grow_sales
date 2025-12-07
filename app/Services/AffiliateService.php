@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Helpers\ReportingService;
-use App\Models\Affiliate;
 use App\Models\User;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\UserRepository;
@@ -51,13 +50,11 @@ class AffiliateService
 
             $user = $this->userRepo->createUser($userData);
 
-            $affiliate = $this->affiliateRepo->createAffiliate([
-                'user_id' => $user->id,
-                'affiliate_id' => Affiliate::generateNextAffiliateId(),
-                'referred_by' => $request->referred_by,
-                'status' => 1,
-                'created_by' => $authUser->id,
-            ]);
+            // Set affiliate fields on user
+            $user->user_id = User::generateNextAffiliateId();
+            $user->referred_by = $request->referred_by;
+            $user->status = 1; // Active by default
+            $user->save();
 
             if ($request->reporting_id) {
                 $reportingUser = User::find($request->reporting_id);
@@ -75,7 +72,7 @@ class AffiliateService
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Affiliate created successfully', 'user' => $user, 'affiliate' => $affiliate];
+            return ['success' => true, 'message' => 'Affiliate created successfully', 'user' => $user];
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -94,7 +91,7 @@ class AffiliateService
             $authUser = $this->userRepo->findUserById(Auth::id());
             $user = $this->userRepo->findUserByUuId($uuid);
 
-            if (!$user || $user->company_id !== $authUser->company_id || $user->user_type !== 'affiliate') {
+            if (!$user || $user->company_id !== $authUser->company_id || !$user->isAffiliate()) {
                 throw new \Exception('Affiliate not found');
             }
 
@@ -115,13 +112,15 @@ class AffiliateService
 
             $user->update($userData);
 
-            if ($user->affiliate) {
-                $user->affiliate->update([
-                    'referred_by' => $request->referred_by,
-                    'status' => $request->input('status', $user->affiliate->status),
-                    'updated_by' => $authUser->id,
-                ]);
+            // Update affiliate fields
+            if ($request->has('referred_by')) {
+                $user->referred_by = $request->referred_by;
             }
+            if ($request->has('status')) {
+                $user->status = $request->input('status', $user->status);
+            }
+            $user->updated_by = $authUser->id;
+            $user->save();
 
             $currentReportingUser = $user->reportingUsers()
                 ->where(function ($query) {
@@ -152,13 +151,8 @@ class AffiliateService
             $authUser = $this->userRepo->findUserById(Auth::id());
             $user = $this->userRepo->findUserByUuId($uuid);
 
-            if (!$user || $user->company_id !== $authUser->company_id || $user->user_type !== 'affiliate') {
+            if (!$user || $user->company_id !== $authUser->company_id || !$user->isAffiliate()) {
                 throw new \Exception('Affiliate not found');
-            }
-
-            if ($user->affiliate) {
-                $user->affiliate->update(['deleted_by' => $authUser->id]);
-                $user->affiliate->delete();
             }
 
             $user->update(['deleted_by' => $authUser->id]);

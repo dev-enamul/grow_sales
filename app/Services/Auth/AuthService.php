@@ -79,9 +79,7 @@ class AuthService {
     {
         return User::where('email', $email)
             ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('status', 0); // Inactive employee
-            })
+            ->where('status', 0) // Inactive employee
             ->first();
     }
 
@@ -89,9 +87,7 @@ class AuthService {
     {
         return User::where('email', $email)
             ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', true); // Resigned employee
-            })
+            ->where('is_resigned', true) // Resigned employee
             ->first();
     } 
 
@@ -100,9 +96,8 @@ class AuthService {
     {
         return User::where('email', $email)
             ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', false); // Active employee
-            })
+            ->where('is_resigned', false) // Active employee
+            ->where('status', 1) // Active status
             ->first();
     }
 
@@ -110,10 +105,8 @@ class AuthService {
     {
         return User::where('email', $email)
             ->where('user_type', 'employee')
-            ->whereHas('employee', function ($query) {
-                $query->where('is_resigned', false)
-                    ->where('status', 1); 
-            })
+            ->where('is_resigned', false)
+            ->where('status', 1)
             ->whereHas('company', function ($query) {
                 $query->where('is_verified', true); 
             })

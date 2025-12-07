@@ -22,15 +22,20 @@ class ServiceCategoryController extends Controller
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('name', 'like', '%' . $keyword . '%')
-                        ->orWhere('slug', 'like', '%' . $keyword . '%')
-                        ->orWhere('address', 'like', '%' . $keyword . '%');
+                        ->orWhere('description', 'like', '%' . $keyword . '%');
                 });
             }) 
             ->select('id','uuid', 'name','slug', 'description', 'status', 'image')
             ->with(['area:id,name']);
         
         if ($selectOnly) {
-            $units = $query->select('id','name')->latest()->take(10)->get();
+            $units = $query->latest()->take(10)->get();
+            $units = $units->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                ];
+            });
             return success_response($units);
         }
 
@@ -156,17 +161,17 @@ class ServiceCategoryController extends Controller
             ->first();
 
         if (!$category) {
-            return error_response('Service category not found', 404);
+            return error_response(null, 404,'Service category not found');
         }
  
         $subCategoryCount = ProductSubCategory::where('category_id', $category->id)->count();
         if ($subCategoryCount > 0) {
-            return error_response("You can't delete this category because it has {$subCategoryCount} sub-categories.", 400);
+            return error_response(null, 400,"You can't delete this category because it has {$subCategoryCount} sub-categories.");
         }
  
         $productCount = Product::where('category_id', $category->id)->count();
         if ($productCount > 0) {
-            return error_response("You can't delete this category because it has {$productCount} products.", 400);
+            return error_response(null, 400,"You can't delete this category because it has {$productCount} products.");
         }
 
         $category->deleted_by = Auth::id();

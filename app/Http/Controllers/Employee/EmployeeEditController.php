@@ -43,10 +43,13 @@ class EmployeeEditController extends Controller
             $result = $this->employeeService->updateEmployeeDesignation($user, $designation_id, $start_date, $auth_user);
  
             DB::commit(); 
-            return success_response($result['message']);  
+            return success_response(null, $result['message']);  
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return error_response($e->errors(), 422, 'Validation failed');
         } catch (Exception $e) {
             DB::rollBack(); 
-            return error_response($e->getMessage(),500); 
+            return error_response($e->getMessage(), 500, $e->getMessage()); 
         }
     } 
 
@@ -63,7 +66,7 @@ class EmployeeEditController extends Controller
                         ->where('company_id', $authUser->company_id)
                         ->first();
             if (!$user) {
-                return error_response("User not found.", 404);
+                return error_response("Employee not found.", 404,'Employee not found');
             }
      
             $reportingUserId = $request->reporting_id;
@@ -72,14 +75,17 @@ class EmployeeEditController extends Controller
             // Check if no change was made
             if (isset($result['no_change']) && $result['no_change']) {
                 DB::commit();
-                return success_response($result['message']);
+                return success_response(null,$result['message']);
             }
      
             DB::commit(); 
-            return success_response($result['message']); 
+            return success_response(null,$result['message']); 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return error_response($e->errors(), 422, 'Validation failed');
         } catch (\Exception $e) { 
             DB::rollBack(); 
-            return error_response($e->getMessage(), 500);
+            return error_response($e->getMessage(), 500, $e->getMessage());
         }
     }
     

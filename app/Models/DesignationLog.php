@@ -11,7 +11,6 @@ class DesignationLog extends Model
 
     protected $fillable = [
         'user_id',
-        'employee_id',
         'designation_id',
         'start_date',
         'end_date',
@@ -25,8 +24,8 @@ class DesignationLog extends Model
         return $this->belongsTo(Designation::class, 'designation_id', 'id');
     }
 
-    public function employee()
+    public function user()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

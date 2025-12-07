@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\User;
-use App\Models\UserAddress;
 use App\Models\UserContact;
 use App\Models\UserReporting;
 
@@ -17,11 +16,6 @@ class UserRepository
     public function createUserContact($data)
     {
         return UserContact::create($data);
-    }
-
-    public function createUserAddress($data)
-    {
-        return UserAddress::create($data);
     }
 
     public function createUserReporting($data)

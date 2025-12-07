@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,25 +14,61 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');  
-            $table->foreignId('customer_id')->constrained('customers'); 
-            $table->decimal('original_price', 10, 2)->default(0); 
-            $table->decimal('sell_price', 10, 2)->default(0);  
-            $table->decimal('tax_percent', 10, 2)->default(0);  
-            $table->decimal('tax_amount', 10, 2)->default(0);  
-            $table->decimal('discount', 10, 2)->default(0); 
-            $table->decimal('paid', 10, 2)->default(0);  
-            $table->boolean('is_full_paid')->default(false);  
-            $table->date('sale_date');  
-            $table->foreignId('sales_by')->constrained('users'); 
-            $table->integer('deal_type')->default(1)->comment('1= New customer, 2= Repeat, 3= Upsell'); 
-            $table->text('notes')->nullable();  
-            $table->tinyInteger('status')->comment('0= Quotation, 1= Sale, 2= Reject'); 
-            $table->foreignId('quotation_id')->nullable()->constrained('quotations');  
-            $table->decimal('total_amount', 10, 2)->default(0);  
-            $table->enum('discount_type', ['flat', 'percentage'])->default('flat'); 
-            $table->timestamps();
+            $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
+        
+            // Relations
+            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->foreignId('customer_id')->constrained('customers');
+            $table->foreignId('lead_id')->constrained('leads'); 
+            $table->foreignId('campaign_id')->nullable()->constrained('campaigns')->onDelete('set null');
+            $table->foreignId('organization_id')->nullable()->constrained('organizations')->onDelete('set null'); 
+
+            $table->enum('sale_type', ['sell', 'transfer'])->default('sell');
+            $table->foreignId('sales_by')->nullable()->constrained('users')->onDelete('set null'); 
+        
+            // Amounts
+            $table->decimal('subtotal', 10, 2)->nullable(); 
+            $table->decimal('discount', 10, 2)->nullable(); 
+            $table->decimal('grand_total', 10, 2)->nullable(); 
+            $table->decimal('paid', 10, 2)->default(0);
+            $table->decimal('due', 10, 2)->nullable();
+            $table->decimal('refunded', 10, 2)->nullable();
+            $table->decimal('transfer', 10, 2)->nullable();
+
+        
+            // Dates
+            $table->date('sale_date');
+            $table->date('delivery_date')->nullable();
+        
+            // Return handling 
+            $table->text('return_reason')->nullable();
+            $table->date('return_date')->nullable();
+            $table->foreignId('returned_by')->nullable()->constrained('users');
+        
+            // Transfer handling 
+            $table->foreignId('child_sale_id')->nullable()->constrained('sales'); 
+            $table->foreignId('transfer_by')->nullable()->constrained('users');
+            $table->date('transfer_date')->nullable();
+            $table->text('transfer_notes')->nullable(); 
+        
+            // Status
+            $table->enum('status', [
+                'pending',
+                'processing',
+                'handover',
+                'return',
+                'transfer'
+            ])->default('pending');  
+        
+            // Audits
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->softDeletes();
+        
+            $table->timestamps(); 
         });
+        
     }
 
     /**

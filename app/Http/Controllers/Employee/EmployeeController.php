@@ -35,7 +35,8 @@ class EmployeeController extends Controller
         try {
             $existingUser = AuthService::checkExistingActiveEmployee($request->email);
             if ($existingUser) {
-                return error_response("Already associated with ".$existingUser->company->name." Please resign first or use another email.", 409);
+                $existingUserErrorMessage = "Already associated with ".$existingUser->company->name." Please resign first or use another email.";
+                return error_response( $existingUserErrorMessage, 409,  $existingUserErrorMessage);
             } 
             
             $result = $this->employeeService->createEmployee($request);
@@ -44,7 +45,7 @@ class EmployeeController extends Controller
             // Send password setup email
             $emailSent = $this->sendPasswordSetupEmail($user);   
 
-            // If email failed to send, set default password
+            // If email failed to send, set default passwordP
             if (!$emailSent) { 
                 return success_response(null, 'Employee created successfully but email not sent');
             }
@@ -69,23 +70,41 @@ class EmployeeController extends Controller
 
     public function show($uuid){ 
         try {  
-            $user = User::with(['employee'])
+            $user = User::with(['currentDesignation.designation', 'reportingUsers'])
                         ->where('uuid',$uuid)->first();
 
             if (!$user) {
                 return error_response('User not found', 404);
-            } 
+            }
+
+            // Get current designation ID
+            $currentDesignation = $user->currentDesignation;
+            $designationId = $currentDesignation ? $currentDesignation->designation_id : null;
+
+            // Get current reporting user
+            $currentReportingUser = $user->reportingUsers()
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>', now());
+                })
+                ->first();
+            $reportingUserId = $currentReportingUser ? $currentReportingUser->reporting_user_id : null;
+
             return success_response([
+                "uuid" => $user->uuid,
                 "name" => $user->name, 
-                'designation' => $user->employee->currentDesignation->designation->title??"",
+                'designation' => $currentDesignation ? $currentDesignation->designation->title : "",
+                'designation_id' => $designationId,
                 'profile_image' => $user->profile_image,
                 'profile_image_url' => getFileUrl($user->profile_image),
                 "phone" => $user->phone,
                 'email' => $user->email,
                 "marital_status" => $user->marital_status,
-                'dob' => formatDate($user->dob),
+                'dob' => $user->dob ? formatDate($user->dob) : null,
                 'blood_group' => $user->blood_group,
                 'gender' => $user->gender,
+                'referred_by' => $user->referred_by ?? null,
+                'reporting_id' => $reportingUserId,
                 'senior_user' => json_decode($user->senior_user??"[]")
             ]);
         } catch (Exception $e) {
@@ -97,9 +116,21 @@ class EmployeeController extends Controller
         try{
             $result =  $this->employeeService->updateEmployee($id, $request);
             return success_response(null,$result['message']);
+        }catch(\Illuminate\Validation\ValidationException $e){
+            return error_response($e->errors(), 422, 'Validation failed');
         }catch(Exception $e){
-            return error_response($e->getMessage(),500);
+            return error_response($e->getMessage(), 500, $e->getMessage());
         }
     }
+
+    public function destroy($uuid){
+        try{
+            $result = $this->employeeService->deleteEmployee($uuid);
+            return success_response(null,$result['message']);
+        }catch(Exception $e){
+            return error_response($e->getMessage(), 500, $e->getMessage());
+        }
+    }
+
  
 }

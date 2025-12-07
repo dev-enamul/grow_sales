@@ -29,6 +29,7 @@ class EmployeeStoreRequest extends FormRequest
             'designation_id' => 'required|exists:designations,id',
             'reporting_id' => 'nullable|exists:users,id',
             'referred_by' => 'nullable|exists:users,id',
+            'profile_image' => 'nullable|exists:files,id',
         ];
     }
 }

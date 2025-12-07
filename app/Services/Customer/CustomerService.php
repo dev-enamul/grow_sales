@@ -7,15 +7,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Helpers\ReportingService;
-use App\Models\Employee;
+use App\Models\User;
 use App\Repositories\CustomerRepository;
 
 class CustomerService
 {
-    protected $customerRepository;  
-    public function __construct(CustomerRepository $customerRepository)
+    protected $customerRepository;
+    protected $employeeRepo;
+    protected $userRepo;
+    
+    public function __construct(CustomerRepository $customerRepository, EmployeeRepository $employeeRepo, UserRepository $userRepo)
     {
-        $this->customerRepository = $customerRepository; 
+        $this->customerRepository = $customerRepository;
+        $this->employeeRepo = $employeeRepo;
+        $this->userRepo = $userRepo;
     }
 
     public function getAllCustomer()
@@ -51,32 +56,20 @@ class CustomerService
                 'emergency_contact_person' => $request->emergency_contact_person,
             ]);
 
-            $this->userRepo->createUserAddress([
-                'user_id' => $user->id,
-                'country_id' => $request->country_id,
-                'division_id' => $request->division_id,
-                'district_id' => $request->district_id,
-                'upazila_id' => $request->upazila_id,
-                'address' => $request->address,
-            ]);
-
             $this->userRepo->createUserReporting([
                 'user_id' => $user->id,
                 'reporting_user_id' => $request->reporting_user_id,
                 'start_date' => now(), 
             ]);
 
-            // Create Employee
-            $employee = $this->employeeRepo->createEmployee([
-                'user_id' => $user->id,
-                'employee_id' => Employee::generateNextEmployeeId(),
-                'status' => 1,
-            ]);
+            // Set employee fields on user
+            $user->user_id = User::generateNextEmployeeId();
+            $user->status = 1;
+            $user->save();
 
             // Assign Designation
             $this->employeeRepo->createDesignationLog([
                 'user_id' => $user->id,
-                'employee_id' => $employee->id,
                 'designation_id' => $request->designation_id,
                 'start_date' => now(),
             ]);
@@ -95,7 +88,7 @@ class CustomerService
     }  
 
     public function show($id){
-        return $this->employeeRepo->find($id);
+        return $this->customerRepository->find($id);
     }
 
     public function updateEmployee($id, $request){

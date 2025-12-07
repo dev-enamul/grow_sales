@@ -79,7 +79,13 @@ class UnitController extends Controller
 
         // Dropdown select mode
         if ($selectOnly) {
-            $list = $query->select('id', 'name')->latest()->limit(10)->get();
+            $list = $query->select('id', 'name', 'price')->latest()->limit(10)->get()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'sell_price' => $item->price,
+                ];
+            });
             return success_response($list);
         }
 
@@ -109,6 +115,10 @@ class UnitController extends Controller
                 'rate'             => $item->rate,
                 'quantity'         => $item->quantity,
                 'total_price'      => $item->price,
+                'other_price'      => $item->other_price ?? 0,
+                'discount'         => $item->discount ?? 0,
+                'vat_amount'       => $item->vat_amount ?? 0,
+                'sell_price'       => $item->sell_price ?? 0,
                 'unit_price'       => $item->rate,
                 'qty_in_stock'     => $item->qty_in_stock,
                 'floor'            => $item->floor,
@@ -137,10 +147,14 @@ class UnitController extends Controller
             'rate' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
+            'other_price' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
+            'vat_amount' => 'nullable|numeric|min:0',
+            'sell_price' => 'nullable|numeric|min:0',
             'qty_in_stock' => 'nullable|integer',
             'floor' => 'nullable|integer',
         ]);
@@ -153,10 +167,14 @@ class UnitController extends Controller
         $product->rate = $request->rate;
         $product->quantity = $request->quantity;
         $product->price = $request->price;
+        $product->other_price = $request->other_price ?? 0;
+        $product->discount = $request->discount ?? 0;
         $product->product_unit_id = $request->product_unit_id;
         $product->category_id = $request->category_id;
         $product->sub_category_id = $request->sub_category_id;
         $product->vat_setting_id = $request->vat_setting_id;
+        $product->vat_amount = $request->vat_amount ?? 0;
+        $product->sell_price = $request->sell_price ?? 0;
         $product->qty_in_stock = $request->qty_in_stock??0;
         $product->floor = $request->floor;
         $product->status = 0; 
@@ -189,10 +207,14 @@ class UnitController extends Controller
             'rate' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
+            'other_price' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
+            'vat_amount' => 'nullable|numeric|min:0',
+            'sell_price' => 'nullable|numeric|min:0',
             'qty_in_stock' => 'nullable|integer',
             'floor' => 'nullable|integer',
             'status' => 'nullable|in:0,1',
@@ -207,8 +229,9 @@ class UnitController extends Controller
         }
 
         $product->fill($request->only([
-            'name', 'description', 'code', 'rate', 'quantity', 'price', 'product_unit_id',
-            'category_id', 'sub_category_id', 'vat_setting_id', 'qty_in_stock', 'floor'
+            'name', 'description', 'code', 'rate', 'quantity', 'price', 'other_price', 'discount',
+            'product_unit_id', 'category_id', 'sub_category_id', 'vat_setting_id', 
+            'vat_amount', 'sell_price', 'qty_in_stock', 'floor'
         ])); 
         $product->slug  = getSlug(new Product(),$request->name);
         $product->save(); 

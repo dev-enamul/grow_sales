@@ -10,17 +10,29 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('lead_products', function (Blueprint $table) {
-            $table->id();
+            $table->id(); 
+            $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('lead_id')->constrained('leads')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
-            $table->foreignId('product_unit_id')->nullable()->constrained('product_units')->onDelete('set null');
+            $table->string('type')->nullable(); 
+            $table->foreignId('property_unit_id')->nullable()->constrained('product_units')->onDelete('set null');
             $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
             $table->foreignId('product_category_id')->nullable()->constrained('product_categories')->onDelete('set null');
             $table->foreignId('product_sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
-            $table->integer('qty')->default(null);
+            $table->foreignId('product_id')->nullable()->constrained('products')->onDelete('set null');
+           
+            
+            
+            $table->integer('qty')->nullable(); // for quotation
+            $table->decimal('price', 10, 2)->nullable(); // for quotation
+            $table->decimal('subtotal', 10, 2)->nullable(); // for quotation
+            $table->float('vat_rate')->nullable(); // for quotation
+            $table->decimal('vat_value', 10, 2)->nullable(); // for quotation
+            $table->decimal('discount', 10, 2)->nullable(); // for quotation
+            $table->decimal('grand_total', 10, 2)->nullable(); // for quotation
+            $table->decimal('negotiated_price', 10, 2)->nullable(); // for negotiation 
+
+            $table->text('notes')->nullable();
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
@@ -35,6 +47,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('followup_products');
+        Schema::dropIfExists('lead_products');
     }
 };

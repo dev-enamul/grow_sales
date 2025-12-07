@@ -18,7 +18,7 @@ return new class extends Migration
         $table->foreignId('company_id')->constrained()->onDelete('cascade');
 
         $table->foreignId('product_unit_id')->nullable()->constrained('product_units');
-        $table->foreignId('category_id')->constrained('product_categories')->onDelete('cascade');
+        $table->foreignId('category_id')->nullable()->constrained('product_categories')->onDelete('set null');
         $table->foreignId('sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
 
         $table->string('name');
@@ -27,11 +27,20 @@ return new class extends Migration
         $table->string('code')->nullable();
         $table->foreignId('image')->nullable()->constrained('files')->onDelete('set null');
 
-        $table->decimal('rate', 10, 2)->default(0);
-        $table->integer('quantity')->default(0);
-        $table->decimal('price', 10, 2)->default(0);
+        $table->decimal('rate', 15, 2)->default(0);     
+        $table->integer('quantity')->default(0);      
+        $table->decimal('price', 15, 2)->default(0);
+        $table->decimal('other_price', 15, 2)->nullable();
+        $table->float('discount')->default(0); 
 
-        $table->foreignId('vat_id')->nullable()->constrained('vat_settings');
+        $table->foreignId('vat_setting_id')
+                ->nullable()
+                ->constrained('vat_settings')
+                ->onDelete('set null');
+        $table->float('vat_rate')->nullable();
+        $table->decimal('vat_amount', 15, 2)->nullable();
+        $table->decimal('sell_price', 10, 2)->nullable();
+ 
         $table->integer('qty_in_stock')->nullable();
         $table->integer('floor')->nullable();
 

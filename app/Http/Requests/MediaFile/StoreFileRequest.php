@@ -16,6 +16,7 @@ class StoreFileRequest extends FormRequest
         return [
             'file' => ['required', 'file', 'max:10240'],
             'folder_id' => ['nullable', 'integer', 'exists:folders,id'],
+            'file_name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

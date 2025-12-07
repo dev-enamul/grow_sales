@@ -7,7 +7,6 @@ use App\Services\Auth\AuthService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ReportingService;
-use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 class EmployeeService
@@ -41,21 +40,29 @@ class EmployeeService
                 'password' => Hash::make('123456'), 
                 'user_type' => 'employee',
                 'company_id' => $authUser->company_id,
+                'profile_image' => $request->profile_image ?? null, // Save file ID
                 'created_by' => $authUser->id,
             ]); 
 
-            // Create Employee
-            $employee = $this->employeeRepo->createEmployee([
-                'user_id' => $user->id,
-                'employee_id' => Employee::generateNextEmployeeId(),
-                'referred_by' => $request->referred_by,
-                'created_by' => $authUser->id
-            ]);
+            // Validate referred_by if provided
+            if ($request->referred_by) {
+                ReportingService::validateReferredBy($user, $request->referred_by);
+            }
+
+            // Validate reporting user if provided
+            if ($request->reporting_id) {
+                ReportingService::validateReportingUser($user, $request->reporting_id);
+            }
+
+            // Set employee fields on user
+            $user->user_id = User::generateNextEmployeeId();
+            $user->referred_by = $request->referred_by;
+            $user->status = 1; // Active by default
+            $user->save();
 
             // Assign Designation
             $this->employeeRepo->createDesignationLog([
                 'user_id' => $user->id,
-                'employee_id' => $employee->id,
                 'designation_id' => $request->designation_id,
                 'start_date' => now(),
                 'created_by' => $authUser->id,
@@ -107,17 +114,16 @@ class EmployeeService
             $authUser = $this->userRepo->findUserById(Auth::id());
         }
 
-        if (!$user->employee) {
+        if (!$user->isEmployee()) {
             throw new \Exception('User is not an employee');
         }
 
         $startDate = $startDate ?: now();
 
         // Get current designation
-        $currentDesignation = $user->employee->currentDesignation()->first();
+        $currentDesignation = $user->currentDesignation;
         
-        if ($currentDesignation) {
-            // End current designation
+        if ($currentDesignation) { 
             $currentDesignation->end_date = is_object($startDate) ? $startDate->copy()->subDay() : now()->subDay();
             $currentDesignation->updated_by = $authUser->id;
             $currentDesignation->save();
@@ -126,7 +132,6 @@ class EmployeeService
         // Create new designation log
         $this->employeeRepo->createDesignationLog([
             'user_id' => $user->id,
-            'employee_id' => $user->employee->id,
             'designation_id' => $designationId,
             'start_date' => is_object($startDate) ? $startDate : now(),
             'created_by' => $authUser->id,
@@ -176,19 +181,9 @@ class EmployeeService
             return ['success' => true, 'message' => 'Reporting relationship removed successfully'];
         }
 
+        // Validate reporting user using common function
+        ReportingService::validateReportingUser($user, $reportingUserId);
         $reportingUser = User::find($reportingUserId);
-        if (!$reportingUser) {
-            throw new \Exception('Reporting user not found');
-        }
-
-        // Validation checks
-        if ($user->id == $reportingUser->id) {
-            throw new \Exception('You cannot select yourself as a reporting user');
-        }
-
-        if (in_array($reportingUser->id, json_decode($user->junior_user ?? "[]"))) {
-            throw new \Exception("You cannot select {$reportingUser->name} as a reporting user, as they are already your junior");
-        }
 
         // Check if already up to date
         if ($activeReportingUser && $activeReportingUser->reporting_user_id == $reportingUser->id) {
@@ -255,7 +250,7 @@ class EmployeeService
             }
 
             // Check if user is an employee
-            if ($user->user_type !== 'employee' || !$user->employee) {
+            if (!$user->isEmployee()) {
                 throw new \Exception('User is not an employee');
             }
 
@@ -271,18 +266,24 @@ class EmployeeService
             $user->name = $request->name;
             $user->email = $request->email;
             $user->phone = $request->phone;
+            if ($request->has('profile_image')) {
+                $user->profile_image = $request->profile_image; // Save file ID
+            }
             $user->updated_by = $authUser->id;
             $user->save();
 
             // Update Employee referred_by if provided
             if ($request->has('referred_by')) {
-                $user->employee->referred_by = $request->referred_by;
-                $user->employee->updated_by = $authUser->id;
-                $user->employee->save();
+                // Validate referred_by using common function
+                ReportingService::validateReferredBy($user, $request->referred_by);
+                
+                $user->referred_by = $request->referred_by;
+                $user->updated_by = $authUser->id;
+                $user->save();
             }
 
             // Update Designation if changed
-            $currentDesignation = $user->employee->currentDesignation()->first();
+            $currentDesignation = $user->currentDesignation;
             if (!$currentDesignation || $currentDesignation->designation_id != $request->designation_id) {
                 $this->updateEmployeeDesignation($user, $request->designation_id, now(), $authUser);
             }
@@ -301,12 +302,45 @@ class EmployeeService
             
             // Only update if reporting_user_id has changed
             if ($currentReportingUserId != $newReportingUserId) {
+                // Validate reporting user if provided using common function
+                if ($newReportingUserId !== null) {
+                    ReportingService::validateReportingUser($user, $newReportingUserId);
+                }
+                
                 $this->updateEmployeeReporting($user, $newReportingUserId, $authUser);
             }
 
             DB::commit();
             return ['success' => true, 'message' => 'Employee updated successfully!'];
         } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function deleteEmployee($uuid){
+        DB::beginTransaction();
+        try {
+            $authUser = $this->userRepo->findUserById(Auth::id()); 
+            $user = $this->userRepo->findUserByUuId($uuid);
+            if (!$user) {
+                throw new \Exception('Employee not found');
+            } 
+
+            if($authUser->id == $user->id){
+                throw new \Exception('You cannot delete yourself');
+            }
+            if($user->is_admin){
+                throw new \Exception('You cannot delete an admin');
+            }
+            
+            $user->deleted_by = $authUser->id; 
+            $user->save();
+            $user->delete();
+            $this->updateReportingHierarchy($user);
+            DB::commit();
+            return ['success' => true, 'message' => 'Employee deleted successfully!'];
+        }catch(\Exception $e){
             DB::rollBack();
             throw $e;
         }

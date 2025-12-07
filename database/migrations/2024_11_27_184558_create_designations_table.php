@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('title'); 
             $table->string('slug'); 
-            $table->string('department')->nullable();  
+            $table->string('department')->nullable();
             $table->string('level')->nullable(); 
             $table->decimal('salary_range_min', 15, 2)->nullable(); 
             $table->decimal('salary_range_max', 15, 2)->nullable(); 

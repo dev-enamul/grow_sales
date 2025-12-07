@@ -10,49 +10,54 @@ use Illuminate\Support\Str;
 
 class Lead extends Model
 {
-    use HasFactory, SoftDeletes, ActionTrackable;
-
+    use HasFactory, SoftDeletes, ActionTrackable; 
     protected $fillable = [
         'uuid',
         'company_id',
         'lead_id',
-        'user_id',
-        'customer_id',
-        'lead_categorie_id',
-        'priority',
-        'price',
+        'organization_id',
+        'lead_category_id',
         'next_followup_date',
         'last_contacted_at',
+        'subtotal',
+        'discount',
+        'grand_total',
+        'negotiated_price',
         'assigned_to',
         'lead_source_id',
         'campaign_id',
-        'notes',
+        'affiliate_id',
         'status',
+        'notes',
+        'challenges',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    protected $dates = ['deleted_at'];
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'negotiated_price' => 'decimal:2',
+        'next_followup_date' => 'date',
+        'last_contacted_at' => 'datetime',
+        'challenges' => 'array',
+    ];
  
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
  
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
- 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
- 
     public function leadCategory()
     {
-        return $this->belongsTo(LeadCategory::class, 'lead_categorie_id');
+        return $this->belongsTo(LeadCategory::class, 'lead_category_id');
+    }
+    
+    public function followups()
+    {
+        return $this->hasMany(Followup::class);
     }
 
     public function leadSource()
@@ -63,6 +68,11 @@ class Lead extends Model
     public function campaign()
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
  
     public function assignedTo()
@@ -87,7 +97,19 @@ class Lead extends Model
     
     public function products()
     {
-        return $this->hasManyThrough(Product::class, LeadProduct::class, 'lead_id', 'id', 'id', 'product_id');
+        return $this->hasMany(LeadProduct::class);
+    }
+
+    public function contacts()
+    {
+        return $this->belongsToMany(Contact::class, 'lead_contacts', 'lead_id', 'contact_id')
+                    ->withPivot('relationship_or_role', 'is_decision_maker', 'notes')
+                    ->withTimestamps();
+    }
+    
+    public function leadContacts()
+    {
+        return $this->hasMany(LeadContact::class);
     }
 
     public static function generateNextLeadId(){
@@ -102,14 +124,5 @@ class Lead extends Model
         return $new_lead_id;
     } 
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-    }
 
 }

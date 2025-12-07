@@ -111,13 +111,8 @@ if (!function_exists('formatDate')) {
                 return $carbon->format($format);
             }
 
-            // Auto-detect: check if time component exists (not 00:00:00)
-            $hasTime = $carbon->format('H:i:s') !== '00:00:00';
-            
-            // If has time, use datetime format; otherwise use date only
-            $defaultFormat = $hasTime ? 'Y-m-d H:i:s' : 'Y-m-d';
-            
-            return $carbon->format($defaultFormat);
+          
+            return $carbon->format("M d, Y");
         } catch (\Exception $e) {
             return null;
         }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\Designation;
 use App\Models\DesignationLog;
-use App\Models\Employee;
+use App\Models\User;
 use App\Traits\PaginatorTrait;
 use Exception;
 use Illuminate\Http\Request;
@@ -51,45 +51,58 @@ class DesignationController extends Controller
                 return success_response($list);
             }
 
+            // Build active employee count sub-query (only for list mode)
+            $activeEmployeeCounts = DesignationLog::select(
+                'designation_id',
+                DB::raw('count(distinct user_id) as employee_count')
+            )
+                ->where(function ($q) {
+                    $q->whereNull('end_date')
+                        ->orWhere('end_date', '>=', now());
+                })
+                ->whereHas('user', function ($q) {
+                    $q->where('user_type', 'employee')
+                        ->where(function ($q2) {
+                            $q2->where('is_resigned', 0)
+                                ->orWhereNull('is_resigned');
+                        });
+                })
+                ->groupBy('designation_id');
+
+            $query->leftJoinSub($activeEmployeeCounts, 'active_employee_counts', function ($join) {
+                $join->on('designations.id', '=', 'active_employee_counts.designation_id');
+            });
+
+            $query->select(
+                'designations.*',
+                DB::raw('COALESCE(active_employee_counts.employee_count, 0) as total_employees')
+            );
+
             // Sorting
             $sortBy = $request->input('sort_by');
-            $sortOrder = $request->input('sort_order', 'asc');
-            $allowedSorts = ['title', 'created_at'];
+            $sortOrder = strtolower($request->input('sort_order', 'asc')) === 'desc' ? 'desc' : 'asc';
+            $allowedSorts = ['title', 'created_at', 'total_employees'];
 
             if ($sortBy && in_array($sortBy, $allowedSorts)) {
-                $query->orderBy($sortBy, $sortOrder);
+                if ($sortBy === 'total_employees') {
+                    $query->orderBy('total_employees', $sortOrder);
+                } else {
+                    $query->orderBy("designations.{$sortBy}", $sortOrder);
+                }
             } else {
-                $query->latest();
+                $query->latest('designations.created_at');
             }
 
             // Pagination
             $paginated = $this->paginateQuery($query, $request);
 
-            // Get designation IDs for counting employees
-            $designationIds = collect($paginated['data'])->pluck('id')->toArray();
-
-            // Count active employees for each designation
-            $employeeCounts = DesignationLog::whereIn('designation_id', $designationIds)
-                ->where(function ($q) {
-                    $q->whereNull('end_date')
-                        ->orWhere('end_date', '>=', now());
-                })
-                ->whereHas('employee', function ($q) {
-                    $q->where('is_resigned', 0)
-                        ->orWhereNull('is_resigned');
-                })
-                ->select('designation_id', DB::raw('count(distinct employee_id) as employee_count'))
-                ->groupBy('designation_id')
-                ->pluck('employee_count', 'designation_id')
-                ->toArray();
-
             // Map data
-            $paginated['data'] = collect($paginated['data'])->map(function ($item) use ($employeeCounts) {
+            $paginated['data'] = collect($paginated['data'])->map(function ($item) {
                 return [
                     'id' => $item->uuid, 
                     'title' => $item->title,
                     'slug' => $item->slug,
-                    'total_employees' => $employeeCounts[$item->id] ?? 0,
+                    'total_employees' => (int) ($item->total_employees ?? 0),
                     'created_at' => formatDate($item->created_at),
                     'updated_at' => formatDate($item->updated_at),
                 ];
@@ -241,9 +254,12 @@ class DesignationController extends Controller
                     $q->whereNull('end_date')
                         ->orWhere('end_date', '>=', now());
                 })
-                ->whereHas('employee', function ($q) {
-                    $q->where('is_resigned', 0)
-                        ->orWhereNull('is_resigned');
+                ->whereHas('user', function ($q) {
+                    $q->where('user_type', 'employee')
+                        ->where(function ($q2) {
+                            $q2->where('is_resigned', 0)
+                                ->orWhereNull('is_resigned');
+                        });
                 })
                 ->count();
 

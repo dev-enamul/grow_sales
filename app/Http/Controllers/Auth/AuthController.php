@@ -9,7 +9,6 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\PasswordResetRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Company;
-use App\Models\Employee;
 use App\Models\User;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
@@ -47,6 +46,7 @@ class AuthController extends Controller
             return error_response(self::ERROR_USER_RESIGNED, 404);
         }
 
+        
         return error_response(self::ERROR_USER_NOT_FOUND, 404);
     }
 
@@ -186,11 +186,12 @@ class AuthController extends Controller
 
     private function createEmployee($userId)
     {
-        Employee::create([
-            'user_id' => $userId,
-            'employee_id' => Employee::generateNextEmployeeId(),
-            'status' => 1, // Active status
-            'is_admin' => 1,
-        ]);
+        $user = User::find($userId);
+        if ($user) {
+            $user->user_id = User::generateNextEmployeeId();
+            $user->status = 1; // Active status
+            $user->is_admin = 1;
+            $user->save();
+        }
     }
 }

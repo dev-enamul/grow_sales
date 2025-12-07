@@ -41,8 +41,21 @@ class FileController extends Controller
         $directory = $this->resolveDirectory($folderId, $companyId);
         $storedPath = $uploadedFile->store($directory, $disk);
 
+        // Use custom file_name if provided, otherwise use original file name
+        $customFileName = $request->input('file_name');
+        if ($customFileName) {
+            // If custom name doesn't have extension, add original file's extension
+            $originalExtension = $uploadedFile->getClientOriginalExtension();
+            $originalName = $customFileName;
+            if ($originalExtension && !str_contains($customFileName, '.')) {
+                $originalName = $customFileName . '.' . $originalExtension;
+            }
+        } else {
+            $originalName = $uploadedFile->getClientOriginalName();
+        }
+
         $fileItem = FileItem::create([
-            'original_name' => $uploadedFile->getClientOriginalName(),
+            'original_name' => $originalName,
             'mime_type' => $uploadedFile->getClientMimeType(),
             'disk' => $disk,
             'path' => $storedPath,
@@ -64,10 +77,22 @@ class FileController extends Controller
         return success_response($file);
     }
 
-    public function download($id)
+    public function download($id, Request $request)
     {
         $file = $this->findFileOrFail($id);
 
+        // If force_download parameter is set, always download
+        $forceDownload = $request->boolean('force_download');
+
+        // If it's an image and not forcing download, serve inline for preview
+        if (!$forceDownload && str_starts_with($file->mime_type, 'image/')) {
+            return Storage::disk($file->disk)->response($file->path, $file->original_name, [
+                'Content-Type' => $file->mime_type,
+                'Content-Disposition' => 'inline; filename="' . $file->original_name . '"',
+            ]);
+        }
+
+        // Otherwise, download the file
         return Storage::disk($file->disk)->download($file->path, $file->original_name);
     }
 
@@ -101,7 +126,16 @@ class FileController extends Controller
     protected function applyFileFilters(Builder $query, Request $request): Builder
     {
         $query = $query
-            ->when($request->filled('folder_id'), fn (Builder $builder) => $builder->where('folder_id', $request->integer('folder_id')))
+            ->when($request->has('folder_id'), function (Builder $builder) use ($request) {
+                $folderId = $request->input('folder_id');
+                if ($folderId === null || $folderId === 'null' || $folderId === '') {
+                    // Show only root level files (folder_id IS NULL)
+                    $builder->whereNull('folder_id');
+                } else {
+                    // Show files in specific folder
+                    $builder->where('folder_id', $request->integer('folder_id'));
+                }
+            })
             ->when($request->filled('search'), function (Builder $builder) use ($request) {
                 $search = $request->input('search');
                 $builder->where(function (Builder $innerQuery) use ($search) {

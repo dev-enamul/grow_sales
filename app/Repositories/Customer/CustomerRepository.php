@@ -2,7 +2,6 @@
 namespace App\Repositories;
 
 use App\Models\DesignationLog;
-use App\Models\Employee; 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,16 +25,12 @@ class CustomerRepository
                 'name' => $user->name,
                 'phone' => $user->phone,
                 'email' => $user->email, 
-                'designation' => $user->employee->currentDesignation->designation->title ?? null,
+                'designation' => $user->currentDesignation->designation->title ?? null,
             ];
         }); 
         return $employees;
     }  
     
-    public function createEmployee($data)
-    {
-        return Employee::create($data);
-    } 
     public function createDesignationLog($data)
     {
         return DesignationLog::create($data);

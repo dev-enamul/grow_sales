@@ -36,15 +36,19 @@ return new class extends Migration
 
             $table->decimal('rate', 15, 2)->default(0);     
             $table->integer('quantity')->default(0);      
-            $table->decimal('price', 15, 2)->default(0); 
+            $table->decimal('price', 15, 2)->default(0);
+            $table->decimal('other_price', 15, 2)->nullable();
+            $table->float('discount')->default(0); 
 
             $table->foreignId('vat_setting_id')
                   ->nullable()
                   ->constrained('vat_settings')
                   ->onDelete('set null');
+            $table->float('vat_rate')->nullable();
+            $table->decimal('vat_amount', 15, 2)->nullable();
+            $table->decimal('sell_price', 10, 2)->nullable();
 
             $table->string('applies_to');
-
             $table->foreignId('created_by')
                   ->nullable()
                   ->constrained('users')

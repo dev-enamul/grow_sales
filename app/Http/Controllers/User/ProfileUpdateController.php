@@ -4,9 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\ProfilePictureUpdateRequest;
-use App\Models\FileItem;
 use App\Models\User;
-use App\Models\UserAddress;
 use App\Models\UserContact;
 use Exception;
 use Illuminate\Http\Request;

@@ -53,7 +53,45 @@ class ReportingService
         return $collectedSeniorIds;
     }
 
+    /**
+     * Validate reporting user selection
+     * 
+     * @param User $user The user who is being updated
+     * @param int $reportingUserId The ID of the reporting user to validate
+     * @return void
+     * @throws \Exception
+     */
+    public static function validateReportingUser($user, $reportingUserId)
+    {
+        $reportingUser = \App\Models\User::find($reportingUserId);
+        if (!$reportingUser) {
+            throw new \Exception('Reporting user not found');
+        }
 
-    
+        // Validation: User cannot select themselves as a reporting user
+        if ($user->id == $reportingUser->id) {
+            throw new \Exception('You cannot select yourself as a reporting user');
+        }
+
+        // Validation: User cannot select their junior as a reporting user
+        if (in_array($reportingUser->id, json_decode($user->junior_user ?? "[]"))) {
+            throw new \Exception("You cannot select {$reportingUser->name} as a reporting user, as they are already your junior");
+        }
+    }
+
+    /**
+     * Validate referred_by user selection
+     * 
+     * @param User $user The user who is being updated
+     * @param int|null $referredById The ID of the referred_by user to validate
+     * @return void
+     * @throws \Exception
+     */
+    public static function validateReferredBy($user, $referredById)
+    {
+        if ($referredById && $referredById == $user->id) {
+            throw new \Exception('You cannot select yourself as referred by');
+        }
+    }
 
 }

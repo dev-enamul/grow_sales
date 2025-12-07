@@ -11,38 +11,44 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_details', function (Blueprint $table) {
+        Schema::create('contacts', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('user_id')->constrained();
-            $table->foreignId('customer_id')->constrained();
+            $table->foreignId('organization_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('company_id')->constrained()->onDelete('cascade'); 
             $table->string('name')->nullable()->comment();
-            $table->string('primary_phone', 20)->nullable();
+            $table->string('phone', 20)->nullable();
+            $table->foreignId('profile_image')->nullable()->constrained('files')->onDelete('set null');
             $table->string('secondary_phone', 20)->nullable();
-            $table->string('primary_email', 45)->nullable();
+            $table->string('email', 45)->nullable();
             $table->string('secondary_email', 45)->nullable();
             $table->string('whatsapp', 20)->nullable();
-            $table->string('imo', 20)->nullable();
             $table->string('facebook', 100)->nullable();
             $table->string('linkedin', 100)->nullable();
             $table->string('website')->nullable();
             $table->date('dob')->nullable(); 
-            $table->enum('gender', ['male', 'female', 'others'])->nullable(); 
-            $table->enum('marital_status', ['married', 'unmarried', 'divorced'])->nullable();
+            $table->enum('gender', ['Male', 'Female', 'Others'])->nullable(); 
+            $table->enum('marital_status', ['Married', 'Unmarried', 'Divorced'])->nullable();
             $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->string('religion', 45)->nullable();
             $table->string('education', 45)->nullable();
             $table->string('profession', 45)->nullable();
-            $table->string('relationship_or_role')->nullable()->comment("Customer/Father/Mother/Relative/OfficeSomeone");
-            $table->boolean('is_decision_maker')->default(false);
-            $table->date('avalable_time')->nullable();
+            $table->time('avalable_time')->nullable();
+            $table->text('bio')->nullable();
 
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->softDeletes();
             $table->timestamps();  
+        });
+
+        // Add foreign key constraint for primary_contact_id in organizations table
+        Schema::table('organizations', function (Blueprint $table) {
+            $table->foreign('primary_contact_id')
+                  ->references('id')
+                  ->on('contacts')
+                  ->onDelete('set null');
         });
     }
 
@@ -51,6 +57,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_details');
+        Schema::dropIfExists('contacts');
     }
 };

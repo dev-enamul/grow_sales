@@ -24,7 +24,7 @@ class ServiceSubCategoryController extends Controller
             ->where('applies_to','service')
             ->when($categoryId, function ($query) use ($categoryId) {
                 // Find category by UUID if provided
-                $category = ProductCategory::where('uuid', $categoryId)
+                $category = ProductCategory::where('id', $categoryId)
                     ->where('company_id', Auth::user()->company_id)
                     ->first();
                 if ($category) {
@@ -34,8 +34,7 @@ class ServiceSubCategoryController extends Controller
             ->when($keyword, function ($query) use ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('name', 'like', '%' . $keyword . '%')
-                        ->orWhere('slug', 'like', '%' . $keyword . '%')
-                        ->orWhere('code', 'like', '%' . $keyword . '%');
+                        ->orWhere('description', 'like', '%' . $keyword . '%');
                 });
             }) 
             ->select('id','uuid', 'name','slug', 'code', 'description', 'category_id', 'image')
@@ -46,14 +45,15 @@ class ServiceSubCategoryController extends Controller
             return success_response($subCategories);
         }
 
+        // Sorting
         $sortBy = $request->input('sort_by');
-        $sortOrder = $request->input('sort_order', 'asc');
+        $sortOrder = strtolower($request->input('sort_order', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $allowedSorts = ['name'];
 
-        $allowedSorts = ['name']; 
         if ($sortBy && in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
-            $query->latest();  
+            $query->latest();
         }
 
         $paginated = $this->paginateQuery($query, $request);
@@ -65,6 +65,7 @@ class ServiceSubCategoryController extends Controller
                 'slug' => $item->slug, 
                 'description' => $item->description, 
                 'category_name' => $item->category ? $item->category->name : null,
+                'category_id' => $item->category ? $item->category->id : null,
                 'image' => $item->image,
                 'image_url' => getFileUrl($item->image),
             ];
@@ -94,7 +95,9 @@ class ServiceSubCategoryController extends Controller
             'name' => $subCategory->name,
             'slug' => $subCategory->slug, 
             'description' => $subCategory->description,    
-            'category_name' => $subCategory->category ? $subCategory->category->name : null, 
+            'category_name' => $subCategory->category ? $subCategory->category->name : null,
+            'category_id' => $subCategory->category_id,
+            'image' => $subCategory->image,
             'image_url' => getFileUrl($subCategory->image),
             'created_by' => optional($subCategory->creator)->name,
             'updated_by' => optional($subCategory->updater)->name,

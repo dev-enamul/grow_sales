@@ -2,55 +2,57 @@
 
 namespace App\Models;
 
+use App\Traits\ActionTrackable;
+use App\Traits\FindByUuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\ProductUnit;
-use App\Models\ProductCategory;
-use App\Models\ProductSubCategory;
-use App\Traits\ActionTrackable;
+use Illuminate\Support\Str;
 
 class LeadProduct extends Model
 {
-    use HasFactory, ActionTrackable, SoftDeletes;
+    use HasFactory, ActionTrackable, SoftDeletes, FindByUuidTrait;
 
     protected $fillable = [
+        'uuid',
         'company_id',
         'lead_id',
-        'product_id',
-        'customer_id',
-        'user_id',
-        'product_unit_id',
-        "area_id",
+        'type',
+        'property_unit_id',
+        'area_id',
         'product_category_id',
         'product_sub_category_id',
+        'product_id',
         'qty',
+        'price',
+        'subtotal',
+        'vat_rate',
+        'vat_value',
+        'discount',
+        'grand_total',
+        'negotiated_price',
+        'notes',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    protected $dates = ['deleted_at'];
+    protected $casts = [
+        'qty' => 'integer',
+        'price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'vat_rate' => 'float',
+        'vat_value' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'negotiated_price' => 'decimal:2',
+    ];
 
-    // Relationship with Company
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    // Relationship with User (user who created the lead product)
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // Relationship with Customer
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
-
-    // Relationship with Lead
     public function lead()
     {
         return $this->belongsTo(Lead::class);
@@ -60,36 +62,29 @@ class LeadProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
-
-    public function productUnit()
-    {
-        return $this->belongsTo(ProductUnit::class);
-    }
-
-    public function productCategory()
-    {
-        return $this->belongsTo(ProductCategory::class);
-    }
-
-    public function productSubCategory()
-    {
-        return $this->belongsTo(ProductSubCategory::class);
-    }
  
-    public function creator()
+    public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
  
-    public function updater()
+    public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    // Relationship with User (who deleted the lead product)
-    public function deleter()
+    public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
 }

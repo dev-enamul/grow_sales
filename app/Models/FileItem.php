@@ -59,6 +59,11 @@ class FileItem extends Model
 
         $diskName = $this->disk ?? config('filesystems.default');
 
+        // For local disk, always use download route (it will serve images inline automatically)
+        if ($diskName === 'local') {
+            return route('files.download', $this->id, absolute: true);
+        }
+
         try {
             $disk = Storage::disk($diskName);
 

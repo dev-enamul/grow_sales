@@ -15,34 +15,26 @@ class Followup extends Model
     protected $fillable = [
         'uuid',
         'company_id',
-        'user_id',
-        'customer_id',
         'lead_id',
         'lead_categorie_id',
-        'purchase_probability',
         'price',
         'next_followup_date',
         'notes',
+        'challenges',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
     protected $dates = ['deleted_at'];
+
+    protected $casts = [
+        'challenges' => 'array',
+    ];
  
     public function company()
     {
         return $this->belongsTo(Company::class);
-    }
- 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
- 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
     }
  
     public function lead()

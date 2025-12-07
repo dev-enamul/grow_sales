@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
-use App\Models\FileItem;
 use App\Traits\ActionTrackable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,6 +26,15 @@ class User extends Authenticatable
         'dob',
         'blood_group',
         'gender',
+        // Employee and Affiliate fields
+        'user_id',
+        'signature',
+        'is_admin',
+        'salary',
+        'is_resigned',
+        'resigned_at',
+        'referred_by',
+        'status',
         'senior_user',
         'junior_user',
         'role_id',
@@ -57,19 +63,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'salary' => 'decimal:2',
+        'is_admin' => 'boolean',
+        'is_resigned' => 'boolean',
+        'resigned_at' => 'date',
+        'status' => 'integer',
     ]; 
-
-    public function userDetails()
-    {
-        return $this->hasMany(UserDetail::class);
-    }
-
-    public function userAddress()
-    {
-        return $this->hasMany(UserAddress::class);
-    }
- 
-
     public function reportingUsers()
     {
         return $this->hasMany(UserReporting::class, 'user_id');
@@ -79,16 +78,64 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id', 'id');
-    }  
-
-    public function employee()
-    {
-        return $this->hasOne(Employee::class, 'user_id', 'id');
     }
 
-    public function affiliate()
+    public function designationLogs()
     {
-        return $this->hasOne(Affiliate::class, 'user_id', 'id');
+        return $this->hasMany(DesignationLog::class, 'user_id', 'id');
+    }
+
+    public function currentDesignation()
+    {
+        return $this->hasOne(DesignationLog::class, 'user_id', 'id')
+                    ->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+    }
+
+    // Helper methods to check user type
+    public function isEmployee()
+    {
+        return $this->user_type === 'employee';
+    }
+
+    public function isAffiliate()
+    {
+        return $this->user_type === 'affiliate';
+    }
+
+    public function isCustomer()
+    {
+        return $this->user_type === 'customer';
+    }
+
+    // Generate next employee ID
+    public static function generateNextEmployeeId()
+    {
+        $largest_employee_id = User::where('user_id', 'like', 'EMP-%')
+            ->where('user_type', 'employee')
+            ->pluck('user_id')
+            ->map(function ($id) {
+                return preg_replace("/[^0-9]/", "", $id);
+            })
+            ->max();
+        $largest_employee_id = $largest_employee_id ? $largest_employee_id : 0;
+        $largest_employee_id++;
+        return 'EMP-' . str_pad($largest_employee_id, 6, '0', STR_PAD_LEFT);
+    }
+
+    // Generate next affiliate ID
+    public static function generateNextAffiliateId()
+    {
+        $largest_affiliate_id = User::where('user_id', 'like', 'AFF-%')
+            ->where('user_type', 'affiliate')
+            ->pluck('user_id')
+            ->map(function ($id) {
+                return preg_replace("/[^0-9]/", "", $id);
+            })
+            ->max();
+        $largest_affiliate_id = $largest_affiliate_id ? $largest_affiliate_id : 0;
+        $largest_affiliate_id++;
+        return 'AFF-' . str_pad($largest_affiliate_id, 6, '0', STR_PAD_LEFT);
     }
 
     public function customer()

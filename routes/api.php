@@ -17,10 +17,13 @@ use App\Http\Controllers\Employee\DesignationController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
 use App\Http\Controllers\Followup\FollowupController;
+use App\Http\Controllers\Lead\ContactController;
 use App\Http\Controllers\Lead\LeadAssignController;
 use App\Http\Controllers\Lead\LeadCategoryController;
 use App\Http\Controllers\Lead\LeadController;
 use App\Http\Controllers\Lead\LeadSourceController;
+use App\Http\Controllers\Lead\ChallengeController;
+use App\Http\Controllers\Lead\OrganizationController;
 use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
 use App\Http\Controllers\MediaFile\FileController;
@@ -35,8 +38,8 @@ use App\Http\Controllers\Setting\PropertyTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
 use App\Http\Controllers\Setting\PropertyUnitController;
 use App\Http\Controllers\Setting\VatSettingController; 
+use App\Http\Controllers\Sales\SalesController;
 use App\Http\Controllers\User\ProfileUpdateController;
-use App\Http\Controllers\User\UserAddressController;
 use App\Http\Controllers\User\UserContactController; 
 use Illuminate\Support\Facades\Route;
 
@@ -90,6 +93,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation']);
     Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting']); 
 
+    // Organization  
+    Route::resource('organization', OrganizationController::class);
+
+    // Organization  
+    Route::resource('contact', ContactController::class);
+
     // Affiliate 
     Route::resource('affiliate', AffiliateController::class);
     
@@ -97,12 +106,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('campaign', CampaignController::class);
     Route::apiResource('lead-category', LeadCategoryController::class);
     Route::resource('lead-source',LeadSourceController::class);
+    Route::resource('challenge',ChallengeController::class);
     Route::resource('lead',LeadController::class);
-    Route::post('lead-interested', [LeadController::class, 'interested']);
-    Route::post('lead-assign-to',LeadAssignController::class);
+    Route::post('lead-assign-to/{uuid}',LeadAssignController::class);
 
     Route::resource('customer', CustomerController::class);
-    Route::get('customer-personal-info',[CustomerController::class,'show']); 
+    Route::get('customer-personal-info',[CustomerController::class,'show']);
+    
+    // Sales
+    Route::resource('sales', SalesController::class);
     
     // Follwup 
     Route::resource('followup',FollowupController::class);
@@ -110,8 +122,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // User common 
     Route::post('profile-picture-update',[ProfileUpdateController::class,'profile_picture']);
     Route::post('bio-update',[ProfileUpdateController::class,'bio']); 
-    Route::post('address-update',[UserAddressController::class,'update']);
-    Route::get('address/{uuid}',[UserAddressController::class,'show']);
     // contact   
     Route::get('contacts/{uuid}',[UserContactController::class,'contact_list']);
     Route::post('add-contact',[UserContactController::class,'add_contact']);
@@ -139,6 +149,8 @@ Route::get('educations',[EnamController::class,'education']);
 Route::get('professions',[EnamController::class,'profession']);
 Route::get('campaign-types',[EnamController::class,'campaignType']);
 Route::get('channels',[EnamController::class,'channel']);
+Route::get('organization-types',[EnamController::class,'organizationType']);
+Route::get('industries',[EnamController::class,'industry']);
 
 
  

@@ -7,7 +7,9 @@ use App\Enums\CampaignType;
 use App\Enums\Channel;
 use App\Enums\EducationEnam;
 use App\Enums\Gender;
+use App\Enums\Industry;
 use App\Enums\MaritualStatus;
+use App\Enums\OrganizationType;
 use App\Enums\Priority;
 use App\Enums\ProfessionEnam;
 use App\Enums\Religion;
@@ -159,6 +161,36 @@ class EnamController extends Controller
         $result = [];
 
         foreach ($channels as $id => $name) {
+            $result[] = [
+                'id' => $id,
+                'name' => $name,
+            ];
+        }
+        return success_response($result);
+    }
+
+    public function organizationType()
+    {
+        $types = OrganizationType::values();
+
+        $result = [];
+
+        foreach ($types as $id => $name) {
+            $result[] = [
+                'id' => $id,
+                'name' => $name,
+            ];
+        }
+        return success_response($result);
+    }
+
+    public function industry()
+    {
+        $industries = Industry::values();
+
+        $result = [];
+
+        foreach ($industries as $id => $name) {
             $result[] = [
                 'id' => $id,
                 'name' => $name,

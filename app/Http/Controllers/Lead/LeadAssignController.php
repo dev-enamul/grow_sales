@@ -10,20 +10,18 @@ use Illuminate\Http\Request;
 
 class LeadAssignController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request, $uuid)
     { 
-        $request->validate([
-            'lead_uuid' => 'required|exists:leads,uuid',
-            'assigned_to' => 'required|exists:users,uuid',
+        $request->validate([ 
+            'assigned_to' => 'required|exists:users,id',
         ]);
-
         try {  
-            $lead = Lead::where('uuid',$request->lead_uuid)->first();
+            $lead = Lead::where('uuid',$uuid)->first();
             if(!$lead){
                 return error_response(null,404,"Lead not found");
             } 
 
-            $assigned_user = User::where('uuid',$request->assigned_to)->first();
+            $assigned_user = User::find($request->assigned_to);
             if(!$assigned_user){
                 return error_response(null,404,"User not found");
             } 
