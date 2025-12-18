@@ -25,6 +25,7 @@ class LeadStoreRequest extends FormRequest
             'contact_id' => 'required|integer|exists:contacts,id',  
             'assigned_to' => 'nullable|integer|exists:users,id',
             'lead_source_id' => 'nullable|exists:lead_sources,id',
+            'affiliate_id' => 'nullable|integer|exists:users,id',
             'challenges' => 'nullable|array',
             'challenges.*' => 'integer|exists:challenges,id',
             'next_followup_date' => 'nullable|date',

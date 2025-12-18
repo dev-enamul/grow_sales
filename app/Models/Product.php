@@ -18,6 +18,7 @@ class Product extends Model
         'uuid',
         'company_id',
         'product_unit_id',
+        'measurment_unit_id',
         'category_id',
         'sub_category_id',
         'name',
@@ -63,6 +64,11 @@ class Product extends Model
     public function productUnit()
     {
         return $this->belongsTo(ProductUnit::class);
+    }
+
+    public function measurmentUnit()
+    {
+        return $this->belongsTo(MeasurmentUnit::class);
     }
  
     public function category()

@@ -167,7 +167,7 @@ class ProjectController extends Controller
         $category->created_by = Auth::id();
         $category->save();
 
-        return success_response(null, 'Product category created successfully!', 201);
+        return success_response(null, 'Product category created successfully!');
     }
 
 

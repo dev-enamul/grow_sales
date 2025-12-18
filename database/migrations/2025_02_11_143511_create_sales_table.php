@@ -29,6 +29,7 @@ return new class extends Migration
             // Amounts
             $table->decimal('subtotal', 10, 2)->nullable(); 
             $table->decimal('discount', 10, 2)->nullable(); 
+            $table->decimal('other_price', 10, 2)->nullable();
             $table->decimal('grand_total', 10, 2)->nullable(); 
             $table->decimal('paid', 10, 2)->default(0);
             $table->decimal('due', 10, 2)->nullable();

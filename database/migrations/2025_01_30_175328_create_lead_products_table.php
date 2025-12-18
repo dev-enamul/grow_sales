@@ -21,16 +21,11 @@ return new class extends Migration
             $table->foreignId('product_sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
             $table->foreignId('product_id')->nullable()->constrained('products')->onDelete('set null');
            
-            
-            
-            $table->integer('qty')->nullable(); // for quotation
-            $table->decimal('price', 10, 2)->nullable(); // for quotation
-            $table->decimal('subtotal', 10, 2)->nullable(); // for quotation
-            $table->float('vat_rate')->nullable(); // for quotation
-            $table->decimal('vat_value', 10, 2)->nullable(); // for quotation
-            $table->decimal('discount', 10, 2)->nullable(); // for quotation
-            $table->decimal('grand_total', 10, 2)->nullable(); // for quotation
-            $table->decimal('negotiated_price', 10, 2)->nullable(); // for negotiation 
+ 
+            $table->integer('quantity')->default(0);
+            $table->decimal('other_price', 10, 2)->default(0); 
+            $table->decimal('discount', 10, 2)->default(0); 
+            $table->decimal('negotiated_price', 10, 2)->nullable();
 
             $table->text('notes')->nullable();
             

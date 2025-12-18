@@ -52,8 +52,8 @@ class ServiceController extends Controller
                         ->orWhere('code', 'like', '%' . $keyword . '%');
                 });
             }) 
-            ->select('id','uuid', 'name','slug', 'code', 'description', 'rate', 'quantity', 'price', 'category_id', 'sub_category_id', 'vat_setting_id', 'image')
-            ->with(['category:id,uuid,name', 'subCategory:id,uuid,name', 'vatSetting:id,vat_percentage']);
+            ->select('id','uuid', 'name','slug', 'code', 'description', 'rate', 'quantity', 'price', 'measurment_unit_id', 'other_price', 'discount', 'vat_setting_id', 'vat_rate', 'vat_amount', 'sell_price', 'category_id', 'sub_category_id', 'image')
+            ->with(['category:id,uuid,name', 'subCategory:id,uuid,name', 'vatSetting:id,vat_percentage', 'measurmentUnit:id,name']);
         
         if ($selectOnly) {
             $services = $query->select('id','name', 'price')->latest()->take(10)->get()->map(function ($item) {
@@ -88,7 +88,14 @@ class ServiceController extends Controller
                 'rate' => $item->rate,
                 'quantity' => $item->quantity,
                 'price' => $item->price,
+                'measurment_unit_id' => $item->measurment_unit_id,
+                'other_price' => $item->other_price,
+                'discount' => $item->discount,
                 'vat_id' => $item->vat_setting_id,
+                'vat_setting_id' => $item->vat_setting_id,
+                'vat_rate' => $item->vat_rate,
+                'vat_amount' => $item->vat_amount,
+                'sell_price' => $item->sell_price,
                 'vat_percentage' => $item->vatSetting ? $item->vatSetting->vat_percentage : null,
                 'category_id' => $item->category ? $item->category->id : null,
                 'category_name' => $item->category ? $item->category->name : null,
@@ -110,6 +117,7 @@ class ServiceController extends Controller
                 'category:id,uuid,name',
                 'subCategory:id,uuid,name',
                 'vatSetting:id,name',
+                'measurmentUnit:id,name',
                 'creator:id,name',
                 'updater:id,name',
                 'deleter:id,name'
@@ -129,7 +137,14 @@ class ServiceController extends Controller
             'rate' => $service->rate,
             'quantity' => $service->quantity,
             'price' => $service->price,
+            'measurment_unit_id' => $service->measurment_unit_id,
+            'other_price' => $service->other_price,
+            'discount' => $service->discount,
             'vat_id' => $service->vat_setting_id,
+            'vat_setting_id' => $service->vat_setting_id,
+            'vat_rate' => $service->vat_rate,
+            'vat_amount' => $service->vat_amount,
+            'sell_price' => $service->sell_price,
             'category_id' => $service->category ? $service->category->id : null,
             'category_name' => $service->category ? $service->category->name : null,
             'sub_category_id' => $service->subCategory ? $service->subCategory->id : null,
@@ -155,19 +170,36 @@ class ServiceController extends Controller
             'price' => 'nullable|numeric|min:0',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
             'vat_id' => 'nullable|exists:vat_settings,id', // Backward compatibility
-            'category_id' => 'required|exists:product_categories,id',
-            'sub_category_id' => 'required|exists:product_sub_categories,id',
+            'category_id' => 'nullable|exists:product_categories,id',
+            'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'image' => 'nullable|exists:files,id',
         ]);
 
-        // Verify category and sub-category belong to service and same company
-        $category = ProductCategory::where('id', $request->category_id)
-            ->where('company_id', Auth::user()->company_id)
-            ->where('applies_to', 'service')
-            ->first();
+        // Verify category and sub-category belong to service and same company (only if provided)
+        if ($request->category_id) {
+            $category = ProductCategory::where('id', $request->category_id)
+                ->where('company_id', Auth::user()->company_id)
+                ->where('applies_to', 'service')
+                ->first();
 
-        if (!$category) {
-            return error_response('Service category not found or invalid', 404);
+            if (!$category) {
+                return error_response('Service category not found or invalid', 404);
+            }
+        }
+
+        // Verify sub-category belongs to the category and same company (only if provided)
+        if ($request->sub_category_id) {
+            $subCategory = ProductSubCategory::where('id', $request->sub_category_id)
+                ->where('company_id', Auth::user()->company_id)
+                ->where('applies_to', 'service')
+                ->when($request->category_id, function ($query) use ($request) {
+                    return $query->where('category_id', $request->category_id);
+                })
+                ->first();
+
+            if (!$subCategory) {
+                return error_response('Service sub-category not found or invalid', 404);
+            }
         }
  
 
@@ -180,7 +212,13 @@ class ServiceController extends Controller
         $service->rate = $request->rate ?? 0;
         $service->quantity = $request->quantity ?? 0;
         $service->price = $request->price ?? 0;
+        $service->measurment_unit_id = $request->measurment_unit_id;
+        $service->other_price = $request->other_price ?? 0;
+        $service->discount = $request->discount ?? 0;
         $service->vat_setting_id = $request->vat_setting_id ?? $request->vat_id;
+        $service->vat_rate = $request->vat_rate;
+        $service->vat_amount = $request->vat_amount;
+        $service->sell_price = $request->sell_price;
         $service->category_id = $request->category_id;
         $service->sub_category_id = $request->sub_category_id;
         $service->image = $request->image;
@@ -201,8 +239,14 @@ class ServiceController extends Controller
             'rate' => 'nullable|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
             'price' => 'nullable|numeric|min:0',
+            'measurment_unit_id' => 'nullable|exists:measurment_units,id',
+            'other_price' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
             'vat_id' => 'nullable|exists:vat_settings,id', // Backward compatibility
+            'vat_rate' => 'nullable|numeric|min:0',
+            'vat_amount' => 'nullable|numeric|min:0',
+            'sell_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'image' => 'nullable|exists:files,id',
@@ -218,7 +262,7 @@ class ServiceController extends Controller
         }
 
         // If category_id is being updated, verify it belongs to service
-        if ($request->has('category_id')) {
+        if ($request->has('category_id') && $request->category_id) {
             $category = ProductCategory::where('id', $request->category_id)
                 ->where('company_id', Auth::user()->company_id)
                 ->where('applies_to', 'service')
@@ -229,7 +273,20 @@ class ServiceController extends Controller
             }
         }
 
-       
+        // If sub_category_id is being updated, verify it belongs to service and category
+        if ($request->has('sub_category_id') && $request->sub_category_id) {
+            $subCategory = ProductSubCategory::where('id', $request->sub_category_id)
+                ->where('company_id', Auth::user()->company_id)
+                ->where('applies_to', 'service')
+                ->when($request->category_id, function ($query) use ($request) {
+                    return $query->where('category_id', $request->category_id);
+                })
+                ->first();
+
+            if (!$subCategory) {
+                return error_response('Service sub-category not found or invalid', 404);
+            }
+        }
 
         $service->name = $request->name;
         $service->slug = getSlug(new Product(), $request->name);
@@ -239,8 +296,26 @@ class ServiceController extends Controller
         $service->quantity = $request->quantity ?? $service->quantity;
         $service->price = $request->price ?? $service->price;
         
+        if ($request->has('measurment_unit_id')) {
+            $service->measurment_unit_id = $request->measurment_unit_id;
+        }
+        if ($request->has('other_price')) {
+            $service->other_price = $request->other_price ?? 0;
+        }
+        if ($request->has('discount')) {
+            $service->discount = $request->discount ?? 0;
+        }
         if ($request->has('vat_setting_id') || $request->has('vat_id')) {
             $service->vat_setting_id = $request->vat_setting_id ?? $request->vat_id;
+        }
+        if ($request->has('vat_rate')) {
+            $service->vat_rate = $request->vat_rate;
+        }
+        if ($request->has('vat_amount')) {
+            $service->vat_amount = $request->vat_amount;
+        }
+        if ($request->has('sell_price')) {
+            $service->sell_price = $request->sell_price;
         }
         if ($request->has('category_id')) {
             $service->category_id = $request->category_id;

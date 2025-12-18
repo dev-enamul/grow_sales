@@ -18,6 +18,7 @@ return new class extends Migration
         $table->foreignId('company_id')->constrained()->onDelete('cascade');
 
         $table->foreignId('product_unit_id')->nullable()->constrained('product_units');
+        $table->foreignId('measurment_unit_id')->nullable()->constrained('measurment_units')->onDelete('set null');
         $table->foreignId('category_id')->nullable()->constrained('product_categories')->onDelete('set null');
         $table->foreignId('sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
 

@@ -42,7 +42,9 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-             $table->unique(['company_id', 'name']);
+            // Unique constraint: company_id + name + parent_id
+            // This allows same name at different hierarchy levels (e.g., "Rajshahi" as Division and District)
+            $table->unique(['company_id', 'name', 'parent_id']);
         });
     }
 

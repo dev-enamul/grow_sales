@@ -19,13 +19,25 @@ return new class extends Migration
             $table->foreignId('sales_id')->constrained('sales')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             
-            $table->integer('qty')->nullable(); // for quotation
-            $table->decimal('price', 10, 2)->nullable(); // for quotation
-            $table->decimal('subtotal', 10, 2)->nullable(); // for quotation
-            $table->float('vat_rate')->nullable(); // for quotation
-            $table->decimal('vat_value', 10, 2)->nullable(); // for quotation
-            $table->decimal('discount', 10, 2)->nullable(); // for quotation
-            $table->decimal('grand_total', 10, 2)->nullable(); // for quotation 
+            $table->decimal('rate', 15, 2)->default(0);     
+            $table->integer('quantity')->default(0);      
+            $table->decimal('price', 15, 2)->default(0);
+            $table->decimal('other_price', 15, 2)->nullable();
+            $table->float('discount')->default(0); 
+
+            $table->foreignId('vat_setting_id')
+                    ->nullable()
+                    ->constrained('vat_settings')
+                    ->onDelete('set null');
+            $table->float('vat_rate')->nullable();
+            $table->decimal('vat_amount', 15, 2)->nullable();
+            $table->decimal('sell_price', 10, 2)->nullable(); 
+
+            $table->integer('order_quantity')->default(0);
+            $table->decimal('order_price', 10, 2)->default(0);
+            $table->decimal('order_other_price', 10, 2)->default(0); 
+            $table->float('order_discount')->default(0); 
+            $table->decimal('order_total_price', 10, 2)->default(0);
 
             $table->text('notes')->nullable();
             

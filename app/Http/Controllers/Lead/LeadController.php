@@ -17,6 +17,7 @@ use App\Models\ProductSubCategory;
 use App\Models\ProductCategory;
 use App\Models\Sales;
 use App\Models\User;
+use App\Models\VatSetting;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -169,11 +170,12 @@ class LeadController extends Controller
                 DB::rollBack();
                 return error_response('Contact not found', 404);
             }
+ 
             
             // Create lead (company_id is set automatically by ActionTrackable trait)
             $lead = Lead::create([
                 'company_id' => $companyId,
-                'lead_id' => Lead::generateNextLeadId(),
+                'lead_id' => Lead::generateNextLeadId($companyId),
                 'organization_id' => $contact->organization_id ?? null,
                 'lead_category_id' => $lead_category?->id ?? null,
                 'last_contacted_at' => now(),
@@ -181,8 +183,11 @@ class LeadController extends Controller
                 'assigned_to' => $request->assigned_to?? $authUser->id,
                 'lead_source_id' => $request->lead_source_id?? null,
                 'campaign_id' => $request->campaign_id?? null,
+                'affiliate_id' => $request->affiliate_id,
                 'challenges' => $request->challenges && is_array($request->challenges) ? json_encode($request->challenges) : null,
                 'notes' => $request->notes?? null,
+                'other_price' => $request->other_price ?? 0,
+                'discount' => $request->discount ?? 0,
                 'created_by' => $authUser->id,
             ]); 
 
@@ -195,6 +200,16 @@ class LeadController extends Controller
                 'created_by' => $authUser->id,
             ]); 
 
+            Followup::create([
+                'company_id' => $companyId,
+                'lead_id' => $lead->id,
+                'lead_category_id' => $lead_category?->id ?? null,
+                'next_followup_date' => $request->next_followup_date ?: Carbon::now()->addDay(7),
+                'notes' => $request->notes?? "Data created",
+                'challenges' => $request->challenges && is_array($request->challenges) ? json_encode($request->challenges) : null,
+                'created_by' => $authUser->id,
+            ]); 
+
             // Save lead products
             if ($request->products && is_array($request->products)) {
                 foreach ($request->products as $productData) {
@@ -202,8 +217,7 @@ class LeadController extends Controller
                     $productId = $productData['product_id'] ?? null;
                     $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
                     $negotiatedPrice = $productData['negotiated_price'] ?? $productData['negotiation_price'] ?? null;
-                   
-                    // If product_id is not provided but product_sub_category_id is, find a product with that sub_category
+                    
                     if (empty($productId) && !empty($productSubCategoryId)) {
                         $product = Product::where('sub_category_id', $productSubCategoryId)
                             ->where('company_id', $companyId)
@@ -214,29 +228,54 @@ class LeadController extends Controller
                             $productId = $product->id;
                         } 
                     }
-
-                    // For Service category, product_id is required
+ 
                     if ($category === 'Service' && empty($productId)) {
                         DB::rollBack();
                         return error_response('Product ID is required for Service category.', 400);
                     }
+ 
+                    $serviceCategoryId = null;
+                    $serviceSubCategoryId = null;
+                    
+                    if ($productId && $category === 'Service') { 
+                        $product = Product::where('id', $productId)
+                            ->where('company_id', $companyId)
+                            ->first();
+                        if ($product) {
+                            $serviceCategoryId = $product->category_id ?? null;
+                            $serviceSubCategoryId = $product->sub_category_id ?? null;
+                        }
+                    } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) { 
+                        $product = Product::where('id', $productId)
+                            ->where('company_id', $companyId)
+                            ->first();
+                        if ($product) {
+                            $productSubCategoryId = $product->sub_category_id ?? null;
+                        }
+                    }
 
-                    // Prepare data for LeadProduct (without qty, price, subtotal, vat_rate, vat_value, discount, grand_total)
+                    // Prepare data for LeadProduct
                     $leadProductData = [
-                        'company_id' => $companyId,
-                        'lead_id' => $lead->id,
+                        'company_id' => $companyId,  
+                        'lead_id' => $lead->id,  
                         'type' => $category,
                         'property_unit_id' => $productData['property_unit_id'] ?? null,
                         'area_id' => $productData['area_id'] ?? null,
-                        'product_category_id' => $productData['property_id'] ?? null,
-                        'product_sub_category_id' => $productSubCategoryId,
+                        'product_category_id' => $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null),
+                        'product_sub_category_id' => $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId,
                         'product_id' => $productId,
+                        'quantity' => $productData['quantity'] ?? 1,  
+                        'other_price' => $productData['other_price'] ?? 0, 
+                        'discount' => $productData['discount'] ?? 0,  
                         'negotiated_price' => $negotiatedPrice,
-                        'created_by' => $authUser->id,
+                        'notes' => $productData['notes'] ?? null,
+                        'created_by' => $authUser->id, 
                     ];
 
                     LeadProduct::create($leadProductData);
                 }
+
+                 
             }
 
             DB::commit();
@@ -252,26 +291,37 @@ class LeadController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($uuid)
+    public function show($identifier)
     {
         try {
             $authUser = Auth::user();
             $companyId = $authUser->company_id;
 
-            $lead = Lead::where('uuid', $uuid)
-                ->where('company_id', $companyId)
-                ->with([
+            // Check if identifier is numeric (id) or UUID string
+            $query = Lead::where('company_id', $companyId);
+            
+            if (is_numeric($identifier)) {
+                // If numeric, search by id
+                $query->where('id', $identifier);
+            } else {
+                // Otherwise, search by uuid
+                $query->where('uuid', $identifier);
+            }
+
+            $lead = $query->with([
                     'leadCategory:id,uuid,title',
                     'leadSource:id,uuid,name',
                     'campaign:id,uuid,name',
                     'organization:id,uuid,name,organization_type,industry,website,address',
                     'assignedTo:id,uuid,name,email,phone,profile_image',
+                    'affiliate:id,uuid,name,email,phone,profile_image',
                     'createdBy:id,uuid,name',
                     'updatedBy:id,uuid,name',
                     'leadContacts.contact:id,uuid,name,phone,email,profile_image',
-                    'products.product:id,uuid,name,price,image',
+                    'products.product:id,uuid,name,price,image,sell_price',
                     'products.product.category:id,uuid,name',
                     'products.product.subCategory:id,uuid,name',
+                    'products.productSubCategory:id,uuid,name,sell_price',
                     'followups.leadCategory:id,uuid,title',
                     'followups.createdBy:id,uuid,name',
                 ])
@@ -301,23 +351,64 @@ class LeadController extends Controller
                 ];
             });
 
-            // Format products
+            // Format products - Load relationships explicitly to avoid cache issues
             $formattedProducts = $lead->products->map(function ($leadProduct) {
+                // Load relationships if not already loaded
+                if (!$leadProduct->relationLoaded('product')) {
+                    $leadProduct->load('product:id,uuid,name,price,image,sell_price');
+                }
+                if (!$leadProduct->relationLoaded('productSubCategory')) {
+                    $leadProduct->load('productSubCategory:id,uuid,name,sell_price');
+                }
+                
                 $product = $leadProduct->product;
+                $productSubCategory = $leadProduct->productSubCategory;
+                
+                // Get base sell_price based on priority:
+                // Priority 1: If product_id exists, get from products table
+                // Priority 2: If product_id is null, check product_sub_category_id and get from product_sub_categories table
+                // Priority 3: If neither found, return 0
+                $baseSellPrice = 0;
+                
+                // Priority 1: Check product_id first
+                if ($leadProduct->product_id && $product && isset($product->sell_price)) {
+                    // Get from products table
+                    $baseSellPrice = $product->sell_price !== null && $product->sell_price !== '' 
+                        ? (float) $product->sell_price 
+                        : 0;
+                } 
+                // Priority 2: Only if product_id is null/empty, check product_sub_category_id
+                elseif (!$leadProduct->product_id && $leadProduct->product_sub_category_id && $productSubCategory && isset($productSubCategory->sell_price)) {
+                    // Get from product_sub_categories table
+                    $baseSellPrice = $productSubCategory->sell_price !== null && $productSubCategory->sell_price !== '' 
+                        ? (float) $productSubCategory->sell_price 
+                        : 0;
+                }
+                // Priority 3: Default to 0 (already set above)
+                
+                // Calculate final sell price: (basePrice * quantity) + otherPrice - discount
+                $quantity = (float) ($leadProduct->quantity ?? 1);
+                $otherPrice = (float) ($leadProduct->other_price ?? 0);
+                $discount = (float) ($leadProduct->discount ?? 0);
+                $finalSellPrice = ($baseSellPrice * $quantity) + $otherPrice - $discount;
+                
+                // Get negotiated_price from lead_products table
+                $negotiatedPrice = $leadProduct->negotiated_price !== null && $leadProduct->negotiated_price !== '' 
+                    ? (float) $leadProduct->negotiated_price 
+                    : null;
+                
                 $productData = [
                     'id' => $leadProduct->id,
                     'uuid' => $leadProduct->uuid,
                     'category' => $leadProduct->type,
-                    'negotiated_price' => $leadProduct->negotiated_price,
-                    'negotiation_price' => $leadProduct->negotiated_price,
-                    'qty' => $leadProduct->qty,
-                    'price' => $leadProduct->price,
-                    'subtotal' => $leadProduct->subtotal,
-                    'vat_rate' => $leadProduct->vat_rate,
-                    'vat_value' => $leadProduct->vat_value,
-                    'discount' => $leadProduct->discount,
-                    'grand_total' => $leadProduct->grand_total,
+                    'sell_price' => $baseSellPrice, // Base price for reference
+                    'final_sell_price' => $finalSellPrice, // Final calculated sell price
+                    'quantity' => $leadProduct->quantity,
+                    'discount' => $leadProduct->discount ?? null,
                     'notes' => $leadProduct->notes,
+                    'other_price' => $leadProduct->other_price ?? null,
+                    'negotiated_price' => $negotiatedPrice,
+                    'negotiation_price' => $negotiatedPrice, // Backward compatibility
                 ];
 
                 if ($product) {
@@ -337,6 +428,18 @@ class LeadController extends Controller
                             'name' => $product->subCategory->name,
                         ] : null,
                     ];
+                } elseif ($productSubCategory) {
+                    // If no product but has subcategory, show subcategory name
+                    $productData['product'] = [
+                        'id' => $productSubCategory->id,
+                        'uuid' => $productSubCategory->uuid,
+                        'name' => $productSubCategory->name,
+                        'price' => $productSubCategory->price ?? null,
+                        'image' => $productSubCategory->image ?? null,
+                        'image_url' => $productSubCategory->image ? getFileUrl($productSubCategory->image) : null,
+                        'category' => null,
+                        'sub_category' => null,
+                    ];
                 }
 
                 if ($leadProduct->type === 'Property') {
@@ -353,13 +456,39 @@ class LeadController extends Controller
             });
 
             // Format followups
-            $formattedFollowups = $lead->followups->map(function ($followup) {
+            $formattedFollowups = $lead->followups->map(function ($followup) use ($lead) {
+                // Parse challenges if it's a string, otherwise use as is
+                $challenges = $followup->challenges;
+                if (is_string($challenges)) {
+                    $decoded = json_decode($challenges, true);
+                    $challenges = $decoded !== null ? $decoded : [];
+                } elseif (!is_array($challenges)) {
+                    $challenges = [];
+                }
+                
+                // Fetch challenge details if challenge IDs exist
+                $challengeDetails = [];
+                if (!empty($challenges) && is_array($challenges)) {
+                    $challengeModels = \App\Models\Challenge::whereIn('id', $challenges)
+                        ->where('company_id', $lead->company_id)
+                        ->select('id', 'uuid', 'title')
+                        ->get();
+                    
+                    $challengeDetails = $challengeModels->map(function ($challenge) {
+                        return [
+                            'id' => $challenge->id,
+                            'uuid' => $challenge->uuid,
+                            'title' => $challenge->title,
+                        ];
+                    })->toArray();
+                }
+                
                 return [
                     'id' => $followup->id,
                     'uuid' => $followup->uuid,
                     'next_followup_date' => formatDate($followup->next_followup_date),
                     'notes' => $followup->notes,
-                    'challenges' => $followup->challenges,
+                    'challenges' => $challengeDetails,
                     'category' => $followup->leadCategory ? [
                         'id' => $followup->leadCategory->id,
                         'uuid' => $followup->leadCategory->uuid,
@@ -449,6 +578,15 @@ class LeadController extends Controller
                     'profile_image' => $lead->assignedTo->profile_image,
                     'profile_image_url' => getFileUrl($lead->assignedTo->profile_image),
                 ] : null,
+                'affiliate' => $lead->affiliate ? [
+                    'id' => $lead->affiliate->id,
+                    'uuid' => $lead->affiliate->uuid,
+                    'name' => $lead->affiliate->name,
+                    'email' => $lead->affiliate->email,
+                    'phone' => $lead->affiliate->phone,
+                    'profile_image' => $lead->affiliate->profile_image,
+                    'profile_image_url' => getFileUrl($lead->affiliate->profile_image),
+                ] : null,
                 'primary_contact' => $primaryContact ? [
                     'id' => $primaryContact->id,
                     'uuid' => $primaryContact->uuid,
@@ -464,10 +602,9 @@ class LeadController extends Controller
                 'sales' => $sales,
                 'customers' => $customers,
                 'financial' => [
-                    'subtotal' => $lead->subtotal,
-                    'discount' => $lead->discount,
-                    'grand_total' => $lead->grand_total,
-                    'negotiated_price' => $lead->negotiated_price,
+                    'other_price' => $lead->other_price ?? 0,
+                    'discount' => $lead->discount ?? 0,
+                    'negotiated_price' => $lead->negotiated_price ?? null,
                 ],
                 'dates' => [
                     'created_at' => formatDate($lead->created_at),
@@ -476,7 +613,35 @@ class LeadController extends Controller
                     'next_followup_date' => formatDate($lead->next_followup_date),
                 ],
                 'notes' => $lead->notes,
-                'challenges' => $lead->challenges,
+                'challenges' => (function() use ($lead) {
+                    // Parse challenges if it's a string, otherwise use as is
+                    $challenges = $lead->challenges;
+                    if (is_string($challenges)) {
+                        $decoded = json_decode($challenges, true);
+                        $challenges = $decoded !== null ? $decoded : [];
+                    } elseif (!is_array($challenges)) {
+                        $challenges = [];
+                    }
+                    
+                    // Fetch challenge details if challenge IDs exist
+                    $challengeDetails = [];
+                    if (!empty($challenges) && is_array($challenges)) {
+                        $challengeModels = \App\Models\Challenge::whereIn('id', $challenges)
+                            ->where('company_id', $lead->company_id)
+                            ->select('id', 'uuid', 'title')
+                            ->get();
+                        
+                        $challengeDetails = $challengeModels->map(function ($challenge) {
+                            return [
+                                'id' => $challenge->id,
+                                'uuid' => $challenge->uuid,
+                                'title' => $challenge->title,
+                            ];
+                        })->toArray();
+                    }
+                    
+                    return $challengeDetails;
+                })(),
                 'statistics' => [
                     'days_in_pipeline' => $daysInPipeline,
                     'followup_count' => $lead->followups->count(),
@@ -558,6 +723,283 @@ class LeadController extends Controller
     }
 
     /**
+     * Update decision maker for a lead
+     */
+    public function updateDecisionMaker(Request $request, $uuid)
+    {
+        DB::beginTransaction();
+        try {
+            $authUser = Auth::user();
+            $companyId = $authUser->company_id;
+
+            $request->validate([
+                'contact_id' => 'required|integer|exists:contacts,id',
+            ]);
+
+            $lead = Lead::where('uuid', $uuid)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$lead) {
+                return error_response('Lead not found', 404);
+            }
+
+            // Check if this contact is already associated with this lead
+            $leadContact = LeadContact::where('lead_id', $lead->id)
+                ->where('contact_id', $request->contact_id)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$leadContact) {
+                return error_response('Contact is not associated with this lead', 404);
+            }
+
+            // Set all contacts for this lead to not be decision maker
+            LeadContact::where('lead_id', $lead->id)
+                ->where('company_id', $companyId)
+                ->update(['is_decision_maker' => false, 'updated_by' => $authUser->id]);
+
+            // Set the selected contact as decision maker
+            $leadContact->is_decision_maker = true;
+            $leadContact->updated_by = $authUser->id;
+            $leadContact->save();
+
+            DB::commit();
+            return success_response(null, 'Decision maker updated successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update lead products
+     */
+    public function updateProducts(Request $request, $uuid)
+    {
+        DB::beginTransaction();
+        try {
+            $authUser = Auth::user();
+            $companyId = $authUser->company_id;
+
+            $request->validate([
+                'products' => 'required|array',
+                'products.*.category' => 'required|in:Property,Service',
+                'products.*.lead_product_id' => 'nullable|exists:lead_products,id',
+                'products.*.product_id' => 'nullable|exists:products,id',
+                'products.*.product_sub_category_id' => 'nullable|exists:product_sub_categories,id',
+                'products.*.property_unit_id' => 'nullable|exists:product_units,id',
+                'products.*.area_id' => 'nullable|exists:areas,id',
+                'products.*.property_id' => 'nullable|exists:product_categories,id',
+                'products.*.quantity' => 'nullable|numeric|min:1',
+                'products.*.other_price' => 'nullable|numeric|min:0',
+                'products.*.discount' => 'nullable|numeric|min:0',
+                'products.*.negotiation_price' => 'nullable|numeric|min:0',
+                'products.*.negotiated_price' => 'nullable|numeric|min:0',
+                'products.*.notes' => 'nullable|string',
+            ]);
+
+            $lead = Lead::where('uuid', $uuid)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$lead) {
+                return error_response('Lead not found', 404);
+            }
+
+            // Get existing lead product IDs
+            $existingProductIds = $lead->products->pluck('id')->toArray();
+            $updatedProductIds = [];
+
+            // Process each product
+            foreach ($request->products as $productData) {
+                $leadProductId = $productData['lead_product_id'] ?? null;
+                
+                if ($leadProductId && in_array($leadProductId, $existingProductIds)) {
+                    // Update existing product
+                    $leadProduct = LeadProduct::where('id', $leadProductId)
+                        ->where('lead_id', $lead->id)
+                        ->where('company_id', $companyId)
+                        ->first();
+
+                    if ($leadProduct) {
+                        $category = $leadProduct->type ?? $productData['category'] ?? null;
+                        $productId = $productData['product_id'] ?? null;
+                        $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
+                        
+                        // Handle Property category: if product_id is empty but product_sub_category_id exists
+                        if (empty($productId) && !empty($productSubCategoryId) && $category === 'Property') {
+                            $product = Product::where('sub_category_id', $productSubCategoryId)
+                                ->where('company_id', $companyId)
+                                ->where('applies_to', 'property')
+                                ->first();
+                            
+                            if ($product) {
+                                $productId = $product->id;
+                            } 
+                        }
+                        
+                        // Get service category and sub_category for Service products
+                        $serviceCategoryId = null;
+                        $serviceSubCategoryId = null;
+                        
+                        if ($productId && $category === 'Service') {
+                            // For Service, get category_id and sub_category_id from Product
+                            $product = Product::where('id', $productId)
+                                ->where('company_id', $companyId)
+                                ->first();
+                            if ($product) {
+                                $serviceCategoryId = $product->category_id ?? null;
+                                $serviceSubCategoryId = $product->sub_category_id ?? null;
+                            }
+                        } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) {
+                            // For Property, get sub_category_id from Product if not already set
+                            $product = Product::where('id', $productId)
+                                ->where('company_id', $companyId)
+                                ->first();
+                            if ($product) {
+                                $productSubCategoryId = $product->sub_category_id ?? null;
+                            }
+                        }
+
+                        // Update all fields from request - same as store method
+                        $leadProduct->type = $category;
+                        $leadProduct->product_id = $productId;
+                        $leadProduct->property_unit_id = $productData['property_unit_id'] ?? null;
+                        $leadProduct->area_id = $productData['area_id'] ?? null;
+                        $leadProduct->product_category_id = $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null);
+                        $leadProduct->product_sub_category_id = $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId;
+                        
+                        // Update quantity - always update from request
+                        $leadProduct->quantity = isset($productData['quantity']) ? (int)$productData['quantity'] : ($leadProduct->quantity ?? 1);
+                        
+                        // Update other_price - always update from request
+                        $leadProduct->other_price = isset($productData['other_price']) ? (float)$productData['other_price'] : ($leadProduct->other_price ?? 0);
+                        
+                        // Update discount - always update from request
+                        $leadProduct->discount = isset($productData['discount']) ? (float)$productData['discount'] : ($leadProduct->discount ?? 0);
+                        
+                        // Update negotiated_price
+                        if (isset($productData['negotiated_price']) || isset($productData['negotiation_price'])) {
+                            $leadProduct->negotiated_price = $productData['negotiated_price'] ?? $productData['negotiation_price'] ?? null;
+                        }
+                        
+                        // Update notes
+                        if (array_key_exists('notes', $productData)) {
+                            $leadProduct->notes = $productData['notes'];
+                        }
+                        
+                        $leadProduct->updated_by = $authUser->id;
+                        $leadProduct->save();
+
+                        $updatedProductIds[] = $leadProductId;
+                    }
+                } else {
+                    // Create new product
+                    $category = $productData['category'];
+                    $productId = $productData['product_id'] ?? null;
+                    $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
+                    
+                    // Handle Property category: if product_id is empty but product_sub_category_id exists
+                    if (empty($productId) && !empty($productSubCategoryId) && $category === 'Property') {
+                        $product = Product::where('sub_category_id', $productSubCategoryId)
+                            ->where('company_id', $companyId)
+                            ->where('applies_to', 'property')
+                            ->first();
+                        
+                        if ($product) {
+                            $productId = $product->id;
+                        } 
+                    }
+                    
+                    // Validate Service category requires product_id
+                    if ($category === 'Service' && empty($productId)) {
+                        DB::rollBack();
+                        return error_response('Product ID is required for Service category.', 400);
+                    }
+                    
+                    // Get service category and sub_category for Service products
+                    $serviceCategoryId = null;
+                    $serviceSubCategoryId = null;
+                    
+                    if ($productId && $category === 'Service') {
+                        // For Service, get category_id and sub_category_id from Product
+                        $product = Product::where('id', $productId)
+                            ->where('company_id', $companyId)
+                            ->first();
+                        if ($product) {
+                            $serviceCategoryId = $product->category_id ?? null;
+                            $serviceSubCategoryId = $product->sub_category_id ?? null;
+                        }
+                    } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) {
+                        // For Property, get sub_category_id from Product if not already set
+                        $product = Product::where('id', $productId)
+                            ->where('company_id', $companyId)
+                            ->first();
+                        if ($product) {
+                            $productSubCategoryId = $product->sub_category_id ?? null;
+                        }
+                    }
+
+                    // Prepare data for LeadProduct - same as store method
+                    $leadProductData = [
+                        'company_id' => $companyId,
+                        'lead_id' => $lead->id,
+                        'type' => $category,
+                        'property_unit_id' => $productData['property_unit_id'] ?? null,
+                        'area_id' => $productData['area_id'] ?? null,
+                        'product_category_id' => $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null),
+                        'product_sub_category_id' => $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId,
+                        'product_id' => $productId,
+                        'quantity' => $productData['quantity'] ?? 1,
+                        'other_price' => $productData['other_price'] ?? 0,
+                        'discount' => $productData['discount'] ?? 0,
+                        'negotiated_price' => $productData['negotiated_price'] ?? $productData['negotiation_price'] ?? null,
+                        'notes' => $productData['notes'] ?? null,
+                        'created_by' => $authUser->id,
+                    ];
+
+                    LeadProduct::create($leadProductData);
+                }
+            }
+
+            // Delete products that were not in the update list
+            $productsToDelete = array_diff($existingProductIds, $updatedProductIds);
+            if (!empty($productsToDelete)) {
+                LeadProduct::whereIn('id', $productsToDelete)
+                    ->where('lead_id', $lead->id)
+                    ->where('company_id', $companyId)
+                    ->delete();
+            }
+
+            // Recalculate lead totals
+            $leadProducts = LeadProduct::where('lead_id', $lead->id)
+                ->where('company_id', $companyId)
+                ->get();
+            
+            // Update discount and other_price from request if provided
+            if ($request->has('discount')) {
+                $lead->discount = $request->discount;
+            } else {
+                $lead->discount = $leadProducts->sum('discount');
+            }
+            
+            if ($request->has('other_price')) {
+                $lead->other_price = $request->other_price;
+            }
+            
+            $lead->updated_by = $authUser->id;
+            $lead->save();
+
+            DB::commit();
+            return success_response(null, 'Products updated successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy($uuid)
@@ -582,6 +1024,74 @@ class LeadController extends Controller
 
             DB::commit();
             return success_response(null, 'Lead deleted successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update assigned to for a lead
+     */
+    public function updateAssignedTo(Request $request, $uuid)
+    {
+        DB::beginTransaction();
+        try {
+            $authUser = Auth::user();
+            $companyId = $authUser->company_id;
+
+            $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $lead = Lead::where('uuid', $uuid)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$lead) {
+                return error_response('Lead not found', 404);
+            }
+
+            $lead->assigned_to = $request->user_id;
+            $lead->updated_by = $authUser->id;
+            $lead->save();
+
+            DB::commit();
+            return success_response(null, 'Assigned to updated successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update affiliate for a lead
+     */
+    public function updateAffiliate(Request $request, $uuid)
+    {
+        DB::beginTransaction();
+        try {
+            $authUser = Auth::user();
+            $companyId = $authUser->company_id;
+
+            $request->validate([
+                'affiliate_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $lead = Lead::where('uuid', $uuid)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$lead) {
+                return error_response('Lead not found', 404);
+            }
+
+            $lead->affiliate_id = $request->affiliate_id;
+            $lead->updated_by = $authUser->id;
+            $lead->save();
+
+            DB::commit();
+            return success_response(null, 'Affiliate updated successfully');
         } catch (Exception $e) {
             DB::rollBack();
             return error_response($e->getMessage(), 500);

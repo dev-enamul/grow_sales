@@ -109,6 +109,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('challenge',ChallengeController::class);
     Route::resource('lead',LeadController::class);
     Route::post('lead-assign-to/{uuid}',LeadAssignController::class);
+    Route::post('lead-contact',[\App\Http\Controllers\Lead\LeadContactController::class,'store']);
+    Route::put('lead/{uuid}/products',[\App\Http\Controllers\Lead\LeadController::class,'updateProducts']);
+    Route::put('lead/{uuid}/decision-maker',[\App\Http\Controllers\Lead\LeadController::class,'updateDecisionMaker']);
+    Route::put('lead/{uuid}/assigned-to',[\App\Http\Controllers\Lead\LeadController::class,'updateAssignedTo']);
+    Route::put('lead/{uuid}/affiliate',[\App\Http\Controllers\Lead\LeadController::class,'updateAffiliate']);
 
     Route::resource('customer', CustomerController::class);
     Route::get('customer-personal-info',[CustomerController::class,'show']);

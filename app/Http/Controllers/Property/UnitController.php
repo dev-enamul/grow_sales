@@ -156,7 +156,7 @@ class UnitController extends Controller
             'vat_amount' => 'nullable|numeric|min:0',
             'sell_price' => 'nullable|numeric|min:0',
             'qty_in_stock' => 'nullable|integer',
-            'floor' => 'nullable|integer',
+            'floor' => 'required|integer',
         ]);
 
         $product = new Product(); 

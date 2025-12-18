@@ -26,8 +26,18 @@ class AreaController extends Controller
         $parent_id = $request->input('parent_id');
 
         if ($keyword) {
-            $query->where('name', 'like', "%$keyword%");
+            // Search in area name, parent name, and area structure name
+            $query->where(function($q) use ($keyword) {
+                $q->where('name', 'like', "%$keyword%")
+                  ->orWhereHas('parent', function($parentQuery) use ($keyword) {
+                      $parentQuery->where('name', 'like', "%$keyword%");
+                  })
+                  ->orWhereHas('areaStructure', function($structureQuery) use ($keyword) {
+                      $structureQuery->where('name', 'like', "%$keyword%");
+                  });
+            });
         }
+        
         if ($structure_id) {
             $area_structure = AreaStructure::findByUuid($structure_id);
             $query->where('area_structure_id',$area_structure->id);
@@ -44,12 +54,14 @@ class AreaController extends Controller
         if ($sortBy && in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
-            $query->latest();  
+            $query->orderBy('name', 'asc'); // Default sort by name
         }
 
 
         if ($request->boolean('select2')) { 
-            $areas = $query->limit(10)->get();
+            // For select2, return more results (up to 50) for better search
+            $limit = $request->input('limit', 50);
+            $areas = $query->limit($limit)->get();
 
             $results = $areas->map(function ($area) { 
                 $structureName = optional($area->areaStructure)->name; 
@@ -60,14 +72,16 @@ class AreaController extends Controller
                     $textParts[] = $structureName;
                 }
             
-                $text = implode(' ', $textParts);
+                $text = implode(' - ', $textParts);
             
                 if ($parentName) {
-                    $text .= "(in $parentName)";
+                    $text .= " (in $parentName)";
                 } 
                 return [
                     'id' => $area->id,
+                    'uuid' => $area->uuid,
                     'text' => trim($text),
+                    'name' => $area->name,
                 ];
             });  
 
@@ -95,14 +109,14 @@ class AreaController extends Controller
     { 
         $request->validate([
             'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:areas,uuid',
+            'parent_id' => 'nullable|exists:areas,id',
             'area_structure_id' => 'required|exists:area_structures,uuid', 
             'status' => 'nullable|in:0,1',
         ]);  
  
         $input = $request->all();   
         if ($request->filled('parent_id')) {
-            $area = Area::findByUuid($request->parent_id);
+            $area = Area::find($request->parent_id);
             $input['parent_id'] = $area->id;
         } else {
             $input['parent_id'] = null;

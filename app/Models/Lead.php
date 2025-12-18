@@ -19,10 +19,8 @@ class Lead extends Model
         'lead_category_id',
         'next_followup_date',
         'last_contacted_at',
-        'subtotal',
         'discount',
-        'grand_total',
-        'negotiated_price',
+        'other_price',
         'assigned_to',
         'lead_source_id',
         'campaign_id',
@@ -36,9 +34,8 @@ class Lead extends Model
     ];
 
     protected $casts = [
-        'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
-        'grand_total' => 'decimal:2',
+        'other_price' => 'decimal:2',
         'negotiated_price' => 'decimal:2',
         'next_followup_date' => 'date',
         'last_contacted_at' => 'datetime',
@@ -79,6 +76,11 @@ class Lead extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
+    public function affiliate()
+    {
+        return $this->belongsTo(User::class, 'affiliate_id');
+    }
  
     public function createdBy()
     {
@@ -112,16 +114,53 @@ class Lead extends Model
         return $this->hasMany(LeadContact::class);
     }
 
-    public static function generateNextLeadId(){
-        $largest_lead_id = Lead::where('lead_id', 'like', 'LEAD-%') 
-        ->pluck('lead_id')
+    public static function generateNextLeadId($companyId = null){
+        // If company_id is not provided, try to get it from auth user
+        if (!$companyId && auth()->check()) {
+            $companyId = auth()->user()->company_id;
+        }
+        
+        // Build query with company filter if available
+        // Use withTrashed() to include soft deleted records in the check
+        $query = Lead::withTrashed()->where('lead_id', 'like', 'LEAD-%');
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+        
+        $largest_lead_id = $query->pluck('lead_id')
                 ->map(function ($id) {
-                        return preg_replace("/[^0-9]/", "", $id);
+                        return (int) preg_replace("/[^0-9]/", "", $id);
                 }) 
         ->max(); 
+        
+        // Handle case where no leads exist yet
+        $largest_lead_id = $largest_lead_id ? $largest_lead_id : 0;
         $largest_lead_id++;
+        
         $new_lead_id = 'LEAD-' . str_pad($largest_lead_id, 6, '0', STR_PAD_LEFT);
+        
+        // Check if the generated ID already exists (including soft deleted - race condition protection)
+        $maxAttempts = 10;
+        $attempt = 0;
+        while ($attempt < $maxAttempts) {
+            $exists = Lead::withTrashed()->where('lead_id', $new_lead_id);
+            if ($companyId) {
+                $exists->where('company_id', $companyId);
+            }
+            $exists = $exists->exists();
+            
+            if (!$exists) {
         return $new_lead_id;
+            }
+            
+            // If exists, try next number
+            $largest_lead_id++;
+            $new_lead_id = 'LEAD-' . str_pad($largest_lead_id, 6, '0', STR_PAD_LEFT);
+            $attempt++;
+        }
+        
+        // Fallback: add timestamp to ensure uniqueness
+        return 'LEAD-' . str_pad($largest_lead_id, 6, '0', STR_PAD_LEFT) . '-' . time();
     } 
 
 

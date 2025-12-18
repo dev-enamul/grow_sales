@@ -17,10 +17,14 @@ class Sales extends Model
         'uuid',
         'company_id',
         'customer_id',
+        'lead_id',
+        'organization_id',
+        'campaign_id',
         'sale_type',
         'sales_by',
         'subtotal',
         'discount',
+        'other_price',
         'grand_total',
         'paid',
         'due',
@@ -44,6 +48,7 @@ class Sales extends Model
     protected $casts = [
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
+        'other_price' => 'decimal:2',
         'grand_total' => 'decimal:2',
         'paid' => 'decimal:2',
         'due' => 'decimal:2',
@@ -63,6 +68,21 @@ class Sales extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class);
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function campaign()
+    {
+        return $this->belongsTo(Campaign::class);
     }
 
     public function salesBy()

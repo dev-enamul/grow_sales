@@ -4,6 +4,8 @@ namespace App\Observers;
 
 use App\Models\Company;
 use App\Models\Employee;
+use Database\Seeders\AreaSeeder;
+use Database\Seeders\AreaStructureSeeder;
 use Database\Seeders\DesignationSeeder;
 use Database\Seeders\LeadCategorySeeder;
 use Database\Seeders\LeadSourceSeeder;
@@ -31,6 +33,14 @@ class CompanyObserver
         // // Create Role 
         $roleSeeder = new RoleSeeder($company->id);
         $roleSeeder->run();
+
+        // // Create Area Structure (Country -> Division -> District -> Upazila -> Union)
+        // $areaStructureSeeder = new AreaStructureSeeder($company->id);
+        // $areaStructureSeeder->run();
+
+        // // Create Areas (matching Area Structures)
+        // $areaSeeder = new AreaSeeder($company->id);
+        // $areaSeeder->run();
     }
 
     /**

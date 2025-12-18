@@ -66,6 +66,7 @@ class FollowupController extends Controller
                 'price' => $request->price,
                 'next_followup_date' => $request->next_followup_date,
                 'notes' => $request->notes,
+                'challenges' => $request->challenges && is_array($request->challenges) ? json_encode($request->challenges) : ($lead->challenges ?? null),
                 'created_by' => Auth::user()->id
             ]); 
     

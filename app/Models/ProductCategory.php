@@ -17,7 +17,6 @@ class ProductCategory extends Model
         'uuid',
         'company_id',
         'category_type_id',
-        'measurment_unit_id',
         'area_id',
         'name',
         'slug',
@@ -41,11 +40,6 @@ class ProductCategory extends Model
     public function categoryType()
     {
         return $this->belongsTo(CategoryType::class);
-    }
-
-    public function measurmentUnit()
-    {
-        return $this->belongsTo(MeasurmentUnit::class);
     }
 
     public function area()

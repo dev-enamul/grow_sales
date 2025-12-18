@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Organization\OrganizationStoreRequest;
 use App\Http\Requests\Organization\OrganizationUpdateRequest;
 use App\Services\OrganizationService;
+use App\Models\Lead;
+use App\Models\Sales;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -53,6 +55,20 @@ class OrganizationController extends Controller
                 return error_response('Organization not found', 404);
             }
 
+            // Get leads count for this organization
+            $leadsCount = \App\Models\Lead::where('organization_id', $organization->id)
+                ->where('company_id', auth()->user()->company_id)
+                ->count();
+            
+            // Get sales count through leads
+            $leadIds = \App\Models\Lead::where('organization_id', $organization->id)
+                ->where('company_id', auth()->user()->company_id)
+                ->pluck('id');
+            
+            $salesCount = \App\Models\Sales::whereIn('lead_id', $leadIds)
+                ->where('company_id', auth()->user()->company_id)
+                ->count();
+
             return success_response([
                 'uuid' => $organization->uuid,
                 'name' => $organization->name,
@@ -75,9 +91,12 @@ class OrganizationController extends Controller
                     'name' => $organization->primaryContact->name,
                     'phone' => $organization->primaryContact->phone,
                     'email' => $organization->primaryContact->email,
+                    'profile_image_url' => getFileUrl($organization->primaryContact->profile_image),
                 ] : null,
                 'contacts_count' => $organization->contacts->count(),
                 'customers_count' => $organization->customers->count(),
+                'leads_count' => $leadsCount,
+                'sales_count' => $salesCount,
                 'created_at' => formatDate($organization->created_at),
             ]);
         } catch (Exception $e) {

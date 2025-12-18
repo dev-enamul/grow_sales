@@ -23,13 +23,9 @@ class LeadProduct extends Model
         'product_category_id',
         'product_sub_category_id',
         'product_id',
-        'qty',
-        'price',
-        'subtotal',
-        'vat_rate',
-        'vat_value',
+        'quantity',
+        'other_price',
         'discount',
-        'grand_total',
         'negotiated_price',
         'notes',
         'created_by',
@@ -37,14 +33,22 @@ class LeadProduct extends Model
         'deleted_by',
     ];
 
+    // Accessor for qty (backward compatibility)
+    public function getQtyAttribute()
+    {
+        return $this->quantity;
+    }
+
+    // Mutator for qty (backward compatibility)
+    public function setQtyAttribute($value)
+    {
+        $this->attributes['quantity'] = $value;
+    }
+
     protected $casts = [
-        'qty' => 'integer',
-        'price' => 'decimal:2',
-        'subtotal' => 'decimal:2',
-        'vat_rate' => 'float',
-        'vat_value' => 'decimal:2',
+        'quantity' => 'integer',
+        'other_price' => 'decimal:2',
         'discount' => 'decimal:2',
-        'grand_total' => 'decimal:2',
         'negotiated_price' => 'decimal:2',
     ];
 
@@ -61,6 +65,11 @@ class LeadProduct extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function productSubCategory()
+    {
+        return $this->belongsTo(ProductSubCategory::class, 'product_sub_category_id');
     }
  
     public function createdBy()
