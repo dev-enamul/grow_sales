@@ -337,6 +337,10 @@ class LeadController extends Controller
 
             // Format contacts
             $formattedContacts = $lead->leadContacts->map(function ($leadContact) {
+                // Ensure contact exists before accessing properties
+                if (!$leadContact->contact) {
+                    return null;
+                }
                 return [
                     'id' => $leadContact->contact_id,
                     'uuid' => $leadContact->contact->uuid,
@@ -349,7 +353,7 @@ class LeadController extends Controller
                     'relationship_or_role' => $leadContact->relationship_or_role,
                     'notes' => $leadContact->notes,
                 ];
-            });
+            })->filter()->values();
 
             // Format products - Load relationships explicitly to avoid cache issues
             $formattedProducts = $lead->products->map(function ($leadProduct) {
@@ -679,11 +683,12 @@ class LeadController extends Controller
             $companyId = $authUser->company_id;
 
             $request->validate([
-                'lead_category_id' => 'required|exists:lead_categories,id',
+                'lead_category_id' => 'sometimes|exists:lead_categories,id',
                 'notes' => 'nullable|string',
-                'next_followup_date' => 'required|date',
+                'next_followup_date' => 'sometimes|date',
                 'challenges' => 'nullable|array',
                 'challenges.*' => 'integer|exists:challenges,id',
+                'lead_source_id' => 'sometimes|exists:lead_sources,id',
             ]);
 
             $lead = Lead::where('uuid', $uuid)
@@ -694,9 +699,18 @@ class LeadController extends Controller
                 return error_response('Lead not found', 404);
             }
              
-            $lead->lead_category_id = $request->lead_category_id;
-            $lead->next_followup_date = $request->next_followup_date;
-            $lead->notes = $request->notes;
+            if ($request->has('lead_category_id')) {
+                $lead->lead_category_id = $request->lead_category_id;
+            }
+            if ($request->has('next_followup_date')) {
+                $lead->next_followup_date = $request->next_followup_date;
+            }
+            if ($request->has('lead_source_id')) {
+                $lead->lead_source_id = $request->lead_source_id;
+            }
+            if ($request->has('notes')) {
+                $lead->notes = $request->notes;
+            }
             if ($request->has('challenges')) {
                 $lead->challenges = $request->challenges && is_array($request->challenges) ? json_encode($request->challenges) : null;
             }

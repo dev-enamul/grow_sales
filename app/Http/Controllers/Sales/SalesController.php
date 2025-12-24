@@ -10,10 +10,14 @@ use App\Models\LeadProduct;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Contact;
+use App\Models\Account;
+use App\Models\Transaction;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\SalesUser;
 use App\Traits\PaginatorTrait;
 use Carbon\Carbon;
 
@@ -128,6 +132,11 @@ class SalesController extends Controller
                 'products.*.quantity' => 'required|integer|min:1',
                 'products.*.other_price' => 'nullable|numeric|min:0',
                 'products.*.discount' => 'nullable|numeric|min:0',
+                // Commission validation - Array support
+                'sales_users' => 'nullable|array',
+                'sales_users.*.sales_user_id' => 'required|exists:users,id',
+                'sales_users.*.commission_percentage' => 'nullable|numeric|min:0|max:100',
+                'sales_users.*.commission_amount' => 'nullable|numeric|min:0',
             ]);
 
             // Get lead with relationships
@@ -197,9 +206,41 @@ class SalesController extends Controller
                 'due' => $request->grand_total ?? 0,
                 'sale_date' => $request->sale_date,
                 'delivery_date' => $request->delivery_date ?? null,
-                'status' => 'pending',
+                'status' => ($request->delivery_date && $request->delivery_date === date('Y-m-d')) ? 'handover' : 'pending',
                 'created_by' => $authUser->id,
             ]);
+
+            // Accounting: Book Sales Revenue (Accrual Basis)
+            if (($sale->grand_total ?? 0) > 0) {
+                $receivableAccount = Account::where('company_id', $companyId)
+                    ->where('name', 'Accounts Receivable')
+                    ->first();
+
+                $revenueAccount = Account::where('company_id', $companyId)
+                    ->where('name', 'Sales/Revenue')
+                    ->first();
+
+                if ($receivableAccount && $revenueAccount) {
+                     Transaction::create([
+                        'company_id' => $companyId,
+                        'debit_account_id' => $receivableAccount->id, 
+                        'credit_account_id' => $revenueAccount->id, 
+                        'debit' => $sale->grand_total,
+                        'credit' => $sale->grand_total,
+                        'description' => 'Sales Invoice for Sales #' . $sale->id,
+                        'date' => $sale->sale_date,
+                        'transactionable_type' => Sales::class,
+                        'transactionable_id' => $sale->id,
+                        'created_by' => $authUser->id,
+                    ]);
+                }
+            }
+
+            // Update lead status to Salsed
+            if ($lead) {
+                $lead->status = 'Salsed';
+                $lead->save();
+            }
 
             // Create sales_products records
             foreach ($request->products as $productData) {
@@ -357,6 +398,46 @@ class SalesController extends Controller
                 ]);
             }
 
+            // Create SalesUser record if sales_user_id is present
+            // Create SalesUser records if sales_users array is present and not empty
+            if ($request->sales_users && is_array($request->sales_users)) {
+                foreach ($request->sales_users as $userData) {
+                    $userId = $userData['sales_user_id'] ?? null;
+                    if (!$userId) continue;
+
+                    $commissionPercentage = $userData['commission_percentage'] ?? 0;
+                    $commissionAmount = $userData['commission_amount'] ?? 0;
+                    
+                    // Logic: If percentage > 0, type is percentage and value is percentage.
+                    // Otherwise type is amount and value is amount.
+                    // Commission field is the actual calculated or fixed amount.
+                    
+                    $commissionType = 'amount';
+                    $commissionValue = $commissionAmount;
+                    $commission = $commissionAmount;
+
+                    if ($commissionPercentage > 0) {
+                        $commissionType = 'percentage';
+                        $commissionValue = $commissionPercentage;
+                        // Recalculate commission to be safe (or trust frontend?)
+                        // Safe to recalculate:
+                        $commission = ($request->grand_total * $commissionPercentage) / 100;
+                    }
+
+                    SalesUser::create([
+                        'sales_id' => $sale->id,
+                        'user_id' => $userId,
+                        'commission_type' => $commissionType,
+                        'commission_value' => $commissionValue,
+                        'commission' => $commission,
+                        'payable_commission' => $commission,
+                        'commission_payment_type' => 'full',
+                        'paid_commission' => 0,
+                        'created_by' => $authUser->id,
+                    ]);
+                }
+            }
+
             DB::commit();
             return success_response(['uuid' => $sale->uuid], 'Sales created successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -413,7 +494,23 @@ class SalesController extends Controller
             }
 
             // Get primary contact
-            $primaryContact = $sale->customer?->primaryContact;
+            $primaryContact = null;
+            if ($sale->lead) {
+                // Try to find decision maker from lead contacts
+                $decisionMaker = $sale->lead->leadContacts()
+                    ->where('is_decision_maker', true)
+                    ->with('contact')
+                    ->first();
+                
+                if ($decisionMaker && $decisionMaker->contact) {
+                    $primaryContact = $decisionMaker->contact;
+                }
+            }
+
+            // Fallback to customer's primary contact if no lead decision maker found
+            if (!$primaryContact && $sale->customer) {
+                $primaryContact = $sale->customer->primaryContact;
+            }
 
             // Format contacts from customer
             $formattedContacts = [];
@@ -422,6 +519,9 @@ class SalesController extends Controller
                 $lead = $sale->lead;
                 if ($lead) {
                     $formattedContacts = $lead->leadContacts->map(function ($leadContact) {
+                        if (!$leadContact->contact) {
+                            return null;
+                        }
                         return [
                             'id' => $leadContact->contact_id,
                             'uuid' => $leadContact->contact->uuid,
@@ -434,7 +534,7 @@ class SalesController extends Controller
                             'relationship_or_role' => $leadContact->relationship_or_role,
                             'notes' => $leadContact->notes,
                         ];
-                    })->toArray();
+                    })->filter()->values()->toArray();
                 } else {
                     // Fallback: if no lead, use primary contact only
                     if ($primaryContact) {
@@ -653,5 +753,6 @@ class SalesController extends Controller
             return error_response($e->getMessage(), 500);
         }
     }
+
 }
 

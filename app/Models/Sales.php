@@ -26,8 +26,6 @@ class Sales extends Model
         'discount',
         'other_price',
         'grand_total',
-        'paid',
-        'due',
         'refunded',
         'transfer',
         'sale_date',
@@ -50,8 +48,6 @@ class Sales extends Model
         'discount' => 'decimal:2',
         'other_price' => 'decimal:2',
         'grand_total' => 'decimal:2',
-        'paid' => 'decimal:2',
-        'due' => 'decimal:2',
         'refunded' => 'decimal:2',
         'transfer' => 'decimal:2',
         'sale_date' => 'date',
@@ -59,6 +55,8 @@ class Sales extends Model
         'return_date' => 'date',
         'transfer_date' => 'date',
     ];
+
+    protected $appends = ['paid_amount', 'due_amount'];
 
     public function company()
     {
@@ -113,6 +111,22 @@ class Sales extends Model
     public function products()
     {
         return $this->hasMany(SalesProduct::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(SalesPayment::class, 'sales_id');
+    }
+
+    public function getPaidAmountAttribute()
+    {
+        // Assuming status 1 is Approved
+        return $this->payments()->where('status', 1)->sum('amount');
+    }
+
+    public function getDueAmountAttribute()
+    {
+        return $this->grand_total - $this->paid_amount;
     }
 
     public function salesUsers()

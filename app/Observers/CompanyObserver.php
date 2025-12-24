@@ -34,6 +34,14 @@ class CompanyObserver
         $roleSeeder = new RoleSeeder($company->id);
         $roleSeeder->run();
 
+        // // Create Default Accounts
+        $accountSeeder = new \Database\Seeders\AccountSeeder($company->id);
+        $accountSeeder->run();
+
+        // // Create Payment Reasons (Booking, Down Payment, Installments)
+        $paymentReasonSeeder = new \Database\Seeders\PaymentReasonSeeder($company->id);
+        $paymentReasonSeeder->run();
+
         // // Create Area Structure (Country -> Division -> District -> Upazila -> Union)
         // $areaStructureSeeder = new AreaStructureSeeder($company->id);
         // $areaStructureSeeder->run();

@@ -31,8 +31,6 @@ return new class extends Migration
             $table->decimal('discount', 10, 2)->nullable(); 
             $table->decimal('other_price', 10, 2)->nullable();
             $table->decimal('grand_total', 10, 2)->nullable(); 
-            $table->decimal('paid', 10, 2)->default(0);
-            $table->decimal('due', 10, 2)->nullable();
             $table->decimal('refunded', 10, 2)->nullable();
             $table->decimal('transfer', 10, 2)->nullable();
 
@@ -56,9 +54,9 @@ return new class extends Migration
             $table->enum('status', [
                 'pending',
                 'processing',
-                'handover',
-                'return',
-                'transfer'
+                'handovered',
+                'returned',
+                'transferred'
             ])->default('pending');  
         
             // Audits

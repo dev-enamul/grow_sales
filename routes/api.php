@@ -36,11 +36,13 @@ use App\Http\Controllers\Service\ServiceSubCategoryController;
 use App\Http\Controllers\Service\ServiceController;
 use App\Http\Controllers\Setting\PropertyTypeController;
 use App\Http\Controllers\Setting\MeasurmentUnitController;
+
 use App\Http\Controllers\Setting\PropertyUnitController;
 use App\Http\Controllers\Setting\VatSettingController; 
 use App\Http\Controllers\Sales\SalesController;
 use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserContactController; 
+use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -120,6 +122,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Sales
     Route::resource('sales', SalesController::class);
+    Route::resource('sales-payment-schedule', \App\Http\Controllers\Sales\SalesPaymentScheduleController::class);
+    Route::resource('sales-payment', \App\Http\Controllers\Sales\SalesPaymentController::class);
+    Route::get('users', [UserController::class, 'index']);
     
     // Follwup 
     Route::resource('followup',FollowupController::class);
@@ -137,6 +142,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Setting Route 
     Route::resource('property-unit',PropertyUnitController::class);
     Route::resource('measurment-unit',MeasurmentUnitController::class);
+    // Accounting
+    Route::resource('bank', \App\Http\Controllers\Accounting\BankController::class);
+    Route::resource('account', \App\Http\Controllers\Accounting\AccountController::class);
+    Route::resource('payment-reason', \App\Http\Controllers\Accounting\PaymentReasonController::class);
     Route::resource('property-type',PropertyTypeController::class);
     Route::resource('vat-setting',VatSettingController::class);
     Route::resource('area-structure',AreaStructureController::class);

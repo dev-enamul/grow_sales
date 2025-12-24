@@ -24,8 +24,7 @@ return new class extends Migration
             $table->decimal('commission', 10, 2)->default(0)->comment('Calculated commission amount');
             
             // Payable commission
-            $table->decimal('payable_commission', 10, 2)->default(0)->comment('Total commission that should be paid');
-            $table->enum('commission_payment_type', ['deposit_wise', 'full'])->default('full')->comment('deposit_wise = based on deposit, full = full amount');
+            $table->decimal('payable_commission', 10, 2)->default(0)->comment('Total commission that should be paid'); 
             
             // Paid commission
             $table->decimal('paid_commission', 10, 2)->default(0)->comment('Commission amount already paid');
