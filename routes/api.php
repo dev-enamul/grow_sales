@@ -44,6 +44,7 @@ use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserContactController; 
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -98,6 +99,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
      
     // Employee  
     Route::resource('designation', DesignationController::class);
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('designations/{id}/permissions', [PermissionController::class, 'getDesignationPermissions']);
+    Route::post('designations/{id}/permissions', [PermissionController::class, 'updateDesignationPermissions']);
     Route::resource('employee', EmployeeController::class);
     Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation']);
     Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting']); 

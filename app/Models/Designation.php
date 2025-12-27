@@ -53,4 +53,9 @@ class Designation extends Model
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'designation_permissions', 'designation_id', 'permission_id');
+    }
 }
