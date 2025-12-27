@@ -37,7 +37,7 @@ class ProjectController extends Controller
             ->when($areaId, function ($query) use ($areaId) {
                 $query->where('area_id', $areaId);
             })
-            ->select('id','uuid', 'name', 'progress_stage','description','address', 'ready_date', 'status', 'area_id','category_type_id','measurment_unit_id')
+            ->select('id','uuid', 'name', 'progress_stage','description','address', 'ready_date', 'status', 'area_id','category_type_id')
             ->with(['area:id,name']);
         
         if ($selectOnly) {
@@ -66,8 +66,7 @@ class ProjectController extends Controller
                 'ready_date' => formatDate($item->ready_date),
                 'status' => $item->status,
                 'area_name' => optional($item->area)->name,
-                'category_type_id' => $item->category_type_id,
-                'measurment_unit_id' => $item->measurment_unit_id,
+                'category_type_id' => $item->category_type_id, 
                 'address' => $item->address,
                 'description' => $item->description,
                 'area_id' => $item->area_id,
@@ -83,7 +82,6 @@ class ProjectController extends Controller
             ->where('company_id', Auth::user()->company_id)
             ->with([
                 'categoryType:id,name',
-                'measurmentUnit:id,name,abbreviation',
                 'area:id,name',
                 'creator:id,name',
                 'updater:id,name',
@@ -106,8 +104,6 @@ class ProjectController extends Controller
             'address' => $category->address,
             'status' => $category->status,
             'category_type' => optional($category->categoryType)->name,
-            'measurment_unit' => optional($category->measurmentUnit)->name,
-            'measurment_abbreviation' => optional($category->measurmentUnit)->abbreviation,
             'area_name' => optional($category->area)->name,
             'created_by' => optional($category->creator)->name,
             'updated_by' => optional($category->updater)->name,
@@ -126,8 +122,7 @@ class ProjectController extends Controller
             'progress_stage' => 'required|in:Ready,Ongoing,Upcomming,Complete',
             'ready_date' => 'nullable|date',
             'address' => 'nullable|string',
-            'category_type_id' => 'nullable|exists:category_types,id',
-            'measurment_unit_id' => 'nullable|exists:measurment_units,id',
+            'category_type_id' => 'nullable|exists:category_types,id', 
             'area_id' => 'nullable|exists:areas,id',
         ]);
 
@@ -151,17 +146,7 @@ class ProjectController extends Controller
             }
         }
         $category->category_type_id = $category_type_id;
-
-        // ✅ Default measurment_unit_id যদি null হয়
-        $measurment_unit_id = $request->measurment_unit_id;
-        if ($measurment_unit_id === null) {
-            $activeUnits = MeasurmentUnit::where('is_active', true)->get();
-            if ($activeUnits->count() === 1) {
-                $measurment_unit_id = $activeUnits->first()->id;
-            }
-        }
-        $category->measurment_unit_id = $measurment_unit_id;
-        
+ 
 
         $category->area_id = $request->area_id;
         $category->created_by = Auth::id();
@@ -180,8 +165,7 @@ class ProjectController extends Controller
             'ready_date' => 'nullable|date',
             'address' => 'nullable|string',
             'status' => 'nullable|in:0,1',
-            'category_type_id' => 'nullable|exists:category_types,id',
-            'measurment_unit_id' => 'nullable|exists:measurment_units,id',
+            'category_type_id' => 'nullable|exists:category_types,id', 
             'area_id' => 'nullable|exists:areas,id',
         ]);
 
@@ -211,15 +195,7 @@ class ProjectController extends Controller
         }
         $category->category_type_id = $category_type_id;
 
-        // ✅ measurment_unit_id ফিল্ডে default logic
-        $measurment_unit_id = $request->measurment_unit_id;
-        if ($measurment_unit_id === null) {
-            $activeUnits = MeasurmentUnit::where('is_active', true)->get();
-            if ($activeUnits->count() === 1) {
-                $measurment_unit_id = $activeUnits->first()->id;
-            }
-        }
-        $category->measurment_unit_id = $measurment_unit_id;
+       
 
         $category->area_id = $request->area_id;
         $category->updated_by = Auth::id();

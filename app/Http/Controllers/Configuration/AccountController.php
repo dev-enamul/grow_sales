@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Accounting;
+namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
@@ -126,15 +126,17 @@ class AccountController extends Controller
                 return error_response('Account not found', 404);
             }
 
+            if (!$account->is_editable) {
+                return error_response('This system account cannot be modified.', 403);
+            }
+
             $request->validate([
                 'name' => 'required|string|max:255',
-                // Code update might be restricted or need check
-                // 'code' => 'required|string', 
                 'type' => 'required|in:Asset,Liability,Equity,Income,Expense',
             ]);
             
             // Check code uniqueness only if changed
-            if ($request->code !== $account->code) {
+            if ($request->code && $request->code !== $account->code) {
                  $exists = Account::where('company_id', Auth::user()->company_id)
                     ->where('code', $request->code)
                     ->exists();
@@ -168,7 +170,9 @@ class AccountController extends Controller
                 return error_response('Account not found', 404);
             }
             
-            // Should check if transactions exist before delete ideally
+            if (!$account->is_editable) {
+                return error_response('This system account cannot be deleted.', 403);
+            }
 
             $account->deleted_by = Auth::id();
             $account->save();

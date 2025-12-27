@@ -19,36 +19,7 @@ class CompanyObserver
      */
     public function created(Company $company): void
     {
-        $leadSourceSeeder = new LeadSourceSeeder($company->id);
-        $leadSourceSeeder->run(); 
-
-        // // Create Lead Category 
-        $leadCategorySeeder = new LeadCategorySeeder($company->id);
-        $leadCategorySeeder->run(); 
-
-        // // Create Designation 
-        $designationSeeder = new DesignationSeeder($company->id);
-        $designationSeeder->run();
-
-        // // Create Role 
-        $roleSeeder = new RoleSeeder($company->id);
-        $roleSeeder->run();
-
-        // // Create Default Accounts
-        $accountSeeder = new \Database\Seeders\AccountSeeder($company->id);
-        $accountSeeder->run();
-
-        // // Create Payment Reasons (Booking, Down Payment, Installments)
-        $paymentReasonSeeder = new \Database\Seeders\PaymentReasonSeeder($company->id);
-        $paymentReasonSeeder->run();
-
-        // // Create Area Structure (Country -> Division -> District -> Upazila -> Union)
-        // $areaStructureSeeder = new AreaStructureSeeder($company->id);
-        // $areaStructureSeeder->run();
-
-        // // Create Areas (matching Area Structures)
-        // $areaSeeder = new AreaSeeder($company->id);
-        // $areaSeeder->run();
+        // Setup moved to updated event upon verification
     }
 
     /**
@@ -56,7 +27,47 @@ class CompanyObserver
      */
     public function updated(Company $company): void
     {
-        
+        if ($company->isDirty('is_verified') && $company->is_verified) {
+             // 1. Lead Source
+            $leadSourceSeeder = new LeadSourceSeeder($company->id);
+            $leadSourceSeeder->run(); 
+
+            // 2. Lead Category 
+            $leadCategorySeeder = new LeadCategorySeeder($company->id);
+            $leadCategorySeeder->run(); 
+
+            // 3. Designation 
+            $designationSeeder = new DesignationSeeder($company->id);
+            $designationSeeder->run();
+
+            // 4. Role 
+            $roleSeeder = new RoleSeeder($company->id);
+            $roleSeeder->run();
+
+            // 5. Default Accounts
+            $accountSeeder = new \Database\Seeders\AccountSeeder($company->id);
+            $accountSeeder->run();
+
+            // 6. Payment Reasons
+            $paymentReasonSeeder = new \Database\Seeders\PaymentReasonSeeder($company->id);
+            $paymentReasonSeeder->run();
+
+            // 7. Measurement Units
+            $measurmentUnitSeeder = new \Database\Seeders\MeasurmentUnitSeeder($company->id);
+            $measurmentUnitSeeder->run();
+            
+            // 8. Product Units (New)
+            $productUnitSeeder = new \Database\Seeders\ProductUnitSeeder($company->id);
+            $productUnitSeeder->run();
+
+            // 9. VAT Settings (New)
+            $vatSettingSeeder = new \Database\Seeders\VatSettingSeeder($company->id);
+            $vatSettingSeeder->run();
+
+            // 10. Category Types (New)
+            $categoryTypeSeeder = new \Database\Seeders\CategoryTypeSeeder($company->id);
+            $categoryTypeSeeder->run();
+        }
     }
 
     /**

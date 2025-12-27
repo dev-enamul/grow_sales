@@ -18,8 +18,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('sales_id')->constrained()->onDelete('cascade');
             $table->foreignId('payment_schedule_id')->nullable()->constrained('sales_payment_schedules')->onDelete('set null');
-            $table->foreignId('bank_id')->nullable()->constrained('banks')->nullOnDelete();
-            $table->foreignId('payment_reason_id')->nullable()->constrained('payment_reasons');
+            $table->foreignId('bank_id')->nullable()->constrained('banks')->nullOnDelete(); 
 
             // Actual received amount
             $table->decimal('amount', 14, 2);

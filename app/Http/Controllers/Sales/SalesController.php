@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\SalesUser;
 use App\Traits\PaginatorTrait;
 use Carbon\Carbon;
+use App\Services\LeadProductService;
 
 class SalesController extends Controller
 {
@@ -83,7 +84,7 @@ class SalesController extends Controller
                     'sales_id' => $sale->id, // Using id as sales_id
                     'sold_value' => $sale->grand_total ?? 0,
                     'paid_amount' => $sale->paid ?? 0,
-                    'status' => $sale->status ?? 'pending',
+                    'status' => $sale->status ?? 'Pending',
                     'contact' => $contact ? [
                         'uuid' => $contact->uuid,
                         'name' => $contact->name,
@@ -115,7 +116,7 @@ class SalesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, LeadProductService $leadProductService)
     {
         DB::beginTransaction();
         try {
@@ -132,7 +133,6 @@ class SalesController extends Controller
                 'products.*.quantity' => 'required|integer|min:1',
                 'products.*.other_price' => 'nullable|numeric|min:0',
                 'products.*.discount' => 'nullable|numeric|min:0',
-                // Commission validation - Array support
                 'sales_users' => 'nullable|array',
                 'sales_users.*.sales_user_id' => 'required|exists:users,id',
                 'sales_users.*.commission_percentage' => 'nullable|numeric|min:0|max:100',
@@ -206,7 +206,8 @@ class SalesController extends Controller
                 'due' => $request->grand_total ?? 0,
                 'sale_date' => $request->sale_date,
                 'delivery_date' => $request->delivery_date ?? null,
-                'status' => ($request->delivery_date && $request->delivery_date === date('Y-m-d')) ? 'handover' : 'pending',
+                'status' => ($request->delivery_date && $request->delivery_date === date('Y-m-d')) ? 'Handovered' : 'Pending',
+                'primary_contact_id' => $request->primary_contact_id,
                 'created_by' => $authUser->id,
             ]);
 
@@ -242,102 +243,12 @@ class SalesController extends Controller
                 $lead->save();
             }
 
+            // Sync/Create Lead Products (without deleting others)
+            $leadProducts = $leadProductService->syncLeadProducts($lead, $request->products, $companyId, $authUser->id, false);
+
             // Create sales_products records
-            foreach ($request->products as $productData) {
-                $category = $productData['category'] ?? null;
-                $leadProductId = $productData['lead_product_id'] ?? null;
-                $productId = $productData['product_id'] ?? null;
-                $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
-                $unitId = $productData['unit_id'] ?? null;
-                $layoutId = $productData['layout_id'] ?? null;
-                $serviceId = $productData['service_id'] ?? null;
-                
-                // Map unit_id/layout_id/service_id to product_id/product_sub_category_id (same as lead create)
-                if ($category === 'Property') {
-                    if ($unitId) {
-                        $productId = $unitId; // unit_id is actually product_id
-                    } elseif ($layoutId) {
-                        $productSubCategoryId = $layoutId; // layout_id is product_sub_category_id
-                    }
-                } elseif ($category === 'Service') {
-                    if ($serviceId) {
-                        $productId = $serviceId; // service_id is actually product_id
-                    }
-                }
-                
-                // Get lead_product if lead_product_id exists
-                $leadProduct = null;
-                if ($leadProductId) {
-                    $leadProduct = LeadProduct::where('id', $leadProductId)
-                        ->where('company_id', $companyId)
-                        ->with('product')
-                        ->first();
-                }
-
-                // If no lead_product_id, try to find or create lead_product
-                if (!$leadProduct && $lead->id) {
-                    // Try to find existing lead_product by product_id and lead_id
-                    if ($productId) {
-                        $leadProduct = LeadProduct::where('lead_id', $lead->id)
-                            ->where('product_id', $productId)
-                            ->where('company_id', $companyId)
-                            ->first();
-                    }
-                    
-                    // If still not found, create new lead_product (for new products added in sales modal)
-                    if (!$leadProduct) {
-                        // Determine product_id and product_sub_category_id similar to lead create
-                        if (empty($productId) && !empty($productSubCategoryId)) {
-                            $product = Product::where('sub_category_id', $productSubCategoryId)
-                                ->where('company_id', $companyId)
-                                ->where('applies_to', $category === 'Service' ? 'service' : 'property')
-                                ->first();
-                            
-                            if ($product) {
-                                $productId = $product->id;
-                            }
-                        }
-
-                        // Get service category and sub_category for Service products
-                        $serviceCategoryId = null;
-                        $serviceSubCategoryId = null;
-
-                        if ($productId && $category === 'Service') {
-                            $product = Product::where('id', $productId)
-                                ->where('company_id', $companyId)
-                                ->first();
-                            if ($product) {
-                                $serviceCategoryId = $product->category_id ?? null;
-                                $serviceSubCategoryId = $product->sub_category_id ?? null;
-                            }
-                        } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) {
-                            $product = Product::where('id', $productId)
-                                ->where('company_id', $companyId)
-                                ->first();
-                            if ($product) {
-                                $productSubCategoryId = $product->sub_category_id ?? null;
-                            }
-                        }
-
-                        $leadProduct = LeadProduct::create([
-                            'company_id' => $companyId,
-                            'lead_id' => $lead->id,
-                            'type' => $category,
-                            'property_unit_id' => $productData['property_unit_id'] ?? null,
-                            'area_id' => $productData['area_id'] ?? null,
-                            'product_category_id' => $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null),
-                            'product_sub_category_id' => $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId,
-                            'product_id' => $productId,
-                            'quantity' => $productData['quantity'] ?? 1,
-                            'other_price' => $productData['other_price'] ?? 0,
-                            'discount' => $productData['discount'] ?? 0,
-                            'notes' => $productData['notes'] ?? null,
-                            'created_by' => $authUser->id,
-                        ]);
-                        // Reload with product relationship
-                        $leadProduct->load('product');
-                    }
-                }
+            foreach ($request->products as $index => $productData) {
+                $leadProduct = $leadProducts[$index] ?? null;
 
                 if (!$leadProduct) {
                     continue;
@@ -378,6 +289,12 @@ class SalesController extends Controller
                 SalesProduct::create([
                     'company_id' => $companyId,
                     'sales_id' => $sale->id,
+                    'lead_id' => $lead->id,
+                    'type' => $leadProduct->type,
+                    'property_unit_id' => $leadProduct->property_unit_id,
+                    'area_id' => $leadProduct->area_id,
+                    'product_category_id' => $leadProduct->product_category_id,
+                    'product_sub_category_id' => $leadProduct->product_sub_category_id,
                     'product_id' => $leadProduct->product_id ?? null,
                     'rate' => $rate,
                     'quantity' => $quantity,
@@ -396,9 +313,17 @@ class SalesController extends Controller
                     'notes' => $notes,
                     'created_by' => $authUser->id,
                 ]);
+
+                // Update product status to Sold if it's a Property
+                if ($leadProduct->type === 'Property' && $leadProduct->product_id) {
+                    $productToUpdate = Product::find($leadProduct->product_id);
+                    if ($productToUpdate) {
+                        $productToUpdate->status = 1; // 1 = Sold
+                        $productToUpdate->save();
+                    }
+                }
             }
 
-            // Create SalesUser record if sales_user_id is present
             // Create SalesUser records if sales_users array is present and not empty
             if ($request->sales_users && is_array($request->sales_users)) {
                 foreach ($request->sales_users as $userData) {
@@ -408,10 +333,6 @@ class SalesController extends Controller
                     $commissionPercentage = $userData['commission_percentage'] ?? 0;
                     $commissionAmount = $userData['commission_amount'] ?? 0;
                     
-                    // Logic: If percentage > 0, type is percentage and value is percentage.
-                    // Otherwise type is amount and value is amount.
-                    // Commission field is the actual calculated or fixed amount.
-                    
                     $commissionType = 'amount';
                     $commissionValue = $commissionAmount;
                     $commission = $commissionAmount;
@@ -419,8 +340,6 @@ class SalesController extends Controller
                     if ($commissionPercentage > 0) {
                         $commissionType = 'percentage';
                         $commissionValue = $commissionPercentage;
-                        // Recalculate commission to be safe (or trust frontend?)
-                        // Safe to recalculate:
                         $commission = ($request->grand_total * $commissionPercentage) / 100;
                     }
 
@@ -486,6 +405,15 @@ class SalesController extends Controller
                 'products.product:id,uuid,name,price,image,sell_price',
                 'products.product.category:id,uuid,name',
                 'products.product.subCategory:id,uuid,name',
+                'products.propertyUnit:id,uuid,name',
+                'products.area:id,uuid,name,text',
+                'products.productCategory:id,uuid,name',
+                'products.productSubCategory:id,uuid,name',
+                'keyContact:id,uuid,name,email,phone,profile_image',
+                'payments',
+                'payments.paymentReason',
+                'payments.bank',
+                'salesUsers.user',
             ])
             ->first();
 
@@ -561,6 +489,7 @@ class SalesController extends Controller
                 $productData = [
                     'id' => $salesProduct->id,
                     'uuid' => $salesProduct->uuid,
+                    'type' => $salesProduct->type,
                     'order_quantity' => $salesProduct->order_quantity,
                     'order_price' => $salesProduct->order_price,
                     'order_other_price' => $salesProduct->order_other_price,
@@ -574,8 +503,50 @@ class SalesController extends Controller
                     'notes' => $salesProduct->notes,
                 ];
 
+                $productData['product'] = [];
+                
+                // Add extended fields directly to product object for frontend compatibility
+                 if ($salesProduct->propertyUnit) {
+                    $productData['product']['property_unit'] = [
+                        'id' => $salesProduct->propertyUnit->id,
+                        'name' => $salesProduct->propertyUnit->name,
+                    ];
+                }
+                if ($salesProduct->area) {
+                    $productData['product']['area'] = [
+                        'id' => $salesProduct->area->id,
+                        'name' => $salesProduct->area->name,
+                         'text' => $salesProduct->area->text,
+                    ];
+                }
+                 if ($salesProduct->productCategory) {
+                     // For property, this is the Project
+                     // For service, this is the Service Category
+                    $productData['product']['project'] = [
+                        'id' => $salesProduct->productCategory->id,
+                        'name' => $salesProduct->productCategory->name,
+                    ];
+                     $productData['product']['category'] = [
+                        'id' => $salesProduct->productCategory->id,
+                        'name' => $salesProduct->productCategory->name,
+                    ];
+                }
+                 if ($salesProduct->productSubCategory) {
+                      // For property, this is Layout
+                    $productData['product']['layout_type'] = [
+                        'id' => $salesProduct->productSubCategory->id,
+                        'name' => $salesProduct->productSubCategory->name,
+                    ];
+                     $productData['product']['sub_category'] = [
+                        'id' => $salesProduct->productSubCategory->id,
+                        'name' => $salesProduct->productSubCategory->name,
+                    ];
+                }
+                
+                $productData['product']['applies_to'] = $salesProduct->type;
+
                 if ($product) {
-                    $productData['product'] = [
+                    $productData['product'] = array_merge($productData['product'], [
                         'id' => $product->id,
                         'uuid' => $product->uuid,
                         'name' => $product->name,
@@ -583,15 +554,9 @@ class SalesController extends Controller
                         'image' => $product->image,
                         'image_url' => getFileUrl($product->image),
                         'sell_price' => $product->sell_price,
-                        'category' => $product->category ? [
-                            'id' => $product->category->id,
-                            'name' => $product->category->name,
-                        ] : null,
-                        'sub_category' => $product->subCategory ? [
-                            'id' => $product->subCategory->id,
-                            'name' => $product->subCategory->name,
-                        ] : null,
-                    ];
+                    ]);
+                     // Keep original category/sub_category if present on product, but salesProduct overrides take precedence for specific transaction details?
+                     // Actually salesProduct stores the specific variant sold.
                 }
 
                 return $productData;
@@ -668,6 +633,7 @@ class SalesController extends Controller
                 'grand_total' => $sale->grand_total,
                 'paid' => $sale->paid,
                 'due' => $sale->due,
+                'approved_by' => $sale->approved_by,
                 'primary_contact' => $primaryContact ? [
                     'id' => $primaryContact->id,
                     'uuid' => $primaryContact->uuid,
@@ -696,6 +662,15 @@ class SalesController extends Controller
                     'uuid' => $sale->campaign->uuid,
                     'name' => $sale->campaign->name,
                 ] : null,
+                'key_contact' => $sale->keyContact ? [
+                    'id' => $sale->keyContact->id,
+                    'uuid' => $sale->keyContact->uuid,
+                    'name' => $sale->keyContact->name,
+                    'email' => $sale->keyContact->email,
+                    'phone' => $sale->keyContact->phone,
+                    'profile_image' => $sale->keyContact->profile_image,
+                    'profile_image_url' => getFileUrl($sale->keyContact->profile_image),
+                ] : null,
                 'sales_by' => $sale->salesBy ? [
                     'id' => $sale->salesBy->id,
                     'uuid' => $sale->salesBy->uuid,
@@ -713,8 +688,67 @@ class SalesController extends Controller
                 'created_at' => formatDate($sale->created_at),
                 'contacts' => $formattedContacts,
                 'products' => $formattedProducts,
+                'paid_history' => $sale->payments->map(function ($payment) {
+                    return [
+                        'id' => $payment->id,
+                        'uuid' => $payment->uuid,
+                        'amount' => $payment->amount,
+                        'payment_date' => formatDate($payment->payment_date),
+                        'transaction_ref' => $payment->transaction_ref,
+                        'status' => $payment->status, // 0=Pending, 1=Approved, 2=Rejected
+                        'notes' => $payment->notes,
+                        'payment_reason' => ($payment->schedule && $payment->schedule->paymentReason) ? [
+                            'id' => $payment->schedule->paymentReason->id,
+                            'name' => $payment->schedule->paymentReason->name ?? $payment->schedule->paymentReason->title,
+                        ] : null,
+                        'bank' => $payment->bank ? [
+                            'id' => $payment->bank->id,
+                            'name' => $payment->bank->name,
+                            'account_number' => $payment->bank->account_number,
+                        ] : null,
+                    ];
+                }),
                 'lead' => $leadData,
+                'sales_users' => $sale->salesUsers->map(function ($salesUser) use ($sale) {
+                    $paidAmount = $sale->payments->where('status', 1)->sum('amount');
+                    $grandTotal = $sale->grand_total;
+
+                    return [
+                        'id' => $salesUser->id,
+                        'user' => $salesUser->user ? [
+                            'id' => $salesUser->user->id,
+                            'name' => $salesUser->user->name,
+                            'profile_image_url' => getFileUrl($salesUser->user->profile_image),
+                        ] : null,
+                        'commission_type' => $salesUser->commission_type,
+                        'commission_value' => $salesUser->commission_value,
+                        'commission' => $salesUser->commission,
+                        'payable_commission' => $salesUser->calculatePayable($grandTotal, $paidAmount),
+                        'paid_commission' => $salesUser->paid_commission,
+                    ];
+                }),
             ]);
+        } catch (Exception $e) {
+            return error_response($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function approve($uuid)
+    {
+        try {
+            $sale = Sales::where('uuid', $uuid)->firstOrFail();
+
+            if ($sale->approved_by) {
+                return error_response('Sale is already approved', 400);
+            }
+
+            $sale->approved_by = auth()->id();
+            $sale->save();
+
+            return success_response(null, 'Sale approved successfully');
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);
         }

@@ -36,9 +36,14 @@ class SalesPaymentSchedule extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function sales()
+    {
+        return $this->belongsTo(Sales::class, 'sales_id');
+    }
+
     public function sale()
     {
-        return $this->belongsTo(Sale::class, 'sales_id');
+        return $this->sales();
     }
 
     public function paymentReason()

@@ -17,32 +17,33 @@ use App\Http\Controllers\Employee\DesignationController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeEditController;
 use App\Http\Controllers\Followup\FollowupController;
-use App\Http\Controllers\Lead\ContactController;
+use App\Http\Controllers\Contact\ContactController;
 use App\Http\Controllers\Lead\LeadAssignController;
-use App\Http\Controllers\Lead\LeadCategoryController;
+use App\Http\Controllers\Configuration\LeadCategoryController;
 use App\Http\Controllers\Lead\LeadController;
-use App\Http\Controllers\Lead\LeadSourceController;
-use App\Http\Controllers\Lead\ChallengeController;
-use App\Http\Controllers\Lead\OrganizationController;
+use App\Http\Controllers\Configuration\LeadSourceController;
+use App\Http\Controllers\Configuration\ChallengeController;
+use App\Http\Controllers\Configuration\OrganizationController;
 use App\Http\Controllers\Location\AreaController;
 use App\Http\Controllers\Location\AreaStructureController;
-use App\Http\Controllers\MediaFile\FileController;
-use App\Http\Controllers\MediaFile\FolderController;
+use App\Http\Controllers\Configuration\FileController;
+use App\Http\Controllers\Configuration\FolderController;
 use App\Http\Controllers\Property\LayoutTypeController;
 use App\Http\Controllers\Property\ProjectController;
 use App\Http\Controllers\Property\UnitController;
 use App\Http\Controllers\Service\ServiceCategoryController;
 use App\Http\Controllers\Service\ServiceSubCategoryController;
 use App\Http\Controllers\Service\ServiceController;
-use App\Http\Controllers\Setting\PropertyTypeController;
-use App\Http\Controllers\Setting\MeasurmentUnitController;
+use App\Http\Controllers\Configuration\PropertyTypeController;
+use App\Http\Controllers\Configuration\MeasurmentUnitController;
 
-use App\Http\Controllers\Setting\PropertyUnitController;
-use App\Http\Controllers\Setting\VatSettingController; 
+use App\Http\Controllers\Configuration\PropertyUnitController;
+use App\Http\Controllers\Configuration\VatSettingController; 
 use App\Http\Controllers\Sales\SalesController;
 use App\Http\Controllers\User\ProfileUpdateController;
 use App\Http\Controllers\User\UserContactController; 
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,6 +75,12 @@ Route::get('unions',UnionApiController::class);
 Route::get('company-verify/{id}',[VerifyController::class,'verify']);
 Route::get('files/{file}/download', [FileController::class, 'download'])->name('files.download');
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    // Dashboard
+    Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard/chart', [DashboardController::class, 'chartData']);
+    Route::get('dashboard/recent-activity', [DashboardController::class, 'recentActivity']);
+
 
     // MediaFile 
     Route::resource('folder', FolderController::class);
@@ -121,9 +128,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('customer-personal-info',[CustomerController::class,'show']);
     
     // Sales
+    Route::post('sales/{uuid}/approve', [SalesController::class, 'approve']);
     Route::resource('sales', SalesController::class);
     Route::resource('sales-payment-schedule', \App\Http\Controllers\Sales\SalesPaymentScheduleController::class);
     Route::resource('sales-payment', \App\Http\Controllers\Sales\SalesPaymentController::class);
+    Route::post('sales-user/bulk-update', [\App\Http\Controllers\Sales\SalesUserController::class, 'bulkUpdate']);
+    Route::resource('sales-user', \App\Http\Controllers\Sales\SalesUserController::class);
     Route::get('users', [UserController::class, 'index']);
     
     // Follwup 
@@ -143,9 +153,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('property-unit',PropertyUnitController::class);
     Route::resource('measurment-unit',MeasurmentUnitController::class);
     // Accounting
-    Route::resource('bank', \App\Http\Controllers\Accounting\BankController::class);
-    Route::resource('account', \App\Http\Controllers\Accounting\AccountController::class);
-    Route::resource('payment-reason', \App\Http\Controllers\Accounting\PaymentReasonController::class);
+    Route::resource('bank', \App\Http\Controllers\Configuration\BankController::class);
+    Route::resource('account', \App\Http\Controllers\Configuration\AccountController::class);
+    Route::resource('payment-reason', \App\Http\Controllers\Configuration\PaymentReasonController::class);
     Route::resource('property-type',PropertyTypeController::class);
     Route::resource('vat-setting',VatSettingController::class);
     Route::resource('area-structure',AreaStructureController::class);

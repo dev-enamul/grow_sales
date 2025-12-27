@@ -57,4 +57,19 @@ class SalesUser extends Model
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
+
+    /**
+     * Calculate payable commission based on paid amount ratio.
+     *
+     * @param float $grandTotal
+     * @param float $paidAmount
+     * @return float
+     */
+    public function calculatePayable($grandTotal, $paidAmount)
+    {
+        if ($grandTotal <= 0) {
+            return 0;
+        }
+        return ($this->commission / $grandTotal) * $paidAmount;
+    }
 }

@@ -27,18 +27,21 @@ class AccountSeeder extends Seeder
                 'name' => 'Cash in Hand',
                 'type' => 'Asset',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
             [
                 'code' => '1100',
                 'name' => 'Accounts Receivable',
                 'type' => 'Asset',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
             [
                 'code' => '1200',
                 'name' => 'Inventory Asset',
                 'type' => 'Asset',
                 'is_bank_account' => false,
+                'is_editable' => true,
             ],
             
             // Liabilities
@@ -47,12 +50,14 @@ class AccountSeeder extends Seeder
                 'name' => 'Accounts Payable',
                 'type' => 'Liability',
                 'is_bank_account' => false,
+                 'is_editable' => false,
             ],
             [
                 'code' => '2100',
                 'name' => 'VAT Payable',
                 'type' => 'Liability',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
 
             // Equity
@@ -61,26 +66,30 @@ class AccountSeeder extends Seeder
                 'name' => 'Opening Balance Equity',
                 'type' => 'Equity',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
             [
                 'code' => '3100',
                 'name' => 'Owner\'s Equity',
                 'type' => 'Equity',
                 'is_bank_account' => false,
+                 'is_editable' => true,
             ],
 
             // Income
             [
                 'code' => '4000',
-                'name' => 'Sales/Revenue',
+                'name' => 'Sales/Revenue', // Primary income account
                 'type' => 'Income',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
             [
                 'code' => '4100',
                 'name' => 'Service Income',
                 'type' => 'Income',
                 'is_bank_account' => false,
+                 'is_editable' => true,
             ],
 
             // Expenses
@@ -89,24 +98,28 @@ class AccountSeeder extends Seeder
                 'name' => 'Cost of Goods Sold',
                 'type' => 'Expense',
                 'is_bank_account' => false,
+                'is_editable' => false,
             ],
             [
                 'code' => '5100',
                 'name' => 'Salary Expense',
                 'type' => 'Expense',
                 'is_bank_account' => false,
+                 'is_editable' => true,
             ],
             [
                 'code' => '5200',
                 'name' => 'Rent Expense',
                 'type' => 'Expense',
                 'is_bank_account' => false,
+                 'is_editable' => true,
             ],
             [
                 'code' => '5300',
                 'name' => 'Office Supplies',
                 'type' => 'Expense',
                 'is_bank_account' => false,
+                 'is_editable' => true,
             ],
         ];
 
@@ -120,6 +133,7 @@ class AccountSeeder extends Seeder
                     'name' => $account['name'],
                     'type' => $account['type'],
                     'is_bank_account' => $account['is_bank_account'],
+                    'is_editable' => $account['is_editable'] ?? true,
                 ]
             );
         }

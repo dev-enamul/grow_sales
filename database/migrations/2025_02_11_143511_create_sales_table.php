@@ -21,7 +21,8 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('lead_id')->constrained('leads'); 
             $table->foreignId('campaign_id')->nullable()->constrained('campaigns')->onDelete('set null');
-            $table->foreignId('organization_id')->nullable()->constrained('organizations')->onDelete('set null'); 
+            $table->foreignId('organization_id')->nullable()->constrained('organizations')->onDelete('set null');
+            $table->foreignId('primary_contact_id')->constrained('contacts');
 
             $table->enum('sale_type', ['sell', 'transfer'])->default('sell');
             $table->foreignId('sales_by')->nullable()->constrained('users')->onDelete('set null'); 
@@ -52,17 +53,18 @@ return new class extends Migration
         
             // Status
             $table->enum('status', [
-                'pending',
-                'processing',
-                'handovered',
-                'returned',
-                'transferred'
-            ])->default('pending');  
+                'Pending',
+                'Processing',
+                'Handovered',
+                'Returned',
+                'Transferred'
+            ])->default('Pending');  
         
-            // Audits
+            // Audits 
+            $table->foreignId('approved_by')->nullable()->constrained('users');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users'); 
             $table->softDeletes();
         
             $table->timestamps(); 

@@ -18,7 +18,7 @@ class LayoutTypeController extends Controller
         $keyword = $request->keyword;
         $query = ProductSubCategory::where('company_id', Auth::user()->company_id)
             ->where('applies_to','property')
-            ->with(['category:id,name,measurment_unit_id', 'productUnit:id,name', 'vatSetting:id,name,vat_percentage']);
+            ->with(['category:id,name', 'productUnit:id,name', 'vatSetting:id,name,vat_percentage']);
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
@@ -119,7 +119,6 @@ class LayoutTypeController extends Controller
                 'description'  => $item->description, 
                 'rate'         => $item->rate, 
                 'quantity'     => $item->quantity,
-                'measurment_unit' => $item?->category?->measurmentUnit?->name??"",
                 'total_price'  => $item->price,
                 'other_price'  => $item->other_price ?? 0,
                 'discount'     => $item->discount ?? 0,

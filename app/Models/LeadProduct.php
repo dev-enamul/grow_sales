@@ -61,7 +61,22 @@ class LeadProduct extends Model
     {
         return $this->belongsTo(Lead::class);
     }
- 
+
+    public function propertyUnit()
+    {
+        return $this->belongsTo(ProductUnit::class, 'property_unit_id');
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_id');
+    }
+
+    public function propertyCategory()
+    {
+        return $this->belongsTo(ProductCategory::class, 'product_category_id');
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

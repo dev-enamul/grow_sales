@@ -23,9 +23,6 @@ return new class extends Migration
             $table->decimal('commission_value', 10, 2)->default(0)->comment('Percentage or fixed amount based on commission_type');
             $table->decimal('commission', 10, 2)->default(0)->comment('Calculated commission amount');
             
-            // Payable commission
-            $table->decimal('payable_commission', 10, 2)->default(0)->comment('Total commission that should be paid'); 
-            
             // Paid commission
             $table->decimal('paid_commission', 10, 2)->default(0)->comment('Commission amount already paid');
             

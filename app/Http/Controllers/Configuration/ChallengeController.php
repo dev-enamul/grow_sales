@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Lead;
+namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
 use App\Models\Challenge;

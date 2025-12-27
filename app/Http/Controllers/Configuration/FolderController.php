@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\MediaFile;
+namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MediaFile\StoreFolderRequest;

@@ -17,8 +17,15 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('sales_id')->constrained('sales')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('lead_id')->constrained('leads')->onDelete('cascade');
+            $table->string('type')->nullable();
+            $table->foreignId('property_unit_id')->nullable()->constrained('product_units')->onDelete('set null');
+            $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
+            $table->foreignId('product_category_id')->nullable()->constrained('product_categories')->onDelete('set null');
+            $table->foreignId('product_sub_category_id')->nullable()->constrained('product_sub_categories')->onDelete('set null');
+            $table->foreignId('product_id')->nullable()->constrained('products')->onDelete('set null');
             
+            // Product Details
             $table->decimal('rate', 15, 2)->default(0);     
             $table->integer('quantity')->default(0);      
             $table->decimal('price', 15, 2)->default(0);
@@ -31,16 +38,18 @@ return new class extends Migration
                     ->onDelete('set null');
             $table->float('vat_rate')->nullable();
             $table->decimal('vat_amount', 15, 2)->nullable();
-            $table->decimal('sell_price', 10, 2)->nullable(); 
+            $table->decimal('sell_price', 10, 2)->nullable();
 
+            // Order Details
             $table->integer('order_quantity')->default(0);
             $table->decimal('order_price', 10, 2)->default(0);
             $table->decimal('order_other_price', 10, 2)->default(0); 
-            $table->float('order_discount')->default(0); 
+            $table->float('order_discount')->default(0);
             $table->decimal('order_total_price', 10, 2)->default(0);
 
             $table->text('notes')->nullable();
             
+            // Audit
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');

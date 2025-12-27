@@ -33,16 +33,31 @@ class SalesPaymentScheduleController extends Controller
                  return error_response('Sales not found', 404);
             }
 
-            $schedules = SalesPaymentSchedule::with('paymentReason')
+            $schedules = SalesPaymentSchedule::with(['paymentReason', 'payments'])
                 ->where('sales_id', $sale->id)
                 ->where('company_id', Auth::user()->company_id)
                 ->orderBy('due_date', 'asc')
                 ->get();
             
-            // Append status attribute
-            $schedules->append('status');
+            $data = $schedules->map(function ($schedule) {
+                 $paidAmount = $schedule->payments->where('status', 1)->sum('amount');
+                 $dueAmount = $schedule->amount - $paidAmount;
+                 
+                 return [
+                    'id' => $schedule->id,
+                    'uuid' => $schedule->uuid,
+                    'amount' => $schedule->amount,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
+                    'due_date' => $schedule->due_date, // Or format it? Frontend handles dates usually, but SalesController formatted it. I'll NOT format it here to keep standard JSON date unless requested. Wait, SalesController used `formatDate`. I'll use raw date here as component formats it?
+                    // Component uses `formatDate(payment.due_date)` (Step 2350). So raw is fine.
+                    'status' => $schedule->status,
+                    'notes' => $schedule->notes,
+                    'payment_reason' => $schedule->paymentReason,
+                 ];
+            });
 
-            return success_response($schedules);
+            return success_response($data);
 
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);

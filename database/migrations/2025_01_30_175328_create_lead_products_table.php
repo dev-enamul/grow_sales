@@ -14,7 +14,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('lead_id')->constrained('leads')->onDelete('cascade');
-            $table->string('type')->nullable(); 
+            $table->string('type')->nullable();
             $table->foreignId('property_unit_id')->nullable()->constrained('product_units')->onDelete('set null');
             $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
             $table->foreignId('product_category_id')->nullable()->constrained('product_categories')->onDelete('set null');

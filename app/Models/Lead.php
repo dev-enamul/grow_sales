@@ -102,6 +102,11 @@ class Lead extends Model
         return $this->hasMany(LeadProduct::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function contacts()
     {
         return $this->belongsToMany(Contact::class, 'lead_contacts', 'lead_id', 'contact_id')

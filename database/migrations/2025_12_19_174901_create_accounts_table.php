@@ -28,6 +28,7 @@ return new class extends Migration
             $table->foreignId('bank_id')->nullable()->constrained('banks');
 
             // Audit
+            $table->boolean('is_editable')->default(true);
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');

@@ -17,6 +17,12 @@ class SalesProduct extends Model
         'uuid',
         'company_id',
         'sales_id',
+        'lead_id',
+        'type',
+        'property_unit_id',
+        'area_id',
+        'product_category_id',
+        'product_sub_category_id',
         'product_id',
         'rate',
         'quantity',
@@ -37,6 +43,26 @@ class SalesProduct extends Model
         'updated_by',
         'deleted_by',
     ];
+
+    public function propertyUnit()
+    {
+        return $this->belongsTo(\App\Models\ProductUnit::class, 'property_unit_id');
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(\App\Models\Area::class, 'area_id');
+    }
+
+    public function productCategory()
+    {
+        return $this->belongsTo(\App\Models\ProductCategory::class, 'product_category_id');
+    }
+
+    public function productSubCategory()
+    {
+        return $this->belongsTo(\App\Models\ProductSubCategory::class, 'product_sub_category_id');
+    }
 
     protected $casts = [
         'rate' => 'decimal:2',

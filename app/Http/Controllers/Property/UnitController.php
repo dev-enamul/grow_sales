@@ -24,9 +24,10 @@ class UnitController extends Controller
         $query = Product::where('company_id', Auth::user()->company_id)
             ->where('applies_to','property')
             ->with([
-                'category:id,name,measurment_unit_id',
+                'category:id,name',
                 'subCategory:id,name',
                 'productUnit:id,name',
+                'measurmentUnit:id,name',
                 'vatSetting:id,name,vat_percentage'
             ]);
 
@@ -50,6 +51,10 @@ class UnitController extends Controller
 
         if ($request->filled('product_unit_id')) {
             $query->where('product_unit_id', $request->product_unit_id);
+        }
+
+        if ($request->filled('measurment_unit_id')) {
+            $query->where('measurment_unit_id', $request->measurment_unit_id);
         }
 
         if ($request->filled('vat_setting_id')) {
@@ -79,11 +84,11 @@ class UnitController extends Controller
 
         // Dropdown select mode
         if ($selectOnly) {
-            $list = $query->select('id', 'name', 'price')->latest()->limit(10)->get()->map(function ($item) {
+            $list = $query->select('id', 'name', 'price','sell_price')->latest()->limit(10)->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'sell_price' => $item->price,
+                    'sell_price' => $item->sell_price,
                 ];
             });
             return success_response($list);
@@ -125,7 +130,7 @@ class UnitController extends Controller
                 'status'           => $item->status,
                 'category'         => optional($item->category)->name,
                 'sub_category'     => optional($item->subCategory)->name,
-                'measurment_unit'  => $item?->category?->measurmentUnit?->name ?? '',
+                'measurment_unit'  => optional($item->measurmentUnit)->name,
                 'vat'              => (@$item->vatSetting->vat_percentage ?? 0) . '%',
                 'vat_setting_id'   => $item->vat_setting_id,
                 'category_id'      => $item->category_id,
@@ -150,6 +155,7 @@ class UnitController extends Controller
             'other_price' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
+            'measurment_unit_id' => 'nullable|exists:measurment_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
@@ -170,6 +176,7 @@ class UnitController extends Controller
         $product->other_price = $request->other_price ?? 0;
         $product->discount = $request->discount ?? 0;
         $product->product_unit_id = $request->product_unit_id;
+        $product->measurment_unit_id = $request->measurment_unit_id;
         $product->category_id = $request->category_id;
         $product->sub_category_id = $request->sub_category_id;
         $product->vat_setting_id = $request->vat_setting_id;
@@ -210,6 +217,7 @@ class UnitController extends Controller
             'other_price' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'product_unit_id' => 'nullable|exists:product_units,id',
+            'measurment_unit_id' => 'nullable|exists:measurment_units,id',
             'category_id' => 'required|exists:product_categories,id',
             'sub_category_id' => 'nullable|exists:product_sub_categories,id',
             'vat_setting_id' => 'nullable|exists:vat_settings,id',
@@ -230,7 +238,7 @@ class UnitController extends Controller
 
         $product->fill($request->only([
             'name', 'description', 'code', 'rate', 'quantity', 'price', 'other_price', 'discount',
-            'product_unit_id', 'category_id', 'sub_category_id', 'vat_setting_id', 
+            'product_unit_id', 'measurment_unit_id', 'category_id', 'sub_category_id', 'vat_setting_id', 
             'vat_amount', 'sell_price', 'qty_in_stock', 'floor'
         ])); 
         $product->slug  = getSlug(new Product(),$request->name);

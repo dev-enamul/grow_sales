@@ -38,10 +38,17 @@ class Sales extends Model
         'transfer_date',
         'transfer_notes',
         'status',
+        'primary_contact_id',
         'created_by',
         'updated_by',
         'deleted_by',
+        'approved_by',
     ];
+
+    public function keyContact()
+    {
+        return $this->belongsTo(Contact::class, 'key_contact_id');
+    }
 
     protected $casts = [
         'subtotal' => 'decimal:2',

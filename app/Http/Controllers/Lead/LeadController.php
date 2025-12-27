@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\PaginatorTrait;
+use App\Services\LeadProductService;
 
 class LeadController extends Controller
 {
@@ -322,6 +323,9 @@ class LeadController extends Controller
                     'products.product.category:id,uuid,name',
                     'products.product.subCategory:id,uuid,name',
                     'products.productSubCategory:id,uuid,name,sell_price',
+                    'products.propertyUnit:id,name',
+                    'products.area:id,name',
+                    'products.propertyCategory:id,name',
                     'followups.leadCategory:id,uuid,title',
                     'followups.createdBy:id,uuid,name',
                 ])
@@ -448,12 +452,18 @@ class LeadController extends Controller
 
                 if ($leadProduct->type === 'Property') {
                     $productData['property_unit_id'] = $leadProduct->property_unit_id;
+                    $productData['property_unit_name'] = $leadProduct->propertyUnit->name ?? null;
                     $productData['area_id'] = $leadProduct->area_id;
+                    $productData['area_name'] = $leadProduct->area->name ?? null;
                     $productData['property_id'] = $leadProduct->product_category_id;
+                    $productData['property_name'] = $leadProduct->propertyCategory->name ?? null;
                     $productData['layout_id'] = $leadProduct->product_sub_category_id;
+                    $productData['layout_name'] = $productSubCategory->name ?? null;
                     $productData['unit_id'] = $leadProduct->product_id;
+                    $productData['unit_name'] = $product->name ?? null;
                 } else if ($leadProduct->type === 'Service') {
                     $productData['service_id'] = $leadProduct->product_id;
+                    $productData['service_name'] = $product->name ?? null;
                 }
 
                 return $productData;
@@ -605,6 +615,8 @@ class LeadController extends Controller
                 'followups' => $formattedFollowups,
                 'sales' => $sales,
                 'customers' => $customers,
+                'other_price' => $lead->other_price ?? 0,
+                'discount' => $lead->discount ?? 0,
                 'financial' => [
                     'other_price' => $lead->other_price ?? 0,
                     'discount' => $lead->discount ?? 0,
@@ -789,7 +801,10 @@ class LeadController extends Controller
     /**
      * Update lead products
      */
-    public function updateProducts(Request $request, $uuid)
+    /**
+     * Update lead products
+     */
+    public function updateProducts(Request $request, $uuid, LeadProductService $leadProductService)
     {
         DB::beginTransaction();
         try {
@@ -821,170 +836,8 @@ class LeadController extends Controller
                 return error_response('Lead not found', 404);
             }
 
-            // Get existing lead product IDs
-            $existingProductIds = $lead->products->pluck('id')->toArray();
-            $updatedProductIds = [];
-
-            // Process each product
-            foreach ($request->products as $productData) {
-                $leadProductId = $productData['lead_product_id'] ?? null;
-                
-                if ($leadProductId && in_array($leadProductId, $existingProductIds)) {
-                    // Update existing product
-                    $leadProduct = LeadProduct::where('id', $leadProductId)
-                        ->where('lead_id', $lead->id)
-                        ->where('company_id', $companyId)
-                        ->first();
-
-                    if ($leadProduct) {
-                        $category = $leadProduct->type ?? $productData['category'] ?? null;
-                        $productId = $productData['product_id'] ?? null;
-                        $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
-                        
-                        // Handle Property category: if product_id is empty but product_sub_category_id exists
-                        if (empty($productId) && !empty($productSubCategoryId) && $category === 'Property') {
-                            $product = Product::where('sub_category_id', $productSubCategoryId)
-                                ->where('company_id', $companyId)
-                                ->where('applies_to', 'property')
-                                ->first();
-                            
-                            if ($product) {
-                                $productId = $product->id;
-                            } 
-                        }
-                        
-                        // Get service category and sub_category for Service products
-                        $serviceCategoryId = null;
-                        $serviceSubCategoryId = null;
-                        
-                        if ($productId && $category === 'Service') {
-                            // For Service, get category_id and sub_category_id from Product
-                            $product = Product::where('id', $productId)
-                                ->where('company_id', $companyId)
-                                ->first();
-                            if ($product) {
-                                $serviceCategoryId = $product->category_id ?? null;
-                                $serviceSubCategoryId = $product->sub_category_id ?? null;
-                            }
-                        } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) {
-                            // For Property, get sub_category_id from Product if not already set
-                            $product = Product::where('id', $productId)
-                                ->where('company_id', $companyId)
-                                ->first();
-                            if ($product) {
-                                $productSubCategoryId = $product->sub_category_id ?? null;
-                            }
-                        }
-
-                        // Update all fields from request - same as store method
-                        $leadProduct->type = $category;
-                        $leadProduct->product_id = $productId;
-                        $leadProduct->property_unit_id = $productData['property_unit_id'] ?? null;
-                        $leadProduct->area_id = $productData['area_id'] ?? null;
-                        $leadProduct->product_category_id = $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null);
-                        $leadProduct->product_sub_category_id = $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId;
-                        
-                        // Update quantity - always update from request
-                        $leadProduct->quantity = isset($productData['quantity']) ? (int)$productData['quantity'] : ($leadProduct->quantity ?? 1);
-                        
-                        // Update other_price - always update from request
-                        $leadProduct->other_price = isset($productData['other_price']) ? (float)$productData['other_price'] : ($leadProduct->other_price ?? 0);
-                        
-                        // Update discount - always update from request
-                        $leadProduct->discount = isset($productData['discount']) ? (float)$productData['discount'] : ($leadProduct->discount ?? 0);
-                        
-                        // Update negotiated_price
-                        if (isset($productData['negotiated_price']) || isset($productData['negotiation_price'])) {
-                            $leadProduct->negotiated_price = $productData['negotiated_price'] ?? $productData['negotiation_price'] ?? null;
-                        }
-                        
-                        // Update notes
-                        if (array_key_exists('notes', $productData)) {
-                            $leadProduct->notes = $productData['notes'];
-                        }
-                        
-                        $leadProduct->updated_by = $authUser->id;
-                        $leadProduct->save();
-
-                        $updatedProductIds[] = $leadProductId;
-                    }
-                } else {
-                    // Create new product
-                    $category = $productData['category'];
-                    $productId = $productData['product_id'] ?? null;
-                    $productSubCategoryId = $productData['product_sub_category_id'] ?? null;
-                    
-                    // Handle Property category: if product_id is empty but product_sub_category_id exists
-                    if (empty($productId) && !empty($productSubCategoryId) && $category === 'Property') {
-                        $product = Product::where('sub_category_id', $productSubCategoryId)
-                            ->where('company_id', $companyId)
-                            ->where('applies_to', 'property')
-                            ->first();
-                        
-                        if ($product) {
-                            $productId = $product->id;
-                        } 
-                    }
-                    
-                    // Validate Service category requires product_id
-                    if ($category === 'Service' && empty($productId)) {
-                        DB::rollBack();
-                        return error_response('Product ID is required for Service category.', 400);
-                    }
-                    
-                    // Get service category and sub_category for Service products
-                    $serviceCategoryId = null;
-                    $serviceSubCategoryId = null;
-                    
-                    if ($productId && $category === 'Service') {
-                        // For Service, get category_id and sub_category_id from Product
-                        $product = Product::where('id', $productId)
-                            ->where('company_id', $companyId)
-                            ->first();
-                        if ($product) {
-                            $serviceCategoryId = $product->category_id ?? null;
-                            $serviceSubCategoryId = $product->sub_category_id ?? null;
-                        }
-                    } elseif ($productId && $category === 'Property' && empty($productSubCategoryId)) {
-                        // For Property, get sub_category_id from Product if not already set
-                        $product = Product::where('id', $productId)
-                            ->where('company_id', $companyId)
-                            ->first();
-                        if ($product) {
-                            $productSubCategoryId = $product->sub_category_id ?? null;
-                        }
-                    }
-
-                    // Prepare data for LeadProduct - same as store method
-                    $leadProductData = [
-                        'company_id' => $companyId,
-                        'lead_id' => $lead->id,
-                        'type' => $category,
-                        'property_unit_id' => $productData['property_unit_id'] ?? null,
-                        'area_id' => $productData['area_id'] ?? null,
-                        'product_category_id' => $category === 'Service' ? $serviceCategoryId : ($productData['property_id'] ?? null),
-                        'product_sub_category_id' => $category === 'Service' ? $serviceSubCategoryId : $productSubCategoryId,
-                        'product_id' => $productId,
-                        'quantity' => $productData['quantity'] ?? 1,
-                        'other_price' => $productData['other_price'] ?? 0,
-                        'discount' => $productData['discount'] ?? 0,
-                        'negotiated_price' => $productData['negotiated_price'] ?? $productData['negotiation_price'] ?? null,
-                        'notes' => $productData['notes'] ?? null,
-                        'created_by' => $authUser->id,
-                    ];
-
-                    LeadProduct::create($leadProductData);
-                }
-            }
-
-            // Delete products that were not in the update list
-            $productsToDelete = array_diff($existingProductIds, $updatedProductIds);
-            if (!empty($productsToDelete)) {
-                LeadProduct::whereIn('id', $productsToDelete)
-                    ->where('lead_id', $lead->id)
-                    ->where('company_id', $companyId)
-                    ->delete();
-            }
+            // Sync products using service
+            $leadProductService->syncLeadProducts($lead, $request->products, $companyId, $authUser->id, true);
 
             // Recalculate lead totals
             $leadProducts = LeadProduct::where('lead_id', $lead->id)
