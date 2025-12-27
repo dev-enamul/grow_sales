@@ -39,9 +39,7 @@ return new class extends Migration
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
             
             $table->json('senior_user')->nullable(); 
-            $table->json('junior_user')->nullable();
-
-            $table->foreignId('role_id')->nullable()->constrained('roles');
+            $table->json('junior_user')->nullable(); 
             
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
