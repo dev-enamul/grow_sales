@@ -16,6 +16,14 @@ class DesignationController extends Controller
 {
     use PaginatorTrait;
 
+    public function __construct()
+    {
+        $this->middleware('permission:designation.view')->only(['index', 'show']);
+        $this->middleware('permission:designation.create')->only(['store']);
+        $this->middleware('permission:designation.edit')->only(['update']);
+        $this->middleware('permission:designation.delete')->only(['destroy']);
+    }
+
     /**
      * Display a listing of the resource.
      */

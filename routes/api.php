@@ -78,49 +78,49 @@ Route::get('files/{file}/download', [FileController::class, 'download'])->name('
 Route::middleware(['auth:sanctum'])->group(function () {
 
     // Dashboard
-    Route::get('dashboard', [DashboardController::class, 'index']);
-    Route::get('dashboard/chart', [DashboardController::class, 'chartData']);
-    Route::get('dashboard/recent-activity', [DashboardController::class, 'recentActivity']);
+    Route::get('dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view');
+    Route::get('dashboard/chart', [DashboardController::class, 'chartData'])->middleware('permission:dashboard.view');
+    Route::get('dashboard/recent-activity', [DashboardController::class, 'recentActivity'])->middleware('permission:dashboard.view');
 
 
     // MediaFile 
-    Route::resource('folder', FolderController::class);
-    Route::resource('files', FileController::class); 
+    Route::resource('folder', FolderController::class)->middleware('permission:configuration.media_view');
+    Route::resource('files', FileController::class)->middleware('permission:configuration.media_view'); 
     
     // Property
-    Route::resource('project', ProjectController::class); 
-    Route::resource('layout-type', LayoutTypeController::class);
-    Route::resource('unit', UnitController::class);
+    Route::resource('project', ProjectController::class)->middleware('permission:property.view'); 
+    Route::resource('layout-type', LayoutTypeController::class)->middleware('permission:property.view');
+    Route::resource('unit', UnitController::class)->middleware('permission:property.view');
 
     // Service
-    Route::resource('service-category', ServiceCategoryController::class);
-    Route::resource('service-sub-category', ServiceSubCategoryController::class);
-    Route::resource('service', ServiceController::class);  
+    Route::resource('service-category', ServiceCategoryController::class)->middleware('permission:service.view');
+    Route::resource('service-sub-category', ServiceSubCategoryController::class)->middleware('permission:service.view');
+    Route::resource('service', ServiceController::class)->middleware('permission:service.view');  
      
     // Employee  
     Route::resource('designation', DesignationController::class);
-    Route::get('permissions', [PermissionController::class, 'index']);
-    Route::get('designations/{id}/permissions', [PermissionController::class, 'getDesignationPermissions']);
-    Route::post('designations/{id}/permissions', [PermissionController::class, 'updateDesignationPermissions']);
-    Route::resource('employee', EmployeeController::class);
-    Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation']);
-    Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting']); 
+    Route::get('permissions', [PermissionController::class, 'index'])->middleware('permission:designation.edit'); 
+    Route::get('designations/{id}/permissions', [PermissionController::class, 'getDesignationPermissions'])->middleware('permission:designation.view');
+    Route::post('designations/{id}/permissions', [PermissionController::class, 'updateDesignationPermissions'])->middleware('permission:designation.edit');
+    Route::resource('employee', EmployeeController::class)->middleware('permission:employee.view_all|employee.view_own');
+    Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation'])->middleware('permission:employee.edit');
+    Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting'])->middleware('permission:employee.edit'); 
 
     // Organization  
     Route::resource('organization', OrganizationController::class);
 
     // Organization  
-    Route::resource('contact', ContactController::class);
+    Route::resource('contact', ContactController::class)->middleware('permission:contact.view');
 
     // Affiliate 
-    Route::resource('affiliate', AffiliateController::class);
+    Route::resource('affiliate', AffiliateController::class)->middleware('permission:affiliate.view_all|affiliate.view_own');
     
     // Lead 
     Route::resource('campaign', CampaignController::class);
-    Route::apiResource('lead-category', LeadCategoryController::class);
-    Route::resource('lead-source',LeadSourceController::class);
-    Route::resource('challenge',ChallengeController::class);
-    Route::resource('lead',LeadController::class);
+    Route::apiResource('lead-category', LeadCategoryController::class)->middleware('permission:configuration.pipeline_view');
+    Route::resource('lead-source',LeadSourceController::class)->middleware('permission:configuration.pipeline_view');
+    Route::resource('challenge',ChallengeController::class)->middleware('permission:configuration.pipeline_view');
+    Route::resource('lead',LeadController::class)->middleware('permission:lead.view_all|lead.view_own');
     Route::post('lead-assign-to/{uuid}',LeadAssignController::class);
     Route::post('lead-contact',[\App\Http\Controllers\Lead\LeadContactController::class,'store']);
     Route::put('lead/{uuid}/products',[\App\Http\Controllers\Lead\LeadController::class,'updateProducts']);
@@ -128,12 +128,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('lead/{uuid}/assigned-to',[\App\Http\Controllers\Lead\LeadController::class,'updateAssignedTo']);
     Route::put('lead/{uuid}/affiliate',[\App\Http\Controllers\Lead\LeadController::class,'updateAffiliate']);
 
-    Route::resource('customer', CustomerController::class);
+    Route::resource('customer', CustomerController::class)->middleware('permission:customer.view_all|customer.view_own');
     Route::get('customer-personal-info',[CustomerController::class,'show']);
     
     // Sales
     Route::post('sales/{uuid}/approve', [SalesController::class, 'approve']);
-    Route::resource('sales', SalesController::class);
+    Route::resource('sales', SalesController::class)->middleware('permission:sales.view_all|sales.view_own');
     Route::resource('sales-payment-schedule', \App\Http\Controllers\Sales\SalesPaymentScheduleController::class);
     Route::resource('sales-payment', \App\Http\Controllers\Sales\SalesPaymentController::class);
     Route::post('sales-user/bulk-update', [\App\Http\Controllers\Sales\SalesUserController::class, 'bulkUpdate']);
@@ -154,16 +154,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
  
     // Setting Route 
-    Route::resource('property-unit',PropertyUnitController::class);
-    Route::resource('measurment-unit',MeasurmentUnitController::class);
+    Route::resource('property-unit',PropertyUnitController::class)->middleware('permission:configuration.properties_view');
+    Route::resource('measurment-unit',MeasurmentUnitController::class)->middleware('permission:configuration.measurements_view');
     // Accounting
     Route::resource('bank', \App\Http\Controllers\Configuration\BankController::class);
     Route::resource('account', \App\Http\Controllers\Configuration\AccountController::class);
     Route::resource('payment-reason', \App\Http\Controllers\Configuration\PaymentReasonController::class);
-    Route::resource('property-type',PropertyTypeController::class);
-    Route::resource('vat-setting',VatSettingController::class);
-    Route::resource('area-structure',AreaStructureController::class);
-    Route::resource('area',AreaController::class);
+    Route::resource('property-type',PropertyTypeController::class)->middleware('permission:configuration.properties_view');
+    Route::resource('vat-setting',VatSettingController::class)->middleware('permission:configuration.vat_view');
+    Route::resource('area-structure',AreaStructureController::class)->middleware('permission:location.view');
+    Route::resource('area',AreaController::class)->middleware('permission:location.view');
 });
 
 // Enam 

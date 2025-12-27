@@ -57,10 +57,24 @@ class PermissionController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-            // Sync permissions (detach old, attach new)
+            DB::beginTransaction(); 
             $permissions = $request->input('permissions', []);
             $designation->permissions()->sync($permissions);
+ 
+            $userIds = \App\Models\DesignationLog::where('designation_id', $designation->id)
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                          ->orWhere('end_date', '>=', now());
+                })
+                ->pluck('user_id');
+
+            if ($userIds->isNotEmpty()) {
+                $users = \App\Models\User::whereIn('id', $userIds)->get();
+                foreach ($users as $user) {
+                    $user->tokens()->delete();
+                }
+            }
+
             DB::commit();
 
             return response()->json([

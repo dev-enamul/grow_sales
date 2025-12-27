@@ -46,9 +46,11 @@ class AuthService {
     {
         $token = $user->createToken('authToken')->plainTextToken;
  
-        $permissions = @$user->role->slug === 'admin'
-            ? Permission::pluck('slug')  
-            : $user?->role?->permissions?->pluck('slug'); 
+        if ($user->is_admin) {
+            $permissions = Permission::pluck('name');
+        } else { 
+            $permissions = $user?->currentDesignation?->designation?->permissions?->pluck('name') ?? collect();
+        }
      
         $data = [
             'token' => $token,
@@ -58,7 +60,7 @@ class AuthService {
                 'name' => $user->name,
                 'email' => $user->email,
                 'user_type' => @$user->user_type,
-                'role' => @$user->role->slug,
+                'designation' => @$user->currentDesignation->designation->name,
             ],
             'permissions' => $permissions,
         ];

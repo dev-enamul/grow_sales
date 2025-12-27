@@ -41,6 +41,9 @@ class EmployeeEditController extends Controller
             } 
            
             $result = $this->employeeService->updateEmployeeDesignation($user, $designation_id, $start_date, $auth_user);
+            
+            // Force logout strictly for the user being updated
+            $user->tokens()->delete();
  
             DB::commit(); 
             return success_response(null, $result['message']);  

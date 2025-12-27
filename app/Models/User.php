@@ -88,8 +88,10 @@ class User extends Authenticatable
     public function currentDesignation()
     {
         return $this->hasOne(DesignationLog::class, 'user_id', 'id')
-                    ->whereNull('end_date')
+            ->where(function ($query) {
+                $query->whereNull('end_date')
                     ->orWhere('end_date', '>=', now());
+            });
     }
 
     // Helper methods to check user type
