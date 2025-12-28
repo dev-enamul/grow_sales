@@ -62,6 +62,15 @@ class AuthService {
                 'user_type' => @$user->user_type,
                 'designation' => @$user->currentDesignation->designation->name,
             ],
+            'company' => [
+                'id' => @$user->company->id,
+                'uuid' => @$user->company->uuid,
+                'name' => @$user->company->name,
+                'logo' => @$user->company->logo,
+                'primary_color' => @$user->company->primary_color,
+                'secondary_color' => @$user->company->secondary_color,
+                'website' => @$user->company->website,
+            ],
             'permissions' => $permissions,
         ];
         return success_response($data, 'User authenticated successfully.'); 
