@@ -8,8 +8,7 @@ use Database\Seeders\AreaSeeder;
 use Database\Seeders\AreaStructureSeeder;
 use Database\Seeders\DesignationSeeder;
 use Database\Seeders\LeadCategorySeeder;
-use Database\Seeders\LeadSourceSeeder;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\LeadSourceSeeder; 
 use Illuminate\Support\Facades\Artisan;
 
 class CompanyObserver
@@ -39,10 +38,7 @@ class CompanyObserver
             // 3. Designation 
             $designationSeeder = new DesignationSeeder($company->id);
             $designationSeeder->run();
-
-            // 4. Role 
-            $roleSeeder = new RoleSeeder($company->id);
-            $roleSeeder->run();
+ 
 
             // 5. Default Accounts
             $accountSeeder = new \Database\Seeders\AccountSeeder($company->id);
