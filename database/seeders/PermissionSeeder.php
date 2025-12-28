@@ -115,6 +115,8 @@ class PermissionSeeder extends Seeder
                 ['name' => 'configuration.pipeline_manage', 'title' => 'Manage Pipeline Configuration'], 
                 ['name' => 'configuration.media_view', 'title' => 'View Media Configuration'], 
                 ['name' => 'configuration.media_manage', 'title' => 'Manage Media Configuration'], 
+                ['name' => 'configuration.company_view', 'title' => 'View Company Configuration'], 
+                ['name' => 'configuration.company_manage', 'title' => 'Manage Company Configuration'], 
             ], 
             'Location' => [
                 ['name' => 'location.view', 'title' => 'View Locations'], 

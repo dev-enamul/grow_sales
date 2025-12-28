@@ -3,6 +3,7 @@ use App\Http\Controllers\Affiliate\AffiliateController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\VerifyController;
 use App\Http\Controllers\Campaign\CampaignController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\Common\CompanyCategoryApiController;
 use App\Http\Controllers\Common\CountryApiController;
 use App\Http\Controllers\Common\DesignationApiController;
@@ -108,6 +109,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Organization  
     Route::resource('organization', OrganizationController::class);
+    Route::resource('company', CompanyController::class)->middleware('permission:configuration.company_view');
 
     // Organization  
     Route::resource('contact', ContactController::class)->middleware('permission:contact.view');
