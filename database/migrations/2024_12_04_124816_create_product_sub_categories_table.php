@@ -48,11 +48,13 @@ return new class extends Migration
             $table->decimal('vat_amount', 15, 2)->nullable();
             $table->decimal('sell_price', 10, 2)->nullable();
 
+            // 5. Status and Tracking
+            $table->integer('status')->default(1)->comment("1=Active, 0=UnActive");
             $table->string('applies_to');
             $table->foreignId('created_by')
                   ->nullable()
                   ->constrained('users')
-                  ->onDelete('set null');
+                  ->onDelete('set null'); 
 
             $table->foreignId('updated_by')
                   ->nullable()

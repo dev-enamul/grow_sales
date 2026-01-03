@@ -11,14 +11,28 @@ use Illuminate\Http\Request;
 class AreaStructureController extends Controller
 {
     use ValidatesParent;
-    public function index()
+    public function index(Request $request)
     {
-        $datas = AreaStructure::with('parent:id,name')  
-                    ->select('id', 'uuid', 'name', 'parent_id', 'status')  
-                    ->latest()
+        $query = AreaStructure::with('parent:id,name')
+                    ->select('id', 'uuid', 'name', 'parent_id', 'status');
+
+        if ($request->boolean('select')) {
+             $datas = $query->where('status', 1)->latest()->get()->map(function($item) {
+                 return [
+                     'id' => $item->id,
+                     'text' => $item->name,
+                     'name' => $item->name,
+                     'uuid' => $item->uuid,
+                 ];
+             });
+             return success_response($datas);
+        }
+
+        $datas = $query->latest()
                     ->get()
                     ->map(function ($item) {
                         return [
+                            'id'         => $item->id,
                             'uuid'       => $item->uuid,
                             'name'       => $item->name,
                             'parent_id'  => $item->parent_id,
@@ -35,18 +49,13 @@ class AreaStructureController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'parent_id' => 'nullable|exists:area_structures,uuid',
+            'parent_id' => 'nullable|exists:area_structures,id',
             'status' => 'required|in:0,1',
         ]);
 
-        $parentId = null;
-        if ($request->filled('parent_id')) {
-            $parentId = AreaStructure::findByUuid($request->parent_id)->id; // ✅ UUID → id
-        }
-
         AreaStructure::create([
             'name' => $request->name,
-            'parent_id' => $parentId, // ✅ correct integer id
+            'parent_id' => $request->parent_id,
             'status' => $request->status,
             'created_by' => auth()->id(),
             'company_id' => auth()->user()->company_id,
@@ -57,24 +66,21 @@ class AreaStructureController extends Controller
 
 
     public function update(Request $request, $id)
-    { 
-        $structure = AreaStructure::findByUuid($id); 
+    {
+        $structure = AreaStructure::findByUuid($id);
         $request->validate([
             'name' => 'required|string',
-            'parent_id' => 'nullable|exists:area_structures,uuid',
+            'parent_id' => 'nullable|exists:area_structures,id',
             'status' => 'in:0,1',
-        ]); 
-        $parentId = null;
-        if ($request->filled('parent_id')) { 
-            $parent = AreaStructure::findByUuid($request->parent_id);
-            if (!$parent) {
-                return error_response(null, 422, 'Parent not found');
-            }
-            $parentId = $parent->id; 
-            if (!$this->isValidParent($structure, $parentId)) {
-                return error_response(null, 422, 'Invalid parent: circular reference detected.');
-            }
-        } 
+        ]);
+
+        $parentId = $request->parent_id;
+        if ($parentId) {
+             if (!$this->isValidParent($structure, $parentId)) {
+                 return error_response(null, 422, 'Invalid parent: circular reference detected.');
+             }
+        }
+
         $structure->update([
             'name' => $request->name,
             'parent_id' => $parentId,

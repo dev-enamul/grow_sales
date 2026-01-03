@@ -33,6 +33,7 @@ class ProductSubCategory extends Model
         'vat_amount',
         'sell_price',
         'applies_to',
+        'status',
         'created_by',
         'updated_by',
         'deleted_by',

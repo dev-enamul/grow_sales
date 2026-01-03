@@ -19,7 +19,7 @@ class AreaController extends Controller
     {
         $authUser = User::find(Auth::user()->id);
         $query = Area::where('company_id',$authUser->company_id)->with(['parent', 'areaStructure'])
-            ->select('id', 'uuid', 'name', 'parent_id', 'area_structure_id');
+            ->select('id', 'uuid', 'name', 'parent_id', 'area_structure_id', 'status');
  
         $keyword = $request->input('keyword');
         $structure_id = $request->input('structure_id');
@@ -58,7 +58,7 @@ class AreaController extends Controller
         }
 
 
-        if ($request->boolean('select2')) { 
+        if ($request->boolean('select')) { 
             // For select2, return more results (up to 50) for better search
             $limit = $request->input('limit', 50);
             $areas = $query->limit($limit)->get();
@@ -96,9 +96,10 @@ class AreaController extends Controller
             return [
                 'uuid' => $area->uuid,
                 'name' => $area->name,
+                'status' => $area->status,
                 'parent_id' => $area->parent_id,
                 'parent_name' => optional($area->parent)->name,
-                'areaStructure_id' => $area->area_structure_id,
+                'areaStructure_id' => optional($area->areaStructure)->id,
                 'areaStructureName' => optional($area->areaStructure)->name ?? '',
             ];
         });
@@ -133,12 +134,12 @@ class AreaController extends Controller
         $area = Area::findByUuid($id); 
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'parent_id' => 'nullable|exists:areas,uuid|not_in:' . $area->uuid,
-            'area_structure_id' => 'sometimes|required|exists:area_structures,uuid',
+            'parent_id' => 'nullable|exists:areas,id|not_in:' . $area->id,
+            'area_structure_id' => 'sometimes|required|exists:area_structures,id',
             'status' => 'nullable|in:0,1',
         ]); 
         if ($request->filled('parent_id')) {
-            $parentArea = Area::findByUuid($request->parent_id);
+            $parentArea = Area::find($request->parent_id);
             if (!$parentArea) {
                 return error_response(null, 404, 'Parent area not found');
             }
@@ -153,7 +154,7 @@ class AreaController extends Controller
         $updateData = array_merge($updateData ?? [], $request->only(['name', 'status']));
 
         if ($request->filled('area_structure_id')) {
-            $structure = AreaStructure::findByUuid($request->area_structure_id);
+            $structure = AreaStructure::find($request->area_structure_id);
             if (!$structure) {
                 return error_response(null, 404, 'Area Structure not found');
             }

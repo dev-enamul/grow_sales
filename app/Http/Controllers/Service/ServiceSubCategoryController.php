@@ -37,8 +37,8 @@ class ServiceSubCategoryController extends Controller
                         ->orWhere('description', 'like', '%' . $keyword . '%');
                 });
             }) 
-            ->select('id','uuid', 'name','slug', 'code', 'description', 'category_id', 'image')
-            ->with(['category:id,uuid,name']);
+            ->select('id','uuid', 'name','slug', 'code', 'description', 'category_id', 'image', 'status')
+            ->with(['category:id,uuid,name,description,image']);
         
         if ($selectOnly) {
             $subCategories = $query->select('id','name')->latest()->take(10)->get();
@@ -63,8 +63,16 @@ class ServiceSubCategoryController extends Controller
                 'id' => $item->uuid,
                 'name' => $item->name,  
                 'slug' => $item->slug, 
+                'status' => $item->status,
                 'description' => $item->description, 
-                'category_name' => $item->category ? $item->category->name : null,
+                'category' => $item->category ? [
+                    'id' => $item->category->id,
+                    'name' => $item->category->name,
+                    'description' => $item->category->description,
+                    'image' => $item->category->image,
+                    'image_url' => getFileUrl($item->category->image),
+                ] : null,
+                'category_name' => $item->category ? $item->category->name : null, // Keep for backward compat if needed, or remove if unused. Used in column filter text? The column filter uses `category_name` dataIndex for filter matching but I am using custom render.
                 'category_id' => $item->category ? $item->category->id : null,
                 'image' => $item->image,
                 'image_url' => getFileUrl($item->image),
@@ -95,6 +103,7 @@ class ServiceSubCategoryController extends Controller
             'name' => $subCategory->name,
             'slug' => $subCategory->slug, 
             'description' => $subCategory->description,    
+            'status' => $subCategory->status,
             'category_name' => $subCategory->category ? $subCategory->category->name : null,
             'category_id' => $subCategory->category_id,
             'image' => $subCategory->image,
@@ -114,6 +123,7 @@ class ServiceSubCategoryController extends Controller
             'description' => 'nullable|string', 
             'category_id' => 'required|exists:product_categories,id',
             'image' => 'nullable|exists:files,id',
+            'status' => 'nullable|in:0,1',
         ]);
 
         
@@ -124,6 +134,7 @@ class ServiceSubCategoryController extends Controller
         $subCategory->description = $request->description;
         $subCategory->category_id = $request->category_id; 
         $subCategory->image = $request->image;
+        $subCategory->status = $request->status ?? 1;
         $subCategory->applies_to = 'service'; 
         $subCategory->save();
 
@@ -137,6 +148,7 @@ class ServiceSubCategoryController extends Controller
             'description' => 'nullable|string', 
             'category_id' => 'nullable|exists:product_categories,id',
             'image' => 'nullable|exists:files,id',
+            'status' => 'nullable|in:0,1',
         ]);
 
         $subCategory = ProductSubCategory::where('uuid', $uuid)
@@ -157,6 +169,9 @@ class ServiceSubCategoryController extends Controller
         $subCategory->slug = getSlug(new ProductSubCategory(), $request->name);
         $subCategory->code = $request->code;
         $subCategory->description = $request->description;
+        if ($request->has('status')) {
+            $subCategory->status = $request->status;
+        }
         if ($request->has('image')) {
             $subCategory->image = $request->image;
         }

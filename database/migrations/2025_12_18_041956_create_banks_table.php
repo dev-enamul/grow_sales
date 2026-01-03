@@ -28,8 +28,7 @@ return new class extends Migration
             $table->softDeletes();
             
             $table->timestamps();
-            
-            // Unique constraint to prevent duplicate entries
+             
             $table->unique(['company_id', 'account_number']);
         });
     }

@@ -24,6 +24,9 @@ class ServiceCategoryController extends Controller
                     $q->where('name', 'like', '%' . $keyword . '%')
                         ->orWhere('description', 'like', '%' . $keyword . '%');
                 });
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
             }) 
             ->select('id','uuid', 'name','slug', 'description', 'status', 'image')
             ->with(['area:id,name']);

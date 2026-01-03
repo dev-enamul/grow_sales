@@ -18,7 +18,7 @@ class ContactRepository
 
         $query = Contact::with([
                 'organization',
-                'addresses',
+                'addresses.area.areaStructure',
                 'createdBy',
                 'updatedBy',
             ])
@@ -36,6 +36,43 @@ class ContactRepository
                         $q->where('name', 'like', "%{$keyword}%");
                     });
             });
+        }
+
+        if ($request->has('organization_id') && $request->organization_id) {
+            $query->where('organization_id', $request->organization_id);
+        }
+
+        if ($request->has('profession') && $request->profession) {
+            $query->where('profession', 'like', "%{$request->profession}%");
+        }
+
+        if ($request->has('area_id') && $request->area_id) {
+            $query->whereHas('addresses', function ($q) use ($request) {
+                $q->where('area_id', $request->area_id);
+            });
+        }
+
+        if ($request->has('gender') && $request->gender) {
+            $query->where('gender', $request->gender);
+        }
+        if ($request->has('blood_group') && $request->blood_group) {
+            $query->where('blood_group', $request->blood_group);
+        }
+        if ($request->has('education') && $request->education) {
+            $query->where('education', $request->education);
+        }
+
+        if ($request->has('dob_start') && $request->dob_start) {
+            $query->whereDate('dob', '>=', $request->dob_start);
+        }
+        if ($request->has('dob_end') && $request->dob_end) {
+            $query->whereDate('dob', '<=', $request->dob_end);
+        }
+        if ($request->has('time_start') && $request->time_start) {
+            $query->whereTime('avalable_time', '>=', $request->time_start);
+        }
+        if ($request->has('time_end') && $request->time_end) {
+            $query->whereTime('avalable_time', '<=', $request->time_end);
         }
 
         if ($selectOnly) {
@@ -64,6 +101,25 @@ class ContactRepository
         $paginated = $this->paginateQuery($query, $request);
 
         $paginated['data'] = collect($paginated['data'])->map(function ($contact) {
+            $primaryAddress = $contact->addresses->where('address_type', 'present')->first() 
+                ?? $contact->addresses->first();
+            
+            $formattedAddress = null;
+            if ($primaryAddress) {
+                $parts = [];
+                if ($primaryAddress->area) {
+                    $areaPart = $primaryAddress->area->name;
+                    if ($primaryAddress->area->areaStructure) {
+                        $areaPart .= ' ' . $primaryAddress->area->areaStructure->name;
+                    }
+                    $parts[] = $areaPart;
+                }
+                if ($primaryAddress->address) {
+                    $parts[] = $primaryAddress->address;
+                }
+                $formattedAddress = implode(', ', $parts);
+            }
+
             return [
                 'id' => $contact->id,
                 'uuid' => $contact->uuid,
@@ -90,6 +146,7 @@ class ContactRepository
                     'uuid' => $contact->organization->uuid,
                     'name' => $contact->organization->name,
                 ] : null,
+                'formatted_address' => $formattedAddress,
                 'addresses' => $contact->addresses->map(function ($address) {
                     return [
                         'uuid' => $address->uuid,
