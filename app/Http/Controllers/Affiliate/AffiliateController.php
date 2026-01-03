@@ -66,6 +66,8 @@ class AffiliateController extends Controller
                 'profile_image_url' => getFileUrl($user->profile_image),
                 'status' => $user->status,
                 'referred_by' => $user->referred_by,
+                'referral_code' => $user->user_id,
+                'created_at' => $user->created_at,
                 'reporting_id' => $reportingUserId,
             ]);
         } catch (Exception $e) {

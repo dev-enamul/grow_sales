@@ -105,6 +105,12 @@ class EmployeeController extends Controller
                 'gender' => $user->gender,
                 'referred_by' => $user->referred_by ?? null,
                 'reporting_id' => $reportingUserId,
+                'employee_id' => $user->user_id,
+                'status' => $user->status,
+                'is_resigned' => $user->is_resigned,
+                'salary' => $user->salary,
+                'signature' => $user->signature,
+                'created_at' => $user->created_at,
                 'senior_user' => json_decode($user->senior_user??"[]")
             ]);
         } catch (Exception $e) {

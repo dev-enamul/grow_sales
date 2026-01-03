@@ -48,6 +48,7 @@ class SalesController extends Controller
             if ($keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->where('id', 'like', "%{$keyword}%")
+                        ->orWhere('sale_id', 'like', "%{$keyword}%")
                         ->orWhereHas('customer.primaryContact', function ($contactQuery) use ($keyword) {
                             $contactQuery->where('name', 'like', "%{$keyword}%")
                                 ->orWhere('phone', 'like', "%{$keyword}%")
@@ -81,10 +82,11 @@ class SalesController extends Controller
                 return [
                     'id' => $sale->id,
                     'uuid' => $sale->uuid,
-                    'sales_id' => $sale->id, // Using id as sales_id
+                    'sales_id' => $sale->sale_id,
                     'sold_value' => $sale->grand_total ?? 0,
                     'paid_amount' => $sale->paid ?? 0,
                     'status' => $sale->status ?? 'Pending',
+                    'approved_by' => $sale->approved_by,
                     'contact' => $contact ? [
                         'uuid' => $contact->uuid,
                         'name' => $contact->name,
@@ -192,6 +194,7 @@ class SalesController extends Controller
             // Create sales record
             $sale = Sales::create([
                 'company_id' => $companyId,
+                'sale_id' => Sales::generateNextSaleId($companyId),
                 'customer_id' => $customerId,
                 'lead_id' => $lead->id,
                 'organization_id' => $lead->organization_id,
@@ -623,7 +626,7 @@ class SalesController extends Controller
             return success_response([
                 'id' => $sale->id,
                 'uuid' => $sale->uuid,
-                'sale_id' => $sale->id,
+                'sale_id' => $sale->sale_id,
                 'sale_date' => formatDate($sale->sale_date),
                 'delivery_date' => formatDate($sale->delivery_date),
                 'status' => $sale->status,

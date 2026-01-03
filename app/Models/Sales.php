@@ -15,6 +15,7 @@ class Sales extends Model
 
     protected $fillable = [
         'uuid',
+        'sale_id',
         'company_id',
         'customer_id',
         'lead_id',
@@ -154,6 +155,55 @@ class Sales extends Model
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    public static function generateNextSaleId($companyId = null) {
+        // If company_id is not provided, try to get it from auth user
+        if (!$companyId && auth()->check()) {
+            $companyId = auth()->user()->company_id;
+        }
+
+        // Build query with company filter if available
+        // Use withTrashed() to include soft deleted records in the check
+        $query = self::withTrashed()->where('sale_id', 'like', 'SLS-%');
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
+        $largest_sale_id = $query->pluck('sale_id')
+                ->map(function ($id) {
+                        return (int) preg_replace("/[^0-9]/", "", $id);
+                })
+        ->max();
+
+        // Handle case where no sales exist yet
+        $largest_sale_id = $largest_sale_id ? $largest_sale_id : 0;
+        $largest_sale_id++;
+
+        $new_sale_id = 'SLS-' . str_pad($largest_sale_id, 6, '0', STR_PAD_LEFT);
+
+        // Check if the generated ID already exists (including soft deleted - race condition protection)
+        $maxAttempts = 10;
+        $attempt = 0;
+        while ($attempt < $maxAttempts) {
+            $exists = self::withTrashed()->where('sale_id', $new_sale_id);
+            if ($companyId) {
+                $exists->where('company_id', $companyId);
+            }
+            $exists = $exists->exists();
+
+            if (!$exists) {
+                return $new_sale_id;
+            }
+
+            // If exists, try next number
+            $largest_sale_id++;
+            $new_sale_id = 'SLS-' . str_pad($largest_sale_id, 6, '0', STR_PAD_LEFT);
+            $attempt++;
+        }
+
+        // Fallback: add timestamp to ensure uniqueness
+        return 'SLS-' . str_pad($largest_sale_id, 6, '0', STR_PAD_LEFT) . '-' . time();
     }
 
     protected static function boot()

@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->default(DB::raw('(UUID())'));
+            $table->string('sale_id')->nullable()->unique();
         
             // Relations
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
