@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\ReportingService;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\SalaryStructure;
+use App\Models\UserSalary;
 class EmployeeService
 
 {
@@ -31,8 +33,7 @@ class EmployeeService
         DB::beginTransaction();
         try {
             $authUser = $this->userRepo->findUserById(Auth::id());
-            
-            // Create User without password (employee will set it via email)
+             
             $user = $this->userRepo->createUser([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -40,24 +41,45 @@ class EmployeeService
                 'password' => Hash::make('123456'), 
                 'user_type' => 'employee',
                 'company_id' => $authUser->company_id,
-                'profile_image' => $request->profile_image ?? null, // Save file ID
+                'profile_image' => $request->profile_image ?? null, 
                 'created_by' => $authUser->id,
             ]); 
 
-            // Validate referred_by if provided
             if ($request->referred_by) {
                 ReportingService::validateReferredBy($user, $request->referred_by);
             }
-
-            // Validate reporting user if provided
             if ($request->reporting_id) {
                 ReportingService::validateReportingUser($user, $request->reporting_id);
             }
 
-            // Set employee fields on user
-            $user->user_id = User::generateNextEmployeeId();
+            $employeeId = \App\Models\Employee::generateNextEmployeeId();
+
+            $contactData = [
+                'company_id' => $authUser->company_id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'dob' => $request->dob,
+                'gender' => $request->gender,
+                'blood_group' => $request->blood_group,
+                'religion' => $request->religion ?? null,
+                'marital_status' => $request->marital_status ?? null,
+                'nid' => $request->nid ?? null,
+                'address' => $request->present_address ?? null,
+                'permanent_address' => $request->permanent_address ?? null,
+                'created_by' => $authUser->id,
+            ];
+
+            $contact = \App\Models\Contact::create($contactData);
+            
+            $user->user_id = $employeeId;
+            $user->contact_id = $contact->id;
+            $user->shift_id = $request->shift_id;
+            $user->joining_date = $request->joining_date ?? now();
+            $user->salary = $request->gross_salary ?? 0;
+            $user->weekend_days = $request->weekend_days ?? null;
             $user->referred_by = $request->referred_by;
-            $user->status = 1; // Active by default
+            $user->status = 1;
             $user->save();
 
             // Assign Designation
@@ -85,6 +107,32 @@ class EmployeeService
             $user->senior_user = ReportingService::getAllSenior($user->id);
             $user->junior_user = ReportingService::getAllJunior($user->id);
             $user->save(); 
+
+            // Create Salary Structure if components provided
+            // Create Salary History and Structure
+            if ($request->has('components') && is_array($request->components)) {
+                
+                // 1. Create UserSalary (Snapshot) - Initial Salary
+                $userSalary = UserSalary::create([
+                    'company_id' => $authUser->company_id,
+                    'user_id' => $user->id,
+                    'gross_salary' => $request->gross_salary ?? 0,
+                    'effective_date' => $request->joining_date ?? now(),
+                    'is_active' => true,
+                    'increment_reason' => 'Initial Joining',
+                    'created_by' => $authUser->id,
+                ]);
+
+                foreach ($request->components as $component) {
+                    SalaryStructure::create([
+                        'company_id' => $authUser->company_id,
+                        'user_salary_id' => $userSalary->id,
+                        'component_id' => $component['component_id'],
+                        'amount' => $component['amount'],
+                        'created_by' => $authUser->id,
+                    ]);
+                }
+            } 
 
             DB::commit();
             return ['success' => true, 'message' => 'Employee created successfully!', 'user' => $user];

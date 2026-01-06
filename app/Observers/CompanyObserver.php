@@ -63,6 +63,18 @@ class CompanyObserver
             // 10. Category Types (New)
             $categoryTypeSeeder = new \Database\Seeders\CategoryTypeSeeder($company->id);
             $categoryTypeSeeder->run();
+
+            // 11. Leave Types
+            $leaveTypeSeeder = new \Database\Seeders\LeaveTypeSeeder($company->id);
+            $leaveTypeSeeder->run();
+
+            // 12. Salary Components
+            $salaryComponentSeeder = new \Database\Seeders\SalaryComponentSeeder($company->id);
+            $salaryComponentSeeder->run();
+
+            // 13. Work Shifts
+            $workShiftSeeder = new \Database\Seeders\WorkShiftSeeder($company->id);
+            $workShiftSeeder->run();
         }
     }
 

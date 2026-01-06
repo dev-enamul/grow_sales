@@ -70,7 +70,7 @@ class EmployeeController extends Controller
 
     public function show($uuid){ 
         try {  
-            $user = User::with(['currentDesignation.designation', 'reportingUsers'])
+            $user = User::with(['currentDesignation.designation', 'reportingUsers', 'contact', 'shift'])
                         ->where('uuid',$uuid)->first();
 
             if (!$user) {
@@ -111,7 +111,23 @@ class EmployeeController extends Controller
                 'salary' => $user->salary,
                 'signature' => $user->signature,
                 'created_at' => $user->created_at,
-                'senior_user' => json_decode($user->senior_user??"[]")
+                'joining_date' => $user->joining_date ? formatDate($user->joining_date) : null,
+                'weekend_days' => $user->weekend_days,
+                'senior_user' => json_decode($user->senior_user??"[]"),
+                // Contact information
+                'contact' => $user->contact ? [
+                    'religion' => $user->contact->religion,
+                    'nid' => $user->contact->nid,
+                    'present_address' => $user->contact->address,
+                    'permanent_address' => $user->contact->permanent_address,
+                ] : null,
+                // Shift information
+                'shift' => $user->shift ? [
+                    'id' => $user->shift->id,
+                    'name' => $user->shift->name,
+                    'start_time' => $user->shift->start_time,
+                    'end_time' => $user->shift->end_time,
+                ] : null,
             ]);
         } catch (Exception $e) {
             return error_response($e->getMessage(), 500);

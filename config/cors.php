@@ -3,9 +3,7 @@
 return [ 
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
-
     'allowed_methods' => ['*'],
-
     'allowed_origins' => ['http://localhost:4001','https://erp.zoomdigital.net'],
 
     'allowed_origins_patterns' => [],

@@ -107,6 +107,46 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('employee-designation-update/{uuid}',[EmployeeEditController::class,'updateDesignation'])->middleware('permission:employee.edit');
     Route::put('employee-reporting-update/{uuid}',[EmployeeEditController::class,'updateReporting'])->middleware('permission:employee.edit'); 
 
+    // Attendance
+    Route::get('attendance/status', [\App\Http\Controllers\HR\AttendanceController::class, 'status']);
+    Route::post('attendance/check-in', [\App\Http\Controllers\HR\AttendanceController::class, 'checkIn']);
+    Route::post('attendance/check-out', [\App\Http\Controllers\HR\AttendanceController::class, 'checkOut']);
+
+    // Leave Management
+    Route::get('leave-types', [\App\Http\Controllers\HR\LeaveController::class, 'getLeaveTypes']);
+    Route::get('my-leave-balance', [\App\Http\Controllers\HR\LeaveController::class, 'myBalance']);
+    Route::post('leave-apply', [\App\Http\Controllers\HR\LeaveController::class, 'apply']);
+    Route::get('leave-applications', [\App\Http\Controllers\HR\LeaveController::class, 'index']); // Admin & User
+    Route::post('leave-applications/{id}/status', [\App\Http\Controllers\HR\LeaveController::class, 'updateStatus']); // Admin
+
+    // HR Settings
+    Route::get('hr-settings', [\App\Http\Controllers\HR\HrSettingController::class, 'getSettings']);
+    Route::post('hr-settings/general', [\App\Http\Controllers\HR\HrSettingController::class, 'updateGeneral']);
+    Route::post('hr-settings/late-rule', [\App\Http\Controllers\HR\HrSettingController::class, 'saveLateRule']);
+    Route::delete('hr-settings/late-rule/{id}', [\App\Http\Controllers\HR\HrSettingController::class, 'deleteLateRule']);
+
+    // Payroll
+    Route::post('payroll/generate', [\App\Http\Controllers\HR\PayrollController::class, 'generate']); // Admin
+    Route::get('payrolls', [\App\Http\Controllers\HR\PayrollController::class, 'index']); // List Sheets
+    
+    // Salary Structure
+    // Salary Structure & Components
+    Route::get('salary-components', [\App\Http\Controllers\HR\SalaryStructureController::class, 'getComponents']);
+    Route::post('salary-components', [\App\Http\Controllers\HR\SalaryStructureController::class, 'storeComponent']);
+    Route::put('salary-components/{id}', [\App\Http\Controllers\HR\SalaryStructureController::class, 'updateComponent']);
+    Route::delete('salary-components/{id}', [\App\Http\Controllers\HR\SalaryStructureController::class, 'destroyComponent']);
+    Route::get('salary-structure/{userId}', [\App\Http\Controllers\HR\SalaryStructureController::class, 'getUserStructure']);
+    Route::post('salary-structure', [\App\Http\Controllers\HR\SalaryStructureController::class, 'updateStructure']);
+
+    // Work Shifts
+    Route::apiResource('work-shifts', \App\Http\Controllers\HR\WorkShiftController::class);
+    
+    // Holiday
+    Route::get('holidays', [\App\Http\Controllers\HR\HolidayController::class, 'index']);
+    Route::post('holidays', [\App\Http\Controllers\HR\HolidayController::class, 'store']);
+    Route::delete('holidays/{id}', [\App\Http\Controllers\HR\HolidayController::class, 'destroy']);
+
+
     // Organization  
     Route::resource('organization', OrganizationController::class);
     Route::resource('company', CompanyController::class)->middleware('permission:configuration.company_view');

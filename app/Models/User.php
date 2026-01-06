@@ -38,6 +38,11 @@ class User extends Authenticatable
         'senior_user',
         'junior_user',
         'role_id',
+        // HR Employee fields
+        'contact_id',
+        'shift_id',
+        'joining_date',
+        'weekend_days',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -68,6 +73,8 @@ class User extends Authenticatable
         'is_resigned' => 'boolean',
         'resigned_at' => 'date',
         'status' => 'integer',
+        'weekend_days' => 'array',
+        'joining_date' => 'date',
     ]; 
     public function reportingUsers()
     {
@@ -92,6 +99,16 @@ class User extends Authenticatable
                 $query->whereNull('end_date')
                     ->orWhere('end_date', '>=', now());
             });
+    }
+
+    public function contact()
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(WorkShift::class, 'shift_id');
     }
 
     // Helper methods to check user type

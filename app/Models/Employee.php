@@ -16,7 +16,11 @@ class Employee extends Model
         'employee_id',
         'signature',
         'is_admin',
+        'contact_id',
+        'shift_id',
+        'joining_date',
         'salary',
+        'weekend_days',
         'referred_by',
         'status',
         'is_resigned',
@@ -26,14 +30,23 @@ class Employee extends Model
         'deleted_by',
     ];
 
+    protected $casts = [
+        'weekend_days' => 'array',
+    ];
+
     public static function generateNextEmployeeId(){
-        $largest_employee_id = Employee::where('employee_id', 'like', 'EMP-%') 
-        ->pluck('employee_id')
-                ->map(function ($id) {
-                        return preg_replace("/[^0-9]/", "", $id);
-                }) 
-        ->max(); 
+        // Check users table for existing IDs, including soft deleted ones
+        $largestFromUsers = \App\Models\User::withTrashed()
+            ->where('user_id', 'like', 'EMP-%')
+            ->pluck('user_id')
+            ->map(function ($id) {
+                return (int) preg_replace("/[^0-9]/", "", $id);
+            })
+            ->max() ?? 0;
+
+        $largest_employee_id = $largestFromUsers;
         $largest_employee_id++;
+        
         $new_employee_id = 'EMP-' . str_pad($largest_employee_id, 6, '0', STR_PAD_LEFT);
         return $new_employee_id;
     } 
@@ -41,7 +54,17 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
-    }  
+    }
+
+    public function contact()
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(WorkShift::class, 'shift_id');
+    }
 
     public function currentDesignation()
     {
